@@ -1224,6 +1224,12 @@ body.hide-verses .stage-head { opacity: .25; }
 
 .ctx-submenu.is-open { display: block; }
 
+.ctx-sep {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--line);
+}
+
 /* ── 幻灯放映条 ────────────────────────────────────────────── */
 .slideshow-bar {
   position: absolute;

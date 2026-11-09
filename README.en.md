@@ -242,8 +242,8 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 | `Ctrl` + `C` | Copy verse text: chapter title + the displayed verses (one flowing paragraph, no verse numbers; copies the selection when there is one) |
 | `Ctrl` + `Shift` + `C` | Copy the current verse only |
 | `Alt` + `C` | Copy the chapter: title only |
-| Right-click | Copy ▸ copy verse text_Ctrl+C / copy verse text (per verse) / copy verse text (per verse, one per line) |
-| Right-click | Stop slideshow_End / fullscreen_F5 / hide verses |
+| Right-click | Copy ▸ copy verse text_Ctrl+C / copy verse text (per verse) / copy verse text (per verse, one per line) / copy chapter_Alt+C |
+| Right-click | Stop slideshow_End / fullscreen_F5 / hide verses / open pen / theme settings (dark, light) |
 | `Ctrl` + `C` inside the search panel | Copy the search results (chapter + verse text) |
 | Search panel "copy verse text / copy chapter" | Copy the ticked results: chapter + verse text / chapter only |
 | `Ctrl` + `=` / `Ctrl` + `-` | Increase / decrease font size |

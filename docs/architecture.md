@@ -631,9 +631,11 @@ stroke = {
 | --- | --- | --- |
 | `Ctrl` + `C` | `stage.js → copyCurrent()` | 显示区有选区 → 复制选区；否则 **复制经文**＝标题 ＋ 当前显示的经文连排（无节号，节间不断行；数据里残留的换行会被去掉） |
 | `Alt` + `C` | `stage.js → copyTitleOnly()` | **复制章节**＝仅标题 |
+| 右键 → 复制 ▸ → 复制章节_Alt+C | `stage.js → copyTitleOnly()` | **复制章节**＝仅标题（原版该项在「复制」子菜单内） |
 | 右键 → 复制 ▸ → 复制经文_Ctrl+C | `stage.js → copyTextVariant('plain')` | 同 `Ctrl` + `C` |
 | 右键 → 复制 ▸ → 复制经文(分节) | `copyTextVariant('numbered')` | 标题 ＋ 每节一段，段间空行 |
 | 右键 → 复制 ▸ → 复制经文(分节分行) | `copyTextVariant('lines')` | 标题 ＋ 每节一行（带节号） |
+| 右键 → 打开画笔 / 主题设置 | `draw.js → toggleDraw()` / `settings.js → pushSettings()` | 原版 5.20 菜单条目（原版的「主题设置」为灰态，本版做成深/浅色切换） |
 | 查找面板 `Ctrl` + `C` / 「复制经文」 | `panel-search.js → copySearchResults('both')` | 勾选的结果（未勾选＝当前已展示的结果），每行「章节 经文」 |
 | 查找面板「复制章节」 | `copySearchResults('title')` | 每行只有「章节」（`书卷 章:节`） |
 
