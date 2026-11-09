@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/fenghaichao/bible-projection/actions/workflows/ci.yml/badge.svg)](https://github.com/fenghaichao/bible-projection/actions/workflows/ci.yml)
 
-[中文](README.md) · [Architecture](docs/architecture.md) · [Data](docs/data.md)
+[中文](README.md) · [Architecture](docs/architecture.md) · [Data](docs/data.md) · [Feature audit](docs/feature-audit.md)
 
 ---
 
@@ -55,23 +55,35 @@ and no crash route.
 
 The "original" column comes from the notes shipped with 《语音投影圣经》5.20-SP2 (no-speech edition).
 
+Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ partial / deliberate deviation · ❌ deliberately not implemented
+
 | Original feature | This project | Notes |
 | --- | --- | --- |
-| Speech narration, accurate to the verse | ❌ not provided | The **no-speech edition contains no narration**; this project likewise implements none |
-| Read single / multiple verses, a chapter, continuously | ❌ not provided | No speech, no reading mode |
-| Speech-synced highlighting (LRC style) | ❌ not provided | — |
-| Pick verses via TOC, list box, letter input | ✅ TOC + list + navigation | 66 books in 8 categories, with book / chapter / verse navigation |
-| Show several passages at once (multi-window) | ⚠️ partial | Single window plus projection mode |
-| Background / font / size / color / shadow / line spacing | ✅ display settings | Font, size, line spacing, text color, background color, background image, italic, underline, verse references |
-| Text shadow | ❌ not provided | — |
-| Remember and save visited passages | ✅ history | Up to 200 recent entries, clearable |
-| Floating panel / slideshow / quick controls | ⚠️ partial | Projection mode (fullscreen + navigation shortcuts); no floating panel |
-| Wireless remote control | ❌ not provided | — |
-| Multi-keyword text search | ✅ multi-keyword search | "Match all" and "Match any" modes |
-| Traditional and Simplified Chinese | ✅ toggle | Full text in both scripts |
-| Copy verses into other programs | ✅ clipboard | One-click copy of the current passage |
-| Simple drawing | ✅ simple brush annotation | Draw / erase / undo in projection mode |
-| — (new) | ✅ verses per page | 1..n verses per page |
+| Speech narration, accurate to the verse; continuous reading; playback bar | ❌ not implemented | The **no-speech edition contains no narration**, so this project implements none either |
+| Speech-synced highlighting (LRC style) and `+` / `-` playback speed | ❌ not implemented | Same reason: no speech, no LRC sync |
+| Pick verses via TOC, list box, letter input | ✅ TOC + list + letter bar | 66 books in 8 categories; the quick-pick bar takes letters for a book (`CSJ`), digits for a chapter (`CSJ34`), `CSJ4:14` for a verse, `CSJ4Z` / `CSJ4:14Z` for a whole chapter or chapter-to-end, auto-inserts separators on space, deletes with Backspace and cancels with `Esc` (needs an English IME) |
+| Show several passages at once (multi-window) | ⚠️ partial | Up to 4 passages side by side in one window (`Ctrl` + `1`…`4` switches the active group); no separate multi-window display |
+| Background / font / size / color / shadow / line spacing | ✅ display settings | Font, size, line spacing, text color, background color, background image (local path, browse dialog, clear), italic, underline, verse references |
+| Text shadow | ✅ text shadow | Shadow colour, blur radius and offset are adjustable |
+| Independent title font / title colour / verse-number colour / padding | ✅ independent typography settings | Title font and title colour can be set on their own (empty = follow the body text), the verse-number colour can be set on its own (empty = follow the theme accent colour), and the padding can be 0–120 px on all four sides (the background image still fills the screen) |
+| Remember and save visited passages | ✅ history | Up to 200 entries; nothing is written on startup, every verse in a multi-verse run is recorded, entries carry the verse text, clearable |
+| Floating panel / slideshow / quick controls | ✅ floating panel + auto-advance | A dedicated `float.html` window with 5 tabs (passage, search, format, New Testament, Old Testament — the last two list all 27 / 39 books and jump to chapter 1 on click), revealed by hovering the left edge, with a master switch in the top bar; the slideshow auto-advances on the configured interval |
+| Wireless remote control | ⚠️ partial | No dedicated remote support, but the keyboard media keys (previous / next track) work as a page-turner |
+| Multi-keyword text search | ✅ multi-keyword search | "Match all" and "Match any" modes; hits are highlighted, results are paged with a "showing N / M" hint and the keywords are kept |
+| Traditional and Simplified Chinese | ✅ toggle | Full text in both scripts; book names and category names are fully localised to the selected script |
+| Copy verses into other programs | ✅ clipboard | Whole chapter, per-verse or per-verse-per-line, plus chapter title only |
+| Simple drawing | ✅ brush annotation | Freehand, rectangle, circle, line and text notes (double-click to type), with eraser, undo and redo; strokes are saved per `book:chapter` into `userData/annotations.json` |
+| Bookmarks | ✅ my bookmarks | `Ctrl` + `S` bookmarks the current verse, up to 500 entries |
+| Continuous display across chapters / verse ranges | ✅ ranges | Verses can be shown continuously across chapter boundaries or as an explicit range |
+| Projection / slideshow mode | ✅ projection mode | `F5` enters and leaves, `F6` leaves projection, `F11` is the system fullscreen; drawer panels no longer interrupt projection, text is not clipped and `Esc` leaves projection in one step |
+| Original window shapes: transparent window (`F7`), desktop extension (`F9`) | ❌ not implemented in this version | Both need extra main-process `BrowserWindow` capabilities that this version does not implement; `F5` for projection and `F11` for native fullscreen cover the common cases |
+| Original `Ctrl` + `0`…`4` "hide all comparison panes" | ⚠️ deliberate deviation | Replaced by `Ctrl` + `1`…`4` to switch the active comparison group and `Ctrl` + `0` to reset the font size (see [docs/feature-audit.md](docs/feature-audit.md)) |
+| — (new) | ✅ verses per page | 1..20 verses per page, `Shift` + `>` / `<` adjusts |
+| — (new) | ✅ multi-column comparison | Up to 4 passages compared side by side, added with the "+ pane" button |
+| — (new) | ✅ background music | Optional looping local audio with a volume control (unrelated to narration) |
+| — (new) | ✅ context menu on the passage area | Copy ▸ three variants, fullscreen / stop slideshow / hide verses |
+| — (new) | ✅ click-to-advance in projection | Clicking the projected text advances one verse; can be switched off in the settings |
+| — (new) | ✅ remote-style navigation | Jump to a chapter by number, media keys, space to advance |
 | — (new) | ✅ dark / light theme | Driven by display settings |
 | — (new) | ✅ fully offline | No network requests; works disconnected |
 
@@ -157,7 +169,7 @@ for the field mapping and the exact extraction steps.
 ```
 bible-projection/
 ├── data/                   # bible-simplified.json / bible-traditional.json
-├── docs/                   # architecture.md, data.md, images/
+├── docs/                   # architecture.md, data.md, feature-audit.md, images/
 ├── src/
 │   ├── main/               # main process: window, IPC, clipboard, persistence
 │   │   ├── main.js
@@ -165,6 +177,9 @@ bible-projection/
 │   │   └── store.js        # JSON persistence
 │   ├── preload/preload.js  # contextBridge security bridge
 │   ├── renderer/           # UI (plain JS, no framework, no build step)
+│   │   ├── index.html      # main window
+│   │   ├── float.html      # floating control panel (second window)
+│   │   └── js/             # ES module renderer code
 │   └── shared/books.js     # 66 books and 8 categories metadata
 ├── test/                   # node --test unit tests
 ├── tools/extract-mdb.ps1   # reproducible extractor for the verse data
@@ -177,24 +192,21 @@ bible-projection/
 
 ## Keyboard shortcuts
 
-### Global
+The table below matches the in-app help panel (**Help** → shortcuts) and is grouped by feature.
 
-| Shortcut | Action |
+### Picking and locating passages
+
+| Shortcut / input | Action |
 | --- | --- |
-| `Ctrl` + `F` | Open the search panel (multiple keywords, space separated, `Enter` runs the search) |
-| `Ctrl` + `H` | Open the "recently read" panel |
-| `Ctrl` + `S` / `Ctrl` + `B` | Bookmark the current verse (both keys work) |
-| `Ctrl` + `,` | Open the settings panel |
-| `Ctrl` + `C` | Copy the text selection, or the whole current chapter (with book name and verse numbers) |
-| `Ctrl` + `=` / `Ctrl` + `+` | Font size +2 |
-| `Ctrl` + `-` | Font size -2 |
-| `Ctrl` + `0` / `Ctrl` + `/` | Reset font size to the default 48 |
-| `F5` / `F11` | Enter / leave projection mode |
-| `Esc` | In order: close the open panel → leave drawing mode → leave projection mode |
+| Letter abbreviation | Jump to a book, e.g. `CSJ` / `CAJ` / `LWJ` |
+| Letters + digits | Locate a chapter, e.g. `CSJ4` or `CSJ 4` |
+| `CSJ4:14` | Locate chapter 4, verse 14 |
+| `CSJ4Z` / `CSJ4:14Z` | Whole chapter / from that verse to the end of the chapter |
+| Digits | Chapter N of the current book |
+| Space | Inserts a separator while typing; with an empty input it means "next verse" |
+| `Enter` / `Backspace` / `Esc` | Jump / delete / cancel (needs the English input method) |
 
-### Passage navigation
-
-Available in both normal and projection mode.
+### Paging and display
 
 | Shortcut | Action |
 | --- | --- |
@@ -204,34 +216,95 @@ Available in both normal and projection mode.
 | `Home` / `End` | First / last verse of the chapter |
 | `Ctrl` + `←` / `→` | Previous / next book |
 | `Ctrl` + `PageUp` / `PageDown` | Previous / next chapter |
+| `Shift` + `>` / `<` | Verses per page +1 / -1 |
+| `Ctrl` + `1`…`4` | Switch the active column-comparison group |
+| `F5` | Enter / leave projection mode (fullscreen) |
+| `F6` | Leave projection mode |
+| `F11` | System fullscreen (the projection look follows automatically) |
+| `Esc` | Close panel / leave drawing / leave projection |
 
 > `PageUp` / `PageDown` page by the *verses per page* setting, not by whole chapters.
-> The setting is adjustable in the settings panel. Use `Ctrl` + `PageUp` / `PageDown` to jump chapters.
+> Use `Ctrl` + `PageUp` / `PageDown` to jump chapters.
 
-### Projection-mode drawing
+### Text and copying
+
+| Shortcut / action | Action |
+| --- | --- |
+| `Ctrl` + `C` | Copy the current chapter (or the text selection) |
+| `Ctrl` + `Shift` + `C` | Copy the current verse only |
+| `Alt` + `C` | Copy the chapter title only |
+| Right-click | Copy ▸ copy text / copy text (per verse) / copy text (per verse, one per line) |
+| Right-click | Fullscreen / stop slideshow / hide verses |
+| `Ctrl` + `=` / `Ctrl` + `-` | Increase / decrease font size |
+| `Ctrl` + `0` / `Ctrl` + `/` | Reset the font size |
+| `Ctrl` + `D` | Cycle the passage font |
+| `Ctrl` + `T` | Show / hide verse references |
+| Top bar "简 / 繁" | Switch between Simplified and Traditional text |
+
+### Search and bookmarks
+
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl` + `F` / `F3` | Open the search panel (multiple keywords, space separated, `Enter` runs the search) |
+| `Ctrl` + `H` / `F4` | Open the "recently read" panel |
+| `Ctrl` + `S` | Bookmark the current verse |
+| `Ctrl` + `,` | Open the settings panel |
+
+### Drawing and annotation (inside projection mode)
 
 | Shortcut / gesture | Action |
 | --- | --- |
-| `D` / `P` | Toggle drawing mode |
-| Left-drag | Draw (width and colour are adjustable in the projection-mode toolbar) |
-| `Ctrl` + left-drag | Erase |
+| `Ctrl` + `B` / `Ctrl` + `P` / `D` | Toggle the canvas (drawing mode) |
+| Left-drag | Freehand line |
+| `Shift` + drag | Rectangle |
+| `Ctrl` + drag | Circle |
+| `Alt` + drag | Straight line segment |
+| `E` | Toggle the eraser |
+| `1`…`6` | Brush width |
+| `W` / `G` / `L` / `B` / `Y` / `R` | Brush colour |
+| Double-click the canvas | Add a text note (HeiTi 30pt · yellow background, dark red text, up to 30 characters) |
 | `Z` / `Ctrl` + `Z` | Undo the last stroke |
 | `Ctrl` + `Shift` + `Z` | Redo |
-| `X` / `Ctrl` + `Shift` + `Delete` | Clear all annotations on the current page |
+| `Ctrl` + `E` / `X` | Clear the annotations of the current chapter |
 
-### Mouse
+> **Single-letter keys only work in projection / drawing mode**: `E`, `1`…`6`,
+> `W` / `G` / `L` / `B` / `Y` / `R`, `Z`, `X` and `D` are taken by the letter quick-pick bar in normal
+> mode (the original also prioritises letter input). Use `Ctrl` + `B` or `Ctrl` + `P` to toggle the
+> canvas in normal mode.
 
-| Gesture | Action |
+### Projection and remote control
+
+| Action | Action |
 | --- | --- |
-| Wheel (normal mode) | Scroll the passage area |
-| Wheel (projection mode) | Next verse |
-| 3 s without mouse movement (projection mode) | The pointer hides itself |
+| Media keys (previous / next track) | Previous / next verse |
+| Click the stage while projecting | Next verse (can be switched off in the settings) |
+| Double-click the stage | Open "recently read" (normal mode) |
+| Triple-click the stage | Clear screen: hide the verses, keep the background |
+| Auto-advance | Turns the page automatically at the configured interval |
+| Floating control panel | Hover the left edge of the stage or use the top-bar button |
+
+### Original audio features (not applicable to the no-speech edition)
+
+The original `Insert` / `Delete` narration control, `Ctrl` + `Enter` / `Ctrl` + `End` narration
+positioning, `+` / `-` playback speed, the playback bar and LRC lyric sync **do not exist in the
+no-speech edition** and are not provided here either.
 
 ### UI notes
 
-- The top bar provides every action above: Simplified / Traditional toggle, search, history, bookmarks,
-  settings, projection mode and help.
+- The top bar provides every action above: Simplified / Traditional toggle, search, history,
+  bookmarks, settings, projection mode, floating panel and help.
 - With the "show references" option enabled, each verse is followed by its reference (e.g. "John 3:16").
+- The wheel scrolls the passage area in normal mode; while projecting the wheel turns to the next verse,
+  and the pointer hides itself after 3 s without mouse movement.
+
+### Differences from the original key bindings
+
+| Key | Original | This project |
+| --- | --- | --- |
+| `Ctrl` + `S` | Change the font | Bookmark the current verse |
+| `Ctrl` + `←` / `→` | Switch between remembered passages | Previous / next book |
+| `Ctrl` + `B` | Bookmark | Toggle the canvas (drawing mode) |
+| `Ctrl` + `0` | Hide all comparison columns | Reset the font size |
 
 ---
 
@@ -242,8 +315,15 @@ Available in both normal and projection mode.
   need extra electron-builder targets or running from source.
 - **Verse text is inherited from the original program's database** and has not been proofread verse-by-verse
   against a modern published electronic CUV; some characters and punctuation may differ.
-- **No multi-window display** of several passages at once (the original has it); single window plus projection mode.
-- **No wireless remote control** and no floating control panel.
+- **No multi-window display** of several passages at once (the original has it); a single window with
+  up to 4 compared passages plus one floating control panel.
+- **No hardware support for a wireless remote**, but the keyboard media keys (previous / next track)
+  can be used as a page-turner.
+- **The original transparent window (`F7`) and desktop extension (`F9`) are not implemented**: both rely on
+  extra main-process `BrowserWindow` capabilities this version does not have; use `F5` for projection and
+  `F11` for the native system fullscreen.
+- **The original `Ctrl` + `0`…`4` "hide all comparison panes" semantics were replaced**: `Ctrl` + `1`…`4`
+  now switches the active comparison group and `Ctrl` + `0` resets the font size.
 - Switching script re-fetches the text for the current version; history and bookmarks are keyed by
   `book:chapter:verse`, so they carry across both scripts.
 

@@ -5,10 +5,20 @@ import { state } from './state.js';
 import { T } from './i18n.js';
 import { toast } from './toast.js';
 import { openPanel, closePanel, isPanelOpen } from './panels.js';
-import { copyCurrent, moveBook, moveChapter, moveVerse, goChapterEdge, saveCurrent } from './stage.js';
+import {
+  copyCurrent,
+  copyCurrentVerse,
+  copyTitleOnly,
+  moveBook,
+  moveChapter,
+  moveVerse,
+  goChapterEdge,
+  saveCurrent,
+} from './stage.js';
 import { toggleProjection, exitProjection } from './projection.js';
-import { clearDraw, isDrawing, redoDraw, toggleDraw, undoDraw } from './draw.js';
-import { pushSettings } from './settings.js';
+import { clearDraw, isDrawing, redoDraw, toggleDraw, toggleEraser, undoDraw } from './draw.js';
+import { pushSettings, cycleFont } from './settings.js';
+import { switchColumnByNumber } from './columns.js';
 import { ipc } from './bridge.js';
 
 const FONT_STEP = 2;
@@ -23,7 +33,6 @@ export function initShortcuts() {
   // 主进程可选通道：拦截浏览器级默认（F5 重载、Ctrl+S 保存框）后转发给渲染层。
   ipc.onShortcut((payload) => {
     if (!payload || typeof payload.key !== 'string') return;
-    // 与 DOM 通道保持一致：焦点在输入控件里时不触发全局快捷键
     if (isTypingTarget(document.activeElement)) return;
     const key = payload.key;
     const ctrl = !!(payload.control || payload.meta);
@@ -44,7 +53,14 @@ function isDuplicate(key, ctrl, shift) {
 }
 
 function onKeyDown(event) {
+  // Esc 在输入框内也要能关掉抽屉（投影模式除外：那里 Esc 用于退出投影）
+  if (event.key === 'Escape' && !state.projection && isPanelOpen()) {
+    closePanel();
+    event.preventDefault();
+    return;
+  }
   if (isTypingTarget(event.target)) return;
+
   const key = event.key;
   const ctrl = event.ctrlKey || event.metaKey;
   const shift = event.shiftKey;
@@ -56,22 +72,47 @@ function onKeyDown(event) {
 function runShortcut(key, mods) {
   const ctrl = !!mods.ctrl;
   const shift = !!mods.shift;
+  const alt = !!mods.alt;
   lastHandled = { key, ctrl, shift, at: Date.now() };
 
   // ── 组合键（无 Shift）────────────────────────────────────────
   if (ctrl && !shift) {
     switch (key.toLowerCase()) {
       case 'f':
+        if (state.projection) return true;      // 投影模式不打开抽屉
         openPanel('search');
         return true;
       case 'h':
+        if (state.projection) return true;
         openPanel('history');
         return true;
       case 's':
-      case 'b':
         saveCurrent();
         return true;
+      case 'b':
+        // 原版 Ctrl+B = 画笔开关（feature-check 6.3 取舍）；收藏改用 Ctrl+S。
+        if (!state.projection) toggleProjection();
+        toggleDraw();
+        return true;
+      case 'p':
+        if (!state.projection) toggleProjection();
+        toggleDraw();
+        return true;
+      case 'e':
+        if (!isDrawing()) return false;
+        clearDraw();
+        return true;
+      case 't': {
+        const next = !state.settings.showNotes;
+        pushSettings({ showNotes: next });
+        toast(next ? T.toast.notesOn : T.toast.notesOff, 'ok', 1400);
+        return true;
+      }
+      case 'd':
+        cycleFont();
+        return true;
       case ',':
+        if (state.projection) return true;
         openPanel('settings');
         return true;
       case 'c':
@@ -90,8 +131,11 @@ function runShortcut(key, mods) {
         setFontSize(DEFAULT_FONT_SIZE);
         return true;
       case 'z':
-        if (isDrawing()) undoDraw();
-        return true;
+        if (isDrawing()) {
+          undoDraw();
+          return true;
+        }
+        return false;                            // 非绘画状态不吞键
       case 'arrowleft':
         moveBook(-1);
         return true;
@@ -104,6 +148,12 @@ function runShortcut(key, mods) {
       case 'pagedown':
         moveChapter(1);
         return true;
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+        if (switchColumnByNumber(Number(key))) return true;
+        return false;
       default:
         break;
     }
@@ -111,32 +161,77 @@ function runShortcut(key, mods) {
 
   if (ctrl && shift) {
     const lower = key.toLowerCase();
-    if (lower === 'z') {
-      if (isDrawing()) redoDraw();
+    if (lower === 'c') {
+      copyCurrentVerse();
       return true;
     }
-    if (key === 'Delete') {
-      if (isDrawing()) clearDraw();
+    if (lower === 'z') {
+      if (isDrawing()) {
+        redoDraw();
+        return true;
+      }
+      return false;
+    }
+    if (key === 'Delete' || key === 'Backspace') {
+      if (isDrawing()) {
+        clearDraw();
+        return true;
+      }
+      return false;
+    }
+  }
+
+  // ── Alt 组合：原版 Alt+C = 复制章节（仅标题）─────────────────
+  if (alt && !ctrl && !shift) {
+    if (key.toLowerCase() === 'c') {
+      copyTitleOnly();
+      return true;
+    }
+  }
+
+  // ── Shift 组合：微调每页显示节数 ───────────────────────────
+  if (shift && !ctrl) {
+    if (key === '>' || key === '.' || key === '。') {
+      changeVersesPerPage(1);
+      return true;
+    }
+    if (key === '<' || key === ',' || key === '，') {
+      changeVersesPerPage(-1);
       return true;
     }
   }
 
   // ── 单键 ────────────────────────────────────────────────────
   switch (key) {
+    case 'F3':
+      if (!state.projection) openPanel('search');
+      return true;
+    case 'F4':
+      if (!state.projection) openPanel('history');
+      return true;
     case 'F5':
       toggleProjection();
+      return true;
+    case 'F6':
+      // 原版：F6 = 退出 / 隐藏窗口（feature-check 6.3 取舍：F5 进、F6 出）
+      if (!state.projection) return false;
+      exitProjection();
       return true;
     case 'F11':
       // 系统 F11 走原生全屏，主进程广播 fullscreen-changed 同步投影外观，
       // 此处不重复切换，避免与原生全屏互相打架。
       return false;
     case 'Escape':
+      // 投影模式：Esc 一次即退出投影（不先关看不见的抽屉）
+      if (state.projection) {
+        if (isDrawing()) toggleDraw();
+        else exitProjection();
+        return true;
+      }
       if (isPanelOpen()) {
         closePanel();
       } else if (isDrawing()) {
         toggleDraw();
-      } else if (state.projection) {
-        exitProjection();
       }
       return true;
     case 'ArrowLeft':
@@ -161,6 +256,16 @@ function runShortcut(key, mods) {
       return true;
     case 'End':
       goChapterEdge('last');
+      return true;
+    case 'AudioNext':
+    case 'MediaTrackNext':
+    case 'MediaNextTrack':
+      moveVerse(1);
+      return true;
+    case 'AudioPrev':
+    case 'MediaTrackPrevious':
+    case 'MediaPreviousTrack':
+      moveVerse(-1);
       return true;
     case 'Delete':
       if (shift && isDrawing()) {
@@ -187,6 +292,10 @@ function runShortcut(key, mods) {
     clearDraw();
     return true;
   }
+  if (lower === 'e' && isDrawing()) {
+    toggleEraser();
+    return true;
+  }
   return false;
 }
 
@@ -199,4 +308,12 @@ async function setFontSize(size) {
   const value = Math.max(12, Math.min(160, Math.round(size)));
   await pushSettings({ fontSize: value });
   toast(T.toast.fontSize(value), 'ok', 1400);
+}
+
+/** Shift + > / < ：微调每页显示节数。 */
+async function changeVersesPerPage(delta) {
+  const next = Math.max(1, Math.min(20, Number(state.settings.versesPerPage || 1) + delta));
+  if (next === state.settings.versesPerPage) return;
+  await pushSettings({ versesPerPage: next });
+  toast(T.toast.versesPerPage(next), 'ok', 1400);
 }

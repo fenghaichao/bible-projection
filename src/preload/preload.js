@@ -27,6 +27,18 @@ const bible = {
   openExternal: (url) => ipcRenderer.invoke('bible:openExternal', url),
   appVersion: () => ipcRenderer.invoke('bible:appVersion'),
 
+  // 文件选择
+  pickImage: () => ipcRenderer.invoke('bible:pickImage'),
+  pickAudio: () => ipcRenderer.invoke('bible:pickAudio'),
+
+  // 画笔标注持久化（按 书卷:章）
+  getAnnotations: (key) => ipcRenderer.invoke('bible:getAnnotations', key),
+  saveAnnotations: (key, strokes) => ipcRenderer.invoke('bible:saveAnnotations', key, strokes),
+
+  // 浮动控制面板
+  toggleFloatPanel: (visible) => ipcRenderer.invoke('bible:toggleFloatPanel', visible),
+  sendFloatState: (payload) => ipcRenderer.invoke('bible:floatState', payload),
+
   /** 订阅设置变化，返回取消订阅函数 */
   onSettingsChanged: (callback) => {
     const listener = (_event, settings) => callback(settings);
@@ -49,6 +61,32 @@ const bible = {
     const listener = (_event, payload) => callback(payload);
     ipcRenderer.on('bible:shortcut', listener);
     return () => ipcRenderer.removeListener('bible:shortcut', listener);
+  },
+
+  /**
+   * 订阅浮动控制面板的指令（面板按钮 → 主窗口）。
+   * 返回取消订阅函数。
+   */
+  onFloatCommand: (callback) => {
+    const listener = (_event, payload) => callback(payload || {});
+    ipcRenderer.on('bible:float-command', listener);
+    return () => ipcRenderer.removeListener('bible:float-command', listener);
+  },
+
+  /**
+   * 面板 → 主窗口：发送控制指令（上一节 / 下一节 / 退出投影 / 关闭面板…）。
+   * 浮动面板自身调用此方法即可驱动主窗口。
+   */
+  sendFloatCommand: (payload) => ipcRenderer.invoke('bible:floatCommand', payload || {}),
+
+  /**
+   * 订阅主进程推送给浮动面板的状态（当前书卷章节、投影开关等）。
+   * 返回取消订阅函数。
+   */
+  onFloatState: (callback) => {
+    const listener = (_event, payload) => callback(payload || {});
+    ipcRenderer.on('bible:float-state', listener);
+    return () => ipcRenderer.removeListener('bible:float-state', listener);
   },
 };
 

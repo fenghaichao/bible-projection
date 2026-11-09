@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, clipboard, shell, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard, shell, Menu, dialog } = require('electron');
 const path = require('path');
 const { JsonStore } = require('./store');
 const bible = require('./bible');
@@ -18,18 +18,39 @@ const DEFAULT_SETTINGS = {
   versesPerPage: 1,
   traditional: false,
   theme: 'dark',
+  // 文字阴影（原版功能 5）
+  textShadow: false,
+  shadowColor: '#000000',
+  shadowBlur: 10,
+  shadowOffset: 2,
+  // 背景音乐（无声版无语音，但可放背景音乐）
+  bgmPath: '',
+  bgmVolume: 50,
+  // 幻灯放映：每 N 秒自动翻一节，0 = 关闭
+  slideshowInterval: 0,
+  // 浮动控制面板
+  floatPanel: false,
+  // 标题/节号/缩进（与渲染层 state.js 字段名保持一致）
+  titleFontFamily: '',
+  titleColor: '',
+  verseNumberColor: '',
+  padding: 0,
 };
 
 let mainWindow = null;
+let floatWindow = null;
 let settingsStore = null;
 let historyStore = null;
 let savedStore = null;
+let annotationsStore = null;
 
 function createStores() {
   const dir = app.getPath('userData');
   settingsStore = new JsonStore(path.join(dir, 'settings.json'), DEFAULT_SETTINGS);
   historyStore = new JsonStore(path.join(dir, 'history.json'), { items: [] });
   savedStore = new JsonStore(path.join(dir, 'saved.json'), { items: [] });
+  // 画笔标注：按 "书卷:章" 存放笔迹，重启后可恢复
+  annotationsStore = new JsonStore(path.join(dir, 'annotations.json'), { items: {} });
 }
 
 function currentVersion() {
@@ -75,18 +96,28 @@ function createWindow() {
   // F5 在 Electron 里默认是「重新加载窗口」的原生菜单快捷键，
   // 渲染层的 preventDefault 拦不住它，会导致投影模式被重载掉。
   // 这里在按键到达页面之前拦下 F5，转发给渲染层处理（切换投影模式）。
+  // 同理拦下 Ctrl+R / Ctrl+Shift+R：投影或标注进行中重载窗口会丢失状态。
   mainWindow.webContents.on('before-input-event', (event, input) => {
     if (input.type !== 'keyDown') return;
-    if (input.key !== 'F5') return;
-    event.preventDefault();
-    mainWindow.webContents.send('bible:shortcut', {
-      key: 'F5',
-      code: input.code || 'F5',
-      control: false,
-      meta: false,
-      shift: false,
-      alt: false,
-    });
+    const key = input.key || '';
+
+    if (key === 'F5') {
+      event.preventDefault();
+      mainWindow.webContents.send('bible:shortcut', {
+        key: 'F5',
+        code: input.code || 'F5',
+        control: false,
+        meta: false,
+        shift: false,
+        alt: false,
+      });
+      return;
+    }
+
+    // Ctrl+R / Ctrl+Shift+R：禁止重载（菜单里「重新加载」仍可手动点击）
+    if ((key === 'r' || key === 'R') && (input.control || input.meta)) {
+      event.preventDefault();
+    }
   });
 
   // 外部链接交给系统浏览器
@@ -94,6 +125,62 @@ function createWindow() {
     shell.openExternal(url);
     return { action: 'deny' };
   });
+
+  // 开发模式：electron . --dev 时自动打开开发者工具
+  if (process.argv.includes('--dev')) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
+}
+
+/**
+ * 浮动控制面板：投影时浮在屏幕上方的小控制条（原版功能 7「浮动面板控制」）。
+ * 与主窗口通过 IPC 双向通信：
+ *   主窗口 → 面板：'bible:float-state'
+ *   面板 → 主窗口：'bible:float-command'
+ */
+function createFloatWindow() {
+  if (floatWindow && !floatWindow.isDestroyed()) {
+    floatWindow.show();
+    floatWindow.focus();
+    return floatWindow;
+  }
+
+  floatWindow = new BrowserWindow({
+    width: 260,
+    height: 96,
+    frame: false,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    transparent: true,
+    backgroundColor: '#00000000',
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, '..', 'preload', 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+    },
+  });
+
+  floatWindow.loadFile(path.join(__dirname, '..', 'renderer', 'float.html'));
+  floatWindow.once('ready-to-show', () => floatWindow.show());
+  floatWindow.on('closed', () => {
+    floatWindow = null;
+    if (settingsStore) settingsStore.set({ floatPanel: false });
+  });
+
+  // 面板上的按钮 → 转发给主窗口
+  return floatWindow;
+}
+
+function sendToFloat(channel, payload) {
+  if (floatWindow && !floatWindow.isDestroyed()) {
+    floatWindow.webContents.send(channel, payload);
+  }
 }
 
 function buildMenu() {
@@ -105,13 +192,15 @@ function buildMenu() {
     {
       label: '视图',
       submenu: [
-        // 显式改绑到 Ctrl+R：F5 要留给应用切换投影模式（见 createWindow 的 before-input-event）
-        { role: 'reload', label: '重新加载', accelerator: 'CmdOrCtrl+R' },
+        // 重新加载不占用快捷键：Ctrl+R 会重载窗口、丢失投影/标注状态
+        // （主进程 before-input-event 也会拦截 Ctrl+R 兜底）
+        { role: 'reload', label: '重新加载', accelerator: '' },
         { role: 'toggleDevTools', label: '开发者工具' },
         { type: 'separator' },
-        { role: 'resetZoom', label: '实际大小' },
-        { role: 'zoomIn', label: '放大' },
-        { role: 'zoomOut', label: '缩小' },
+        // 缩放三项不占用快捷键：Ctrl+0 / Ctrl+= / Ctrl+- 留给渲染层的字号调节
+        { role: 'resetZoom', label: '实际大小', accelerator: '' },
+        { role: 'zoomIn', label: '放大', accelerator: '' },
+        { role: 'zoomOut', label: '缩小', accelerator: '' },
         { role: 'togglefullscreen', label: '全屏' },
       ],
     },
@@ -226,6 +315,68 @@ function registerIpc() {
   });
 
   ipcMain.handle('bible:appVersion', () => app.getVersion());
+
+  // ---- 文件选择（背景图 / 背景音乐） ----
+  ipcMain.handle('bible:pickImage', async () => {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: '选择背景图',
+      properties: ['openFile'],
+      filters: [{ name: '图片', extensions: ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'webp'] }],
+    });
+    return res.canceled || !res.filePaths.length ? null : res.filePaths[0];
+  });
+
+  ipcMain.handle('bible:pickAudio', async () => {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: '选择背景音乐',
+      properties: ['openFile'],
+      filters: [{ name: '音频', extensions: ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'aac'] }],
+    });
+    return res.canceled || !res.filePaths.length ? null : res.filePaths[0];
+  });
+
+  // ---- 画笔标注持久化（按 书卷:章 保存笔迹） ----
+  ipcMain.handle('bible:getAnnotations', (_e, key) => {
+    const items = annotationsStore.get().items || {};
+    const strokes = items[String(key || '')];
+    return Array.isArray(strokes) ? strokes : [];
+  });
+
+  ipcMain.handle('bible:saveAnnotations', (_e, key, strokes) => {
+    const store = annotationsStore.get();
+    const items = store.items || {};
+    const k = String(key || '');
+    if (!k) return null;
+    if (!strokes || !Array.isArray(strokes) || !strokes.length) delete items[k];
+    else items[k] = strokes;
+    annotationsStore.set({ items });
+    return Array.isArray(items[k]) ? items[k] : [];
+  });
+
+  // ---- 浮动控制面板 ----
+  ipcMain.handle('bible:toggleFloatPanel', (_e, visible) => {
+    if (visible === false) {
+      if (floatWindow && !floatWindow.isDestroyed()) floatWindow.close();
+      return false;
+    }
+    createFloatWindow();
+    settingsStore.set({ floatPanel: true });
+    return true;
+  });
+
+  // 主窗口 → 面板
+  ipcMain.handle('bible:floatState', (_e, payload) => {
+    sendToFloat('bible:float-state', payload || {});
+    return true;
+  });
+
+  // 面板 → 主窗口
+  ipcMain.handle('bible:floatCommand', (_e, payload) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('bible:float-command', payload || {});
+    }
+    return true;
+  });
 }
 
 app.whenReady().then(() => {

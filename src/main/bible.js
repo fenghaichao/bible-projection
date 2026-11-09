@@ -112,12 +112,15 @@ function search({ keywords = [], mode = 'all', limit = 500 } = {}, version = 'si
     const matched = terms.filter((t) => text.includes(t)).length;
     if (mode === 'any' ? matched > 0 : matched === terms.length) {
       const [b, c, v] = key.split(':');
+      const book = getBook(Number(b)) || {};
       hits.push({
         bookId: Number(b),
         chapter: Number(c),
         verse: Number(v),
         text,
-        bookName: (getBook(Number(b)) || {}).name || `第${b}卷`,
+        bookName: (version === 'traditional' ? book.nameTraditional : book.name) || `第${b}卷`,
+        bookNameTraditional: book.nameTraditional || book.name || `第${b}卷`,
+        categoryName: (version === 'traditional' ? book.categoryNameTraditional : book.categoryName) || '',
       });
       if (hits.length >= limit) break;
     }

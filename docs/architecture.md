@@ -14,7 +14,7 @@
 │ 主进程  src/main/                                        │
 │   main.js    窗口创建、菜单、IPC 注册、剪贴板、外部链接     │
 │   bible.js   经文数据访问层（读 JSON、查章、查范围、查找）  │
-│   store.js   极简 JSON 持久化（设置 / 历史 / 收藏）          │
+│   store.js   极简 JSON 持久化（设置 / 历史 / 收藏 / 标注）  │
 └───────────────┬──────────────────────────────────────────┘
                 │  ipcMain.handle  /  ipcMain.send
 ┌───────────────▼──────────────────────────────────────────┐
@@ -27,8 +27,13 @@
 │ 渲染进程  src/renderer/                                   │
 │   index.html + 渲染层 JS/CSS                              │
 │   经文显示、卷章导航、查找、设置、历史、收藏、投影模式        │
+│   float.html  浮动控制面板（独立无边框置顶小窗）            │
 └──────────────────────────────────────────────────────────┘
 ```
+
+> 应用一共会创建**两个窗口**：主窗口 `index.html` 与投影时浮在屏幕上方的小控制条
+> `float.html`（`frameless` / `alwaysOnTop` / `transparent` / `skipTaskbar`）。
+> 两者共用同一个 preload 与同一个 `window.bible` 桥，靠 IPC 互相驱动（见 §2）。
 
 ### 职责划分
 
@@ -78,18 +83,27 @@ mainWindow.once('ready-to-show', () => mainWindow.show());
 src/renderer/
 ├── index.html      页面骨架
 ├── styles.css      全部样式
+├── float.html      浮动控制面板的页面骨架
+├── float.css       浮动控制面板的样式
 └── js/             ES module（<script type="module"> 引入）
     ├── app.js         应用装配：把各模块装配起来
     ├── bridge.js      唯一的主进程访问入口（window.bible 的包装）
     ├── state.js       渲染层状态与设置归一化（mergeSettings）
-    ├── shortcuts.js   全局快捷键处理（DOM keydown）
+    ├── shortcuts.js   全局快捷键处理（DOM keydown + IPC 通道）
     ├── sidebar.js     侧栏书目 / 章列表
-    ├── stage.js       经文显示、翻节、复制当前章
+    ├── stage.js       经文显示、翻节、复制当前章 / 当前节 / 章节标题
     ├── panels.js      抽屉面板的开关调度
     ├── panel-search.js / panel-library.js / panel-help.js   各面板
     ├── settings.js    显示设置的读写
     ├── projection.js  投影模式
-    ├── draw.js        画笔 / 擦除 / 撤销 / 重做
+    ├── draw.js        画笔 / 擦除 / 撤销 / 重做 / 文字标注
+    ├── columns.js     多栏对照（最多 4 组经文）
+    ├── letterbar.js   字母 + 数字速选定位（CSJ4:14 一类输入）
+    ├── contextmenu.js 显示区右键菜单（复制 ▸ 三种 / 全屏 / 停止播放 / 不显示经文）
+    ├── slideshow.js   投影模式自动翻页（幻灯放映）
+    ├── bgm.js         背景音乐播放
+    ├── highlight.js   查找结果高亮
+    ├── float.js / floatlink.js   浮动控制面板及其与主窗口的联动
     ├── i18n.js        文案表（含帮助面板的快捷键表）
     ├── util.js        通用小工具
     └── toast.js       轻提示
@@ -116,7 +130,8 @@ src/renderer/
 ## 2. IPC 契约
 
 所有通道名统一使用 `bible:` 前缀，均为 **request / response** 语义（`ipcRenderer.invoke`）。
-推送通道只有两条：`settings-changed` 与 `fullscreen-changed`（主进程 → 渲染进程）。
+除 `settings-changed` 与 `fullscreen-changed` 外，浮动控制面板还使用 `bible:float-state` 与
+`bible:float-command` 两条推送通道（主进程 ↔ 面板），详见 §6。
 
 ### 经文数据
 
@@ -164,6 +179,22 @@ type SearchHit = Verse & { bookName: string };
 | `versesPerPage` | `number` | `1` | 每页节数 |
 | `traditional` | `boolean` | `false` | 是否繁体（`true` = 繁体） |
 | `theme` | `'dark' \| 'light'` | `dark` | 深 / 浅主题 |
+| `textShadow` | `boolean` | `false` | 是否启用文字阴影 |
+| `shadowColor` | `string` | `#000000` | 阴影颜色 |
+| `shadowBlur` | `number` | `10` | 阴影模糊半径 |
+| `shadowOffset` | `number` | `2` | 阴影偏移量 |
+| `bgmPath` | `string` | `''` | 背景音乐文件路径（空字符串表示不播放） |
+| `bgmVolume` | `number` | `50` | 背景音乐音量（0–100） |
+| `slideshowInterval` | `number` | `0` | 幻灯放映间隔（秒），`0` 表示关闭 |
+| `floatPanel` | `boolean` | `false` | 浮动控制面板是否常驻 |
+| `titleFontFamily` | `string` | `''` | 标题字体（空字符串 = 跟随 `fontFamily`） |
+| `titleColor` | `string` | `''` | 标题颜色（空字符串 = 跟随 `textColor`） |
+| `verseNumberColor` | `string` | `''` | 节号颜色（空字符串 = 跟随主题强调色） |
+| `padding` | `number` | `0` | 经文区四边缩进（px，0–120，背景图仍满屏） |
+
+> 这四个字段已由主进程预留，并由渲染层设置面板接入、实际生效（见
+> [docs/feature-audit.md](feature-audit.md)）。渲染层把它们映射为 CSS 变量
+> `--title-font` / `--title-color` / `--verse-no-color` / `--stage-pad`。
 
 > `traditional` 同时决定经文取数版本：`false` → `simplified`，`true` → `traditional`。
 > 取数版本由主进程根据当前设置解析，渲染层不需要在每个请求里重复传参。
@@ -192,6 +223,12 @@ type SearchHit = Verse & { bookName: string };
 }
 ```
 
+- 历史记录**按 `bookId:chapter:verse` 去重并置顶**，上限 200 条；收藏上限 500 条且不重复添加。
+- 渲染层只在**真正翻到某一节时**才写历史，因此启动时不会误写一条空记录；
+  连续翻阅多节时，中间经过的每一节都会被记录。
+- 条目只保存经文的**位置**（`label` = 书卷名 + 章:节）；面板展示时再按当前脚本
+  取回该节的经文正文，因此简繁切换后历史与收藏依然可读。
+
 ### 系统能力
 
 | 方法 | 参数 | 返回 | 说明 |
@@ -200,6 +237,22 @@ type SearchHit = Verse & { bookName: string };
 | `bible:setFullscreen` | `flag: boolean` | `boolean` | 切换窗口全屏 |
 | `bible:openExternal` | `url: string` | `boolean` | 用系统浏览器打开；非 `http(s)://` 一律拒绝 |
 | `bible:appVersion` | — | `string` | `app.getVersion()` |
+| `bible:pickImage` | — | `string \| null` | 弹出系统「打开文件」对话框选择背景图；取消返回 `null`。只放行 `jpg / jpeg / png / bmp / gif / webp` |
+| `bible:pickAudio` | — | `string \| null` | 同上，选择背景音乐；只放行 `mp3 / wav / m4a / flac / ogg / aac` |
+| `bible:toggleFloatPanel` | `visible: boolean` | `boolean` | 显示 / 隐藏浮动控制面板；`false` 时关闭浮窗并把设置里的 `floatPanel` 复位 |
+
+### 标注持久化
+
+| 方法 | 参数 | 返回 | 说明 |
+| --- | --- | --- | --- |
+| `bible:getAnnotations` | `key: string` | `Stroke[]` | 读取指定「书卷:章」的笔迹；没有记录返回 `[]` |
+| `bible:saveAnnotations` | `key: string`, `strokes: Stroke[]` | `Stroke[]` | 覆盖写入该章的笔迹；传入空数组等价于**删除**该章记录 |
+
+- `key` 的格式是 `"<bookId>:<chapter>"`，由渲染层生成；
+- 笔迹数组整体读写，**不做逐笔合并**，因此撤销 / 重做只需在渲染层维护，
+  落盘时始终写入当前完整数组；
+- 存储位置见 §4 的 `annotations.json`；
+- 渲染层在进入某章时读一次、每次落笔后写一次（`src/renderer/js/draw.js`）。
 
 ### 推送通道
 
@@ -208,6 +261,8 @@ type SearchHit = Verse & { bookName: string };
 | `settings-changed` | 主进程 → 渲染进程 | `Settings` | `bible:setSettings` 成功后广播；多窗口 / 多标签下保持同步 |
 | `fullscreen-changed` | 主进程 → 渲染进程 | `boolean` | 窗口进入 / 退出全屏时广播；由 `enter-full-screen` / `leave-full-screen` 事件触发 |
 | `bible:shortcut` | 主进程 → 渲染进程 | `{ key, code, control, meta, shift, alt }` | 主进程在 `before-input-event` 阶段拦下的按键（如 `F5`），见 §5 |
+| `bible:float-state` | 主进程 → 面板窗口 | 状态对象 | 主进程把主窗口的最新状态转发给浮动控制面板 |
+| `bible:float-command` | 主进程 → 主窗口 | 命令对象 | 面板上的操作（翻节、开关投影等）经主进程转发回主窗口 |
 
 预加载层把它们包装成订阅函数，**返回取消订阅函数**：
 
@@ -215,11 +270,15 @@ type SearchHit = Verse & { bookName: string };
 const off = window.bible.onSettingsChanged((settings) => { /* ... */ });
 const offFs = window.bible.onFullscreenChanged((flag) => { /* ... */ });
 const offSc = window.bible.onShortcut((payload) => { /* ... */ });
+const offFloatState = window.bible.onFloatState((payload) => { /* ... */ });
+const offFloatCmd = window.bible.onFloatCommand((payload) => { /* ... */ });
 
 // 不再需要时
 off();
 offFs();
 offSc();
+offFloatState();
+offFloatCmd();
 ```
 
 > `fullscreen-changed` 同时覆盖「点顶栏按钮进入投影模式」与「用户按系统键 / 拖动窗口标题栏退出全屏」两种情况，
@@ -302,6 +361,7 @@ if (mode === 'any' ? matched > 0 : matched === terms.length) { /* 命中 */ }
 <userData>/settings.json     显示设置
 <userData>/history.json      历史记录   { "items": [...] }
 <userData>/saved.json        收藏       { "items": [...] }
+<userData>/annotations.json  画笔标注   { "items": { "<bookId>:<chapter>": Stroke[] } }
 ```
 
 `userData` 在 Windows 上默认是 `%APPDATA%\BibleProjection`（产品名 `BibleProjection`，
@@ -347,8 +407,10 @@ fs.renameSync(tmp, this.filePath);
   好处是设置、历史、收藏的状态天然共享，切换时无需同步。
 - 全屏时隐藏所有编辑类控件（查找框、设置面板、卷目侧栏），只保留经文层与
   投影工具条，避免投影时把操作痕迹投出去。
-- `Esc` 是**分层退出的**：先关闭当前打开的面板 → 再退出绘制模式 → 再退出投影模式。
-  因此误按 `Esc` 不会一次把投影关掉。
+- 投影时**抽屉面板不再打断**：打开的设置 / 查找等面板会被收起，不会盖在投影内容上。
+- 投影时**经文不被裁切**：正文按可用高度自适应，不出现上下被切掉的情况。
+- `Esc` 在投影中**一次直接退出投影模式**（普通模式下仍按「关面板 → 退出绘制 → 关面板」
+  的顺序逐层退出）。
 - 为什么 `F5` 不会被系统菜单抢走：应用菜单里「重新加载」角色**显式改绑**到
   `CmdOrCtrl+R`，把 `F5` 空出来留给「切换投影模式」；`togglefullscreen` 角色仍是 `F11`。
   同理，菜单里没有 `save` 角色，`Ctrl+S` 不会弹出保存框。
@@ -428,13 +490,19 @@ fs.renameSync(tmp, this.filePath);
 
 ```js
 stroke = {
-  tool: 'brush' | 'eraser',
-  color: string,
+  type: 'line' | 'rect' | 'circle' | 'seg' | 'text',
+  color: string,          // 文本标注无此字段
   width: number,
-  points: [{ x, y }, ...],   // 相对于标注层的逻辑坐标
+  points: [{ x, y }, ...], // 相对于标注层的逻辑坐标
+  start: { x, y },        // rect / circle / seg 的起点
+  end: { x, y },          // rect / circle / seg 的终点
+  text: string,           // 仅 type === 'text'
+  x: number, y: number,   // 仅 type === 'text'：文字标注的锚点
 }
 ```
 
+- `line` 是自由画线（`points` 为完整轨迹）；`rect` / `circle` / `seg` 只保留 `start` 与 `end`；
+  `text` 是双击画布添加的文字标注。
 - 笔画数组 `strokes[]` 是当前标注栈；
 - **撤销栈**保存每一步操作前的 `strokes` 快照（结构化共享，成本低），
   重做栈同理；
@@ -444,12 +512,22 @@ stroke = {
 
 | 操作 | 行为 |
 | --- | --- |
-| `D` 或 `P` | 切换画笔开 / 关 |
-| 左键拖动 | 绘制笔迹 |
-| `Ctrl` + 左键拖动 | 擦除 |
+| `Ctrl` + `B` / `Ctrl` + `P` / `D` | 切换画布开 / 关 |
+| 左键拖动 | 自由画线 |
+| `Shift` + 拖动 | 画矩形 |
+| `Ctrl` + 拖动 | 画圆形 |
+| `Alt` + 拖动 | 画线段 |
+| `E` | 橡皮擦开关 |
+| `1`…`6` | 画笔粗细 |
+| `W` / `G` / `L` / `B` / `Y` / `R` | 画笔颜色 |
+| 双击画布 | 添加文字标注（黑体 30 号 · 黄底深红字 · 30 字以内） |
 | `Z` 或 `Ctrl` + `Z` | 撤销上一笔 |
 | `Ctrl` + `Shift` + `Z` | 重做 |
-| `X` 或 `Ctrl` + `Shift` + `Delete` | 清空当前所有标注 |
+| `Ctrl` + `E` 或 `X` | 清空本章标注 |
+
+> **单字母键的适用范围**：`E`、`1`…`6`、`W` / `G` / `L` / `B` / `Y` / `R`、`Z`、`X`、`D`
+> 在**普通模式**下会被「字母速选」条占用（原版同样以字母输入优先），
+> 因此只在投影 / 绘制模式下生效；普通模式请用 `Ctrl` + `B` 或 `Ctrl` + `P` 开关画布。
 
 画笔关闭时，标注层不拦截鼠标事件，鼠标滚轮与拖拽仍用于浏览经文。
 
@@ -469,8 +547,10 @@ stroke = {
 
 翻节后：
 
-- 若当前页仍有标注，标注保持不变（标注属于页面，不属于节）；
-- 若切换导致「每页节数」重新分页，则清空当前页标注，避免旧笔迹盖在新内容上。
+- 标注属于**章节**（按「书卷:章」落盘），因此翻节不会改变当前章已有的标注；
+- 换章时载入新章的标注栈（若该章此前标注过，会被恢复）；
+- 画布清空（`Ctrl` + `E` / `X`）只作用于**当前章**，并同步删除该章在
+  `annotations.json` 里的记录。
 
 ### 指针隐藏
 
@@ -479,16 +559,81 @@ stroke = {
 
 ---
 
-## 6. 目录速查
+## 6. 浮动控制面板（第二个 BrowserWindow）
+
+投影时讲台上的操作者往往够不到键盘，因此有一个独立的**浮动控制面板**：
+一个无边框、置顶、不占任务栏的小浮窗，贴在屏幕上方。
+
+### 窗口形态
+
+| 属性 | 取值 | 作用 |
+| --- | --- | --- |
+| `frame` | `false` | 无边框 |
+| `alwaysOnTop` | `true` | 始终置顶 |
+| `transparent` | `true` + `backgroundColor: '#00000000'` | 圆角浮窗、只显示控件本身 |
+| `skipTaskbar` | `true` | 不在任务栏留下条目 |
+| `resizable` / `fullscreenable` | `false` | 固定尺寸，不参与全屏 |
+| `show` | 先 `false`，`ready-to-show` 后再 `show()` | 避免白屏闪烁 |
+
+- 浮窗加载的是**独立的页面入口** `src/renderer/float.html`
+  （配 `src/renderer/float.css` 与 `src/renderer/js/float.js`），
+  与主窗口的 `index.html` 是两个页面、两条渲染进程，但**共用同一个 preload**，
+  因此两边拿到的是同一个 `window.bible` 白名单 API。
+- 浮窗关闭（`closed` 事件）时，主进程会把设置里的 `floatPanel` 复位为 `false`，
+  避免下次启动时状态不一致。
+- 浮窗有 **5 个标签页**：经文选择、查找、格式、新约、旧约。
+  「新约 / 旧约」两页是**真实目录**（新约 27 卷、旧约 39 卷），
+  点某一卷会让主窗口跳到该卷第 1 章；「格式」页提供字号 ± 与主题切换。
+
+### 显隐与总开关
+
+- 顶栏有一个**总开关**按钮；设置面板里也有同名开关（`settings.floatPanel`）。
+- 浮窗关闭时鼠标移到**主窗口显示区左缘**会再次唤出（悬停显隐），
+  鼠标移开后自动隐藏，实现「需要时出现、不打扰投影」。
+- 显隐最终都收敛到同一个 IPC：`bible:toggleFloatPanel(visible)`。
+
+### 双向通道
+
+面板与主窗口之间通过**主进程中转**，主进程自己不解释语义，只做转发：
+
+```
+主窗口渲染进程                      主进程                        面板渲染进程
+      │                                                        │
+      │  bible:floatState(payload)  ──invoke──▶  sendToFloat(   │
+      │                                        'bible:float-state') ──▶ │
+      │                                                        │
+      │  ◀── send('bible:float-command', payload) ──  invoke ──  │
+      │        bible:floatCommand(payload)  ──invoke──▶        │
+```
+
+| IPC | 方向 | 载荷 | 说明 |
+| --- | --- | --- | --- |
+| `bible:floatState` | 主窗口 → 主进程 → 面板 | 状态对象（当前经文位置、设置摘要、投影状态等） | 主窗口在导航、投影、设置变化时推送最新状态给面板 |
+| `bible:floatCommand` | 面板 → 主进程 → 主窗口 | 命令对象（翻上一节 / 下一节、开关投影、收藏等） | 面板上的按钮经主进程转发回主窗口执行 |
+
+- 面板一侧用 `window.bible.onFloatState(...)` 订阅状态、用
+  `window.bible.onFloatCommand(...)` 接收命令；
+- 主窗口一侧用 `window.bible.sendFloatState(...)` 推送状态、
+  `window.bible.onFloatCommand(...)` 处理面板发来的命令；
+- 两个窗口都订阅 `settings-changed`，因此在任一侧改设置，两侧都会刷新。
+
+> 面板与主窗口是**两个独立页面**，不是同一个页面的两个实例；
+> 因此状态同步完全依赖上述两个通道，不共享 DOM。
+
+---
+
+## 7. 目录速查
 
 | 路径 | 作用 |
 | --- | --- |
-| `src/main/main.js` | 窗口、菜单、IPC 注册、默认值 `DEFAULT_SETTINGS` |
+| `src/main/main.js` | 窗口（主窗口 + 浮动面板）、菜单、IPC 注册、默认值 `DEFAULT_SETTINGS` |
 | `src/main/bible.js` | 经文加载、索引、查章 / 查范围 / 查找 |
 | `src/main/store.js` | `JsonStore`：默认合并 + 原子写入 |
 | `src/preload/preload.js` | `window.bible` API 白名单 |
 | `src/shared/books.js` | 66 卷书目与 8 个分类的元数据 |
-| `src/renderer/` | 界面（原生 JS / CSS，无构建步骤） |
+| `src/renderer/index.html` | 主窗口页面骨架 |
+| `src/renderer/float.html` | 浮动控制面板页面骨架 |
+| `src/renderer/js/` | 渲染层 ES module（快捷键、投影、绘制、浮动面板、查找……） |
 | `data/` | 简繁经文 JSON（只读资源，随安装包分发） |
 | `tools/extract-mdb.ps1` | 从原程序 MDB 重新抽取经文 |
 | `test/` | `node --test` 单元测试 |

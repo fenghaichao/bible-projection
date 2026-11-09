@@ -16,7 +16,39 @@ export const DEFAULT_SETTINGS = {
   versesPerPage: 1,
   traditional: false,
   theme: 'dark',
+  // 主进程 DEFAULT_SETTINGS 新增字段（main.js）
+  textShadow: false,
+  shadowColor: '#000000',
+  shadowBlur: 10,
+  shadowOffset: 2,
+  bgmPath: '',
+  bgmVolume: 50,
+  slideshowInterval: 0,
+  floatPanel: false,
+  // 标题与节号样式、四边留白（main.js DEFAULT_SETTINGS 同步新增）
+  titleFontFamily: '',
+  titleColor: '',
+  verseNumberColor: '',
+  padding: 0,
+  // 渲染层扩展项：后端 JsonStore.set 用 Object.assign 合并，额外键同样会被持久化
+  bgmLoop: true,
+  mouseAdvance: true,
 };
+
+function num(value, fallback, min, max) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+function str(value, fallback = '') {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function hex(value, fallback) {
+  const s = str(value, fallback).trim();
+  return /^#[0-9a-fA-F]{3,8}$/.test(s) ? s : fallback;
+}
 
 /** 把后端返回的设置归一化，容忍缺字段/脏数据。 */
 export function mergeSettings(raw) {
@@ -25,25 +57,33 @@ export function mergeSettings(raw) {
     ? s.fontFamily.trim()
     : DEFAULT_SETTINGS.fontFamily;
 
-  const fontSize = Number(s.fontSize);
-  const lineHeight = Number(s.lineHeight);
-  const versesPerPage = Number(s.versesPerPage);
-
   return {
     fontFamily,
-    fontSize: Number.isFinite(fontSize) ? Math.round(clamp(fontSize, 12, 160)) : DEFAULT_SETTINGS.fontSize,
-    lineHeight: Number.isFinite(lineHeight) ? clamp(lineHeight, 1, 4) : DEFAULT_SETTINGS.lineHeight,
-    textColor: typeof s.textColor === 'string' && s.textColor ? s.textColor : DEFAULT_SETTINGS.textColor,
-    bgColor: typeof s.bgColor === 'string' && s.bgColor ? s.bgColor : DEFAULT_SETTINGS.bgColor,
-    bgImage: typeof s.bgImage === 'string' ? s.bgImage : '',
+    fontSize: Math.round(num(s.fontSize, DEFAULT_SETTINGS.fontSize, 12, 160)),
+    lineHeight: num(s.lineHeight, DEFAULT_SETTINGS.lineHeight, 1, 4),
+    textColor: hex(s.textColor, DEFAULT_SETTINGS.textColor),
+    bgColor: hex(s.bgColor, DEFAULT_SETTINGS.bgColor),
+    bgImage: str(s.bgImage, ''),
     italic: !!s.italic,
     underline: !!s.underline,
     showNotes: !!s.showNotes,
-    versesPerPage: Number.isFinite(versesPerPage)
-      ? Math.round(clamp(versesPerPage, 1, 20))
-      : DEFAULT_SETTINGS.versesPerPage,
+    versesPerPage: Math.round(num(s.versesPerPage, DEFAULT_SETTINGS.versesPerPage, 1, 20)),
     traditional: !!s.traditional,
     theme: s.theme === 'light' ? 'light' : 'dark',
+    textShadow: !!s.textShadow,
+    shadowColor: hex(s.shadowColor, DEFAULT_SETTINGS.shadowColor),
+    shadowBlur: Math.round(num(s.shadowBlur, DEFAULT_SETTINGS.shadowBlur, 0, 60)),
+    shadowOffset: Math.round(num(s.shadowOffset, DEFAULT_SETTINGS.shadowOffset, 0, 40)),
+    bgmPath: str(s.bgmPath, ''),
+    bgmVolume: Math.round(num(s.bgmVolume, DEFAULT_SETTINGS.bgmVolume, 0, 100)),
+    slideshowInterval: Math.round(num(s.slideshowInterval, DEFAULT_SETTINGS.slideshowInterval, 0, 3600)),
+    floatPanel: !!s.floatPanel,
+    titleFontFamily: str(s.titleFontFamily, DEFAULT_SETTINGS.titleFontFamily),
+    titleColor: hex(s.titleColor, DEFAULT_SETTINGS.titleColor),
+    verseNumberColor: hex(s.verseNumberColor, DEFAULT_SETTINGS.verseNumberColor),
+    padding: Math.round(num(s.padding, DEFAULT_SETTINGS.padding, 0, 120)),
+    bgmLoop: s.bgmLoop === undefined ? DEFAULT_SETTINGS.bgmLoop : !!s.bgmLoop,
+    mouseAdvance: s.mouseAdvance === undefined ? DEFAULT_SETTINGS.mouseAdvance : !!s.mouseAdvance,
   };
 }
 
@@ -55,6 +95,15 @@ export const state = {
   projection: false,
   /** 章节缓存：key = `${bookId}:${chapter}` → [{ bookId, chapter, verse, text }] */
   chapterCache: new Map(),
+  /** 当前查找关键字（正文高亮用） */
+  searchKeywords: [],
+  /** 右击菜单「不显示经文」：只留背景 */
+  hideVerses: false,
+  /** 字母速选设定的显示范围：{ bookId, chapter, from, to }，to=0 表示到末节 */
+  range: null,
+  /** 多栏对照：最多 4 栏，每栏 { bookId, chapter, verse, enabled } */
+  columns: [],
+  activeColumn: 0,
 };
 
 export function setBooks(books) {
@@ -81,6 +130,15 @@ export function bookShortName(book) {
     return book.shortTraditional || book.short || book.nameTraditional || book.name || '';
   }
   return book.short || book.name || '';
+}
+
+/** 分类名（繁体模式取 categoryNameTraditional）。 */
+export function categoryDisplayName(book) {
+  if (!book) return '';
+  if (state.settings.traditional) {
+    return book.categoryNameTraditional || book.categoryName || '';
+  }
+  return book.categoryName || book.categoryNameTraditional || '';
 }
 
 /** “创世记 1:1” 形式的标签。 */

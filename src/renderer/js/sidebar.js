@@ -2,7 +2,7 @@
 
 import { $, bus, el } from './util.js';
 import { ipc } from './bridge.js';
-import { bookDisplayName, bookShortName, setBooks, state } from './state.js';
+import { bookDisplayName, bookShortName, categoryDisplayName, setBooks, state } from './state.js';
 import { T } from './i18n.js';
 import { goToVerse } from './stage.js';
 
@@ -68,7 +68,7 @@ function groupByCategory() {
   for (const book of state.books) {
     const key = book.category === undefined || book.category === null ? 'other' : book.category;
     if (!groups.has(key)) {
-      groups.set(key, { key, name: book.categoryName || T.sidebar.categoryFallback, books: [] });
+      groups.set(key, { key, name: categoryDisplayName(book) || T.sidebar.categoryFallback, books: [] });
     }
     groups.get(key).books.push(book);
   }

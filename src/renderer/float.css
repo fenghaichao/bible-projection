@@ -1,0 +1,196 @@
+/* float.css — 浮动控制面板（独立窗口，无边框 / 透明 / 贴左缘） */
+
+:root {
+  --fx-bg: rgba(14, 16, 22, .94);
+  --fx-line: rgba(236, 231, 220, .14);
+  --fx-tx: #ece7dc;
+  --fx-tx-2: #9aa1af;
+  --fx-gold: #d8a648;
+  --fx-crimson: #b2453f;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: "Microsoft YaHei", "Source Han Sans SC", "PingFang SC", sans-serif;
+  color: var(--fx-tx);
+}
+
+.float-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 4px;
+}
+
+.float-card {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--fx-line);
+  border-left: 3px solid var(--fx-gold);
+  border-radius: 10px;
+  background: var(--fx-bg);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .55);
+  opacity: .12;
+  transform: translateX(-6px);
+  transition: opacity .22s ease, transform .22s ease;
+}
+
+.float-body.is-visible .float-card {
+  opacity: 1;
+  transform: none;
+}
+
+.float-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.float-tabs::-webkit-scrollbar { display: none; }
+
+.float-tab {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  font-size: 11px;
+  color: var(--fx-tx-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.float-tab:hover { color: var(--fx-tx); }
+
+.float-tab.is-active {
+  color: var(--fx-gold);
+  border-color: rgba(216, 166, 72, .45);
+  background: rgba(216, 166, 72, .10);
+}
+
+.float-page { display: none; flex-direction: column; gap: 6px; min-height: 0; }
+.float-page.is-active { display: flex; }
+
+.float-ref {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: var(--fx-gold);
+}
+
+.float-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--fx-tx);
+  max-height: 46px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.float-input {
+  width: 100%;
+  padding: 4px 7px;
+  font-size: 12px;
+  color: var(--fx-tx);
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--fx-line);
+  border-radius: 6px;
+}
+
+.float-actions { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+
+.float-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--fx-tx-2);
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--fx-line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.float-btn:hover { color: var(--fx-tx); border-color: rgba(216, 166, 72, .5); }
+
+.float-btn-accent { color: var(--fx-gold); }
+
+.float-value { font-size: 11px; color: var(--fx-tx-2); min-width: 24px; text-align: center; }
+
+.float-foot {
+  display: flex;
+  gap: 5px;
+  padding-top: 4px;
+  border-top: 1px solid var(--fx-line);
+}
+
+/* 新约 / 旧约目录 */
+.float-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 150px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px 6px;
+  scrollbar-width: thin;
+}
+
+.float-list::-webkit-scrollbar { width: 6px; }
+.float-list::-webkit-scrollbar-thumb {
+  background: rgba(216, 166, 72, .35);
+  border-radius: 3px;
+}
+
+.float-book {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  width: 100%;
+  padding: 2px 4px;
+  font-size: 11px;
+  text-align: left;
+  color: var(--fx-tx-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.float-book:hover {
+  color: var(--fx-tx);
+  background: rgba(216, 166, 72, .10);
+  border-color: rgba(216, 166, 72, .35);
+}
+
+.float-book-short {
+  flex: 0 0 auto;
+  min-width: 18px;
+  color: var(--fx-gold);
+  font-family: "Source Han Serif SC", "SimSun", serif;
+}
+
+.float-book-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.float-empty {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: var(--fx-tx-2);
+  padding: 4px 2px;
+}

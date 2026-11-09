@@ -123,6 +123,22 @@ const rows = JSON.parse(fs.readFileSync('data/bible-simplified.json', 'utf8'));
 应用运行时不会重复解析这两个文件——`src/main/bible.js` 会把它们加载成
 `Map<"卷:章:节", 经文>`，详见 [architecture.md](architecture.md#3-数据加载与查找策略)。
 
+### 渲染层如何使用简繁两套数据
+
+两个 JSON 文件**结构完全一致、节数完全相同（各 31,102 节）、键集合完全一致**，
+差别只在第 3 项的正文用字。渲染层因此可以用同一套逻辑处理两版：
+
+| 环节 | 简繁如何切换 |
+| --- | --- |
+| 取数 | 主进程按 `settings.traditional` 决定当前版本：`false` → `bible-simplified.json`，`true` → `bible-traditional.json`。**渲染层不需要在每个请求里重复传版本参数** |
+| 加载 | `src/main/bible.js` 为两个版本各建一份 `Map` 并各自缓存，切换时不会重复读盘 |
+| 索引 | 两版的键都是 `"卷:章:节"`，索引结构完全一致，因此历史、收藏、标注都以同样的键引用经文，跨版本通用 |
+| 显示 | 渲染层只拿到当前版本的 `Verse[]`；书名与分类名走 `src/shared/books.js` 里的 `nameTraditional` / `shortTraditional` / `categoryNameTraditional`，随 `traditional` 一起切换 |
+| 查找 | `bible:search` 在当前版本的索引上扫描，命中结果里的 `bookName` 同样按当前脚本返回 |
+
+> 也就是说：**繁简切换只影响「取哪一份 JSON + 用哪一套书名」**，
+> 经文的定位、索引、缓存与历史 / 收藏键都不随版本变化。
+
 ---
 
 ## 4. 书目元数据：`src/shared/books.js`

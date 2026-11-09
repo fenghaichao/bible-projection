@@ -26,6 +26,15 @@ const stub = {
   onSettingsChanged: () => () => {},
   onFullscreenChanged: () => () => {},
   onShortcut: () => () => {},
+  pickImage: async () => null,
+  pickAudio: async () => null,
+  getAnnotations: async () => null,
+  saveAnnotations: async () => true,
+  toggleFloatPanel: async () => false,
+  sendFloatState: async () => false,
+  sendFloatCommand: async () => false,
+  onFloatState: () => () => {},
+  onFloatCommand: () => () => {},
 };
 
 const backend = usable ? real : stub;
@@ -83,5 +92,17 @@ export const ipc = {
   onFullscreenChanged: (handler) => subscribe('onFullscreenChanged', handler),
   // 可选通道：主进程拦截 F5 / Ctrl+S 等浏览器级默认后转发快捷键（preload 未提供时自动降级）。
   onShortcut: (handler) => subscribe('onShortcut', handler),
+  // 背景图 / 背景音乐选择
+  pickImage: () => call('pickImage'),
+  pickAudio: () => call('pickAudio'),
+  // 画笔标注落盘（key = `${bookId}:${chapter}`）
+  getAnnotations: (key) => call('getAnnotations', key),
+  saveAnnotations: (key, strokes) => call('saveAnnotations', key, strokes),
+  // 浮动控制面板
+  toggleFloatPanel: (visible) => call('toggleFloatPanel', visible),
+  sendFloatState: (payload) => call('sendFloatState', payload),
+  sendFloatCommand: (payload) => call('sendFloatCommand', payload),
+  onFloatState: (handler) => subscribe('onFloatState', handler),
+  onFloatCommand: (handler) => subscribe('onFloatCommand', handler),
   appVersion: () => call('appVersion'),
 };

@@ -94,6 +94,12 @@ export function toFileUrl(input) {
   return `file:///${s}`;
 }
 
+/** 生成 CSS url() 值（转义引号与反斜杠，避免路径破坏样式声明）。 */
+export function cssUrl(url) {
+  const safe = String(url || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return `url("${safe}")`;
+}
+
 /** 极简事件总线（模块之间解耦）。 */
 const listeners = new Map();
 

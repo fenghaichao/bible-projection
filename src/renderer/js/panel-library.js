@@ -1,4 +1,4 @@
-// js/panel-library.js — 历史面板与收藏面板
+// js/panel-library.js — 历史面板与收藏面板（条目带经文正文）
 
 import { $, bus, el, formatTime } from './util.js';
 import { ipc } from './bridge.js';
@@ -7,6 +7,9 @@ import { T } from './i18n.js';
 import { toast } from './toast.js';
 import { closePanel } from './panels.js';
 import { goToVerse } from './stage.js';
+
+const MAX_ITEMS = 100;
+const textCache = new Map();
 
 export function initLibrary() {
   bus.on('panel-open', (name) => {
@@ -24,6 +27,7 @@ export function initLibrary() {
   if (clearBtn) {
     clearBtn.addEventListener('click', async () => {
       await ipc.clearHistory();
+      textCache.clear();
       toast(T.history.cleared, 'ok');
       loadHistory();
       bus.emit('history-changed');
@@ -38,6 +42,45 @@ function labelOf(entry) {
   return `${name} ${entry && entry.chapter}:${entry && entry.verse}`;
 }
 
+function cacheKey(entry) {
+  return `${entry.bookId}:${entry.chapter}:${entry.verse}`;
+}
+
+/** 取一节正文（带缓存），用于列表里直接显示经文内容。 */
+async function verseTextOf(entry) {
+  const key = cacheKey(entry);
+  if (textCache.has(key)) return textCache.get(key);
+  try {
+    const rows = await ipc.getRange(
+      entry.bookId,
+      { chapter: entry.chapter, verse: entry.verse },
+      { chapter: entry.chapter, verse: entry.verse }
+    );
+    const text = rows && rows.length ? String(rows[0].text || '') : '';
+    textCache.set(key, text);
+    return text;
+  } catch (error) {
+    return '';
+  }
+}
+
+function makeItem(entry, extra) {
+  const btn = el('button', { class: 'result-item', type: 'button' }, [
+    el('span', { class: 'result-ref' }, [el('span', { text: labelOf(entry) })]),
+  ]);
+  const snippet = el('span', { class: 'result-text lib-text' });
+  btn.appendChild(snippet);
+  if (extra) btn.querySelector('.result-ref').appendChild(extra);
+  btn.addEventListener('click', async () => {
+    await goToVerse(entry.bookId, entry.chapter, entry.verse);
+    closePanel();
+  });
+  verseTextOf(entry).then((text) => {
+    snippet.textContent = text;
+  });
+  return btn;
+}
+
 async function loadHistory() {
   const list = $('#history-list');
   if (!list) return;
@@ -50,19 +93,9 @@ async function loadHistory() {
     return;
   }
 
-  for (const entry of items) {
+  for (const entry of items.slice(0, MAX_ITEMS)) {
     const at = formatTime(entry.at);
-    const btn = el('button', { class: 'result-item', type: 'button' }, [
-      el('span', { class: 'result-ref' }, [
-        el('span', { text: labelOf(entry) }),
-        at ? el('span', { class: 'result-text-meta', text: at }) : null,
-      ]),
-    ]);
-    btn.addEventListener('click', async () => {
-      await goToVerse(entry.bookId, entry.chapter, entry.verse);
-      closePanel();
-    });
-    list.appendChild(btn);
+    list.appendChild(makeItem(entry, at ? el('span', { class: 'result-text-meta', text: at }) : null));
   }
 }
 
@@ -78,7 +111,7 @@ async function loadSaved() {
     return;
   }
 
-  for (const entry of items) {
+  for (const entry of items.slice(0, MAX_ITEMS)) {
     const remove = el('button', {
       class: 'icon-btn result-del',
       type: 'button',
@@ -93,15 +126,7 @@ async function loadSaved() {
       bus.emit('saved-changed');
     });
 
-    const open = el('button', { class: 'result-item result-open', type: 'button' }, [
-      el('span', { class: 'result-ref' }, [el('span', { text: labelOf(entry) })]),
-    ]);
-    open.addEventListener('click', async () => {
-      await goToVerse(entry.bookId, entry.chapter, entry.verse);
-      closePanel();
-    });
-
-    const wrap = el('div', { class: 'result-row' }, [open, remove]);
+    const wrap = el('div', { class: 'result-row' }, [makeItem(entry, null), remove]);
     list.appendChild(wrap);
   }
 }

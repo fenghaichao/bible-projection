@@ -91,6 +91,21 @@ test('search 空关键字返回空数组', () => {
   assert.deepStrictEqual(bible.search({}, 'simplified'), []);
 });
 
+test('search 繁体版本返回繁体书名与繁体分类名', () => {
+  const hits = bible.search({ keywords: ['神愛'], mode: 'all' }, 'traditional');
+  assert.strictEqual(hits.length, 1);
+  assert.strictEqual(hits[0].bookId, 43);
+  assert.strictEqual(hits[0].bookName, '約翰福音');
+  assert.strictEqual(hits[0].bookNameTraditional, '約翰福音');
+  assert.ok(hits[0].categoryName.length > 0);
+});
+
+test('search 简体版本返回简体书名', () => {
+  const hits = bible.search({ keywords: ['神爱'], mode: 'all' }, 'simplified');
+  assert.strictEqual(hits.length, 1);
+  assert.strictEqual(hits[0].bookName, '约翰福音');
+});
+
 test.after(() => {
   fs.rmSync(FIXTURE_DIR, { recursive: true, force: true });
 });

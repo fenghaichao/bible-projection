@@ -13,7 +13,31 @@ const CATEGORIES = [
   "启示录"
 ];
 
-const BOOKS = [
+/** 与 CATEGORIES 一一对应的繁体分类名（KindSN 1..8） */
+const CATEGORIES_TRADITIONAL = [
+  "摩西五經",
+  "舊約歷史",
+  "詩歌智慧",
+  "大先知",
+  "小先知",
+  "福音書",
+  "書信",
+  "啟示錄"
+];
+
+/**
+ * 取分类名。
+ * @param {number} category KindSN（1..8）
+ * @param {boolean} traditional 是否繁体
+ */
+function getCategoryName(category, traditional) {
+  const idx = Number(category) - 1;
+  if (idx < 0) return '';
+  if (traditional) return CATEGORIES_TRADITIONAL[idx] || CATEGORIES[idx] || '';
+  return CATEGORIES[idx] || '';
+}
+
+const RAW_BOOKS = [
   { id: 1, name: "创世记", nameTraditional: "創世記", short: "创", shortTraditional: "創", abbr: "CSJ", category: 1, categoryName: "摩西五经", chapters: 50, verses: 1533, firstVerseId: 1, testament: "旧约" },
   { id: 2, name: "出埃及记", nameTraditional: "出埃及記", short: "出", shortTraditional: "出", abbr: "CAJ", category: 1, categoryName: "摩西五经", chapters: 40, verses: 1213, firstVerseId: 1534, testament: "旧约" },
   { id: 3, name: "利未记", nameTraditional: "利未記", short: "利", shortTraditional: "利", abbr: "LWJ", category: 1, categoryName: "摩西五经", chapters: 27, verses: 859, firstVerseId: 2747, testament: "旧约" },
@@ -82,7 +106,15 @@ const BOOKS = [
   { id: 66, name: "启示录", nameTraditional: "啟示錄", short: "启", shortTraditional: "啟", abbr: "QSL", category: 8, categoryName: "启示录", chapters: 22, verses: 404, firstVerseId: 30699, testament: "新约" },
 ];
 
+/** 在书卷上补出繁体分类名（categoryName 保持与原库一致的简体） */
+const BOOKS = RAW_BOOKS.map((b) => ({
+  ...b,
+  categoryNameTraditional: getCategoryName(b.category, true),
+}));
+
 module.exports = {
   CATEGORIES,
+  CATEGORIES_TRADITIONAL,
   BOOKS,
+  getCategoryName,
 };
