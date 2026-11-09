@@ -1,0 +1,45 @@
+Extraction report - generated 2026-11-09 10:29:03
+Source file : C:\语音投影圣经无声版\bibleNosound.dat
+Source SHA256: 805740ba8a8304fe10abd4ec99420749eb81f82b4691823a2928dc41690f886b
+
+Bible rows   : 31102
+BibleF rows  : 31102
+bibleid rows : 66
+bibleidF rows: 66
+
+--- validation ---
+duplicate keys (simplified): 0
+NULL texts: 0 ; empty texts: 0 ; texts shorter than 3 chars: 0
+chapters with a verse-number gap: 0
+keys only in simplified: 0 ; only in traditional: 0
+anomalies total: 1
+  ! book 66 启示录: verse count 404 != bibleid.VerseNumber 403  (books.js uses the extracted count)
+
+--- bibleid metadata vs extracted text rows ---
+  book 66 启示录: bibleid says 403 verses / 22 chapters, extracted 404 / 22 -> books.js uses the extracted numbers
+
+--- observed KindSN category mapping ---
+KindSN 1 (摩西五经, n=5): 创世记、出埃及记、利未记、民数记、申命记
+KindSN 2 (旧约历史, n=12): 约书亚记、士师记、路得记、撒母耳记上、撒母耳记下、列王纪上、列王纪下、历代志上、历代志下、以斯拉记、尼希米记、以斯帖记
+KindSN 3 (诗歌智慧, n=5): 约伯记、诗篇、箴言、传道书、雅歌
+KindSN 4 (大先知, n=5): 以赛亚书、耶利米书、耶利米哀歌、以西结书、但以理书
+KindSN 5 (小先知, n=12): 何西阿书、约珥书、阿摩司书、俄巴底亚书、约拿书、弥迦书、那鸿书、哈巴谷书、西番雅书、哈该书、撒迦利亚书、玛拉基书
+KindSN 6 (福音书, n=5): 马太福音、马可福音、路加福音、约翰福音、使徒行传
+KindSN 7 (书信, n=13): 罗马书、哥林多前书、哥林多后书、加拉太书、以弗所书、腓立比书、歌罗西书、帖撒罗尼迦前书、帖撒罗尼迦后书、提摩太前书、提摩太后书、提多书、腓利门书
+KindSN 8 (启示录, n=9): 希伯来书、雅各书、彼得前书、彼得后书、约翰壹书、约翰贰书、约翰叁书、犹大书、启示录
+
+--- spot checks ---
+创世记 1:1  简: 起初神创造天地。
+创世记 1:1  繁: 起初神創造天地。
+约翰福音 3:16  简: 神爱世人，甚至将祂的独生子赐给他们，叫一切信祂的，不至灭亡，反得永生。
+约翰福音 3:16  繁: 神愛世人，甚至將他的獨生子賜給他們，叫一切信他的，不至滅亡，反得永生。
+箴言 3:5  简: 你要专心仰赖耶和华，不可倚靠自己的聪明。
+箴言 3:5  繁: 你要專心仰賴耶和華，不可倚靠自己的聰明，
+启示录 22:21  简: 愿主耶稣的恩惠常与众圣徒同在。阿们。
+启示录 22:21  繁: 愿主耶穌的恩惠常與眾圣徒同在。阿們。
+
+--- output files ---
+E:\AI\projects\bibleProjection\data\bible-simplified.json | bytes=3611879 | sha256=f14272b94595aa39fa7ae1f2fc77fdd4d34b9a564a6e5b8fab4c23ca71bdbf03
+E:\AI\projects\bibleProjection\data\bible-traditional.json | bytes=3609283 | sha256=0053afb0c5023d252ff381bcb401e69c43221f8e36a9d19e7917218565900f4b
+E:\AI\projects\bibleProjection\src\shared\books.js | bytes=15641 | sha256=6ad82cf17532c0f2ccfdc90bf0aaea118e458c64daa093f1d45d61a28d7ba897
+data rows: simplified=31102 traditional=31102

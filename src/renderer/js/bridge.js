@@ -1,0 +1,87 @@
+// js/bridge.js — window.bible 桥接封装（所有特权访问的唯一入口）
+
+import { T } from './i18n.js';
+import { toast } from './toast.js';
+
+const real = typeof window !== 'undefined' ? window.bible : null;
+const usable = !!(real && typeof real.getBooks === 'function');
+
+/** 无桥接时的替身：保证 UI 仍可渲染，不抛未捕获异常。 */
+const stub = {
+  getBooks: async () => [],
+  getChapter: async () => [],
+  getRange: async () => [],
+  search: async () => [],
+  getHistory: async () => [],
+  addHistory: async () => undefined,
+  clearHistory: async () => undefined,
+  getSaved: async () => [],
+  saveVerse: async () => undefined,
+  removeSaved: async () => undefined,
+  getSettings: async () => ({}),
+  setSettings: async (patch) => patch || {},
+  copyText: async () => false,
+  setFullscreen: async () => false,
+  openExternal: async () => false,
+  onSettingsChanged: () => () => {},
+  onFullscreenChanged: () => () => {},
+  onShortcut: () => () => {},
+};
+
+const backend = usable ? real : stub;
+
+let warned = false;
+
+async function call(name, ...args) {
+  if (!usable && !warned) {
+    warned = true;
+    toast(T.toast.noBridge, 'error', 6000);
+  }
+  try {
+    if (typeof backend[name] !== 'function') throw new Error(`missing ${name}`);
+    return await backend[name](...args);
+  } catch (err) {
+    console.error(`[ipc] ${name} failed`, err);
+    toast(T.toast.ipcFailed(name), 'error');
+    return null;
+  }
+}
+
+/** 订阅类方法：出错时静默（由调用方决定提示）。 */
+function subscribe(name, handler) {
+  if (!usable) return () => {};
+  try {
+    if (typeof backend[name] !== 'function') return () => {};
+    const off = backend[name](handler);
+    return typeof off === 'function' ? off : () => {};
+  } catch (err) {
+    console.error(`[ipc] ${name} subscribe failed`, err);
+    return () => {};
+  }
+}
+
+export const bridgeMissing = !usable;
+
+/** 渲染层实际使用的 IPC 集合（与 preload 契约一一对应）。 */
+export const ipc = {
+  getBooks: () => call('getBooks'),
+  getChapter: (bookId, chapter) => call('getChapter', bookId, chapter),
+  getRange: (bookId, from, to) => call('getRange', bookId, from, to),
+  search: (params) => call('search', params),
+  getHistory: () => call('getHistory'),
+  addHistory: (entry) => call('addHistory', entry),
+  clearHistory: () => call('clearHistory'),
+  getSaved: () => call('getSaved'),
+  saveVerse: (entry) => call('saveVerse', entry),
+  removeSaved: (id) => call('removeSaved', id),
+  getSettings: () => call('getSettings'),
+  setSettings: (patch) => call('setSettings', patch),
+  copyText: (text) => call('copyText', text),
+  setFullscreen: (flag) => call('setFullscreen', flag),
+  openExternal: (url) => call('openExternal', url),
+  onSettingsChanged: (handler) => subscribe('onSettingsChanged', handler),
+  onFullscreenChanged: (handler) => subscribe('onFullscreenChanged', handler),
+  // 可选通道：主进程拦截 F5 / Ctrl+S 等浏览器级默认后转发快捷键（preload 未提供时自动降级）。
+  onShortcut: (handler) => subscribe('onShortcut', handler),
+  appVersion: () => call('appVersion'),
+};

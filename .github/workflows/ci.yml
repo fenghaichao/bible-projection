@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 校验依赖树
+        run: npm ls --depth=0
+
+      # 主进程、预加载与共享模块是 CommonJS，可用 node --check 做一次无依赖的语法检查。
+      # 渲染层是浏览器 ES 模块（原生 JS，无构建步骤），因此不在 CI 中静态检查。
+      - name: 语法检查（主进程 / 预加载 / 共享模块）
+        run: |
+          set -e
+          for f in src/main/*.js src/preload/*.js src/shared/*.js; do
+            echo "checking $f"
+            node --check "$f"
+          done
+
+      # CI 只做安装与单元测试；Electron 需要图形环境，不在 CI 中启动。
+      - name: 单元测试
+        run: npm test
+
+      - name: 上传测试报告（如有）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-node-${{ matrix.node }}
+          path: |
+            tools/extraction-report.txt
+          if-no-files-found: ignore
+          retention-days: 7

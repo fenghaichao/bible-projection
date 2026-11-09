@@ -1,0 +1,59 @@
+{
+  "name": "bible-projection",
+  "version": "0.1.0",
+  "description": "圣经投影 Bible Projection —— 开源的圣经经文投影与查经工具（现代重写版，Electron）",
+  "main": "src/main/main.js",
+  "author": "fenghaichao",
+  "license": "MIT",
+  "homepage": "https://github.com/fenghaichao/bible-projection",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fenghaichao/bible-projection.git"
+  },
+  "keywords": [
+    "bible",
+    "projection",
+    "和合本",
+    "electron",
+    "church"
+  ],
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder --win --x64",
+    "pack": "electron-builder --win --dir",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.boco.bibleprojection",
+    "productName": "BibleProjection",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**/*",
+      "data/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "圣经投影"
+    }
+  }
+}

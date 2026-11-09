@@ -1,0 +1,11 @@
+node_modules/
+release/
+dist/
+out/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+tmp/
+shots/
