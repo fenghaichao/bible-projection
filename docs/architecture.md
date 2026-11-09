@@ -176,7 +176,7 @@ type SearchHit = Verse & { bookName: string };
 | `italic` | `boolean` | `false` | 斜体 |
 | `underline` | `boolean` | `false` | 下划线 |
 | `showNotes` | `boolean` | `false` | 预留：显示注释 |
-| `versesPerPage` | `number` | `1` | 每页节数 |
+| `versesPerPage` | `number` | `1` | 每页节数（`1` = 整章连续显示；`≥2` 时普通模式按页开窗，投影模式按屏显示） |
 | `traditional` | `boolean` | `false` | 是否繁体（`true` = 繁体） |
 | `theme` | `'dark' \| 'light'` | `dark` | 深 / 浅主题 |
 | `textShadow` | `boolean` | `false` | 是否启用文字阴影 |
@@ -539,10 +539,11 @@ stroke = {
 | --- | --- |
 | `←` `→` / `↑` `↓` | 上一节 / 下一节 |
 | `Space` | 下一节 |
-| `PageUp` / `PageDown` | 按**「每页节数」**翻页（默认 1 节） |
+| `PageUp` / `PageDown` | 按**「每页节数」**翻页（`1` = 整章显示） |
 | `Home` / `End` | 本章首节 / 本章末节 |
 | `Ctrl` + `←` / `Ctrl` + `→` | 上一卷 / 下一卷 |
 | `Ctrl` + `PageUp` / `Ctrl` + `PageDown` | 上一章 / 下一章 |
+| `Shift` + `>` / `Shift` + `<` | 增减显示的经文节数（原版「方法5」）：有速选范围时增减该范围末节，没有范围时增减「每页节数」 |
 | 鼠标滚轮 | 下一节（投影模式下滚轮不用于滚动经文） |
 
 翻节后：

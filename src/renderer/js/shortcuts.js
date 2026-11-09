@@ -14,6 +14,8 @@ import {
   moveVerse,
   goChapterEdge,
   saveCurrent,
+  adjustRange,
+  activeRange,
 } from './stage.js';
 import { toggleProjection, exitProjection } from './projection.js';
 import { clearDraw, isDrawing, redoDraw, toggleDraw, toggleEraser, undoDraw } from './draw.js';
@@ -59,6 +61,7 @@ function onKeyDown(event) {
     event.preventDefault();
     return;
   }
+  if (event.isComposing) return;              // 中文输入法组字中，不抢键
   if (isTypingTarget(event.target)) return;
 
   const key = event.key;
@@ -189,16 +192,21 @@ function runShortcut(key, mods) {
     }
   }
 
-  // ── Shift 组合：微调每页显示节数 ───────────────────────────
+  // ── Shift 组合：增减显示的经文节数（原版「方法5」）────────
+  // 中文输入法下 Shift+. / Shift+, 可能送成全角「。」「，」，一并接受。
   if (shift && !ctrl) {
     if (key === '>' || key === '.' || key === '。') {
-      changeVersesPerPage(1);
+      changeDisplaySpan(1);
       return true;
     }
     if (key === '<' || key === ',' || key === '，') {
-      changeVersesPerPage(-1);
+      changeDisplaySpan(-1);
       return true;
     }
+  }
+  if (!ctrl && !alt && (key === '。' || key === '，')) {
+    changeDisplaySpan(key === '。' ? 1 : -1);
+    return true;
   }
 
   // ── 单键 ────────────────────────────────────────────────────
@@ -312,8 +320,25 @@ async function setFontSize(size) {
 
 /** Shift + > / < ：微调每页显示节数。 */
 async function changeVersesPerPage(delta) {
-  const next = Math.max(1, Math.min(20, Number(state.settings.versesPerPage || 1) + delta));
-  if (next === state.settings.versesPerPage) return;
+  const current = Number(state.settings.versesPerPage || 1);
+  const next = Math.max(1, Math.min(20, current + delta));
+  if (next === current) {
+    toast(delta > 0 ? T.toast.versesPerPageMax : T.toast.versesPerPageMin, 'info', 1600);
+    return;
+  }
   await pushSettings({ versesPerPage: next });
   toast(T.toast.versesPerPage(next), 'ok', 1400);
+}
+
+/**
+ * Shift + > / Shift + < ：增减显示的经文节数（原版「方法5」）。
+ *  - 当前有速选范围（如 CSJ2:1-10）→ 扩展 / 收缩该范围的末节；
+ *  - 没有范围 → 调整「每页节数」（普通模式按页开窗，投影模式按屏显示）。
+ */
+async function changeDisplaySpan(delta) {
+  if (activeRange()) {
+    await adjustRange(delta);
+    return;
+  }
+  await changeVersesPerPage(delta);
 }

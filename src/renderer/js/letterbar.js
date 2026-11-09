@@ -174,7 +174,12 @@ function updateBar() {
     ? T.letterbar.chapterOf(bookDisplayName(book), chapter)
     : bookDisplayName(book);
 
-  hintEl.textContent = `${target} · ${names.join(' / ')}${more} · ${T.letterbar.hint}`;
+  // 提示里带上节范围（CSJ2:1-10 → 「第 2 章 1–10 节」）
+  const span = parsed.endVerse > parsed.verse
+    ? ` ${parsed.verse}–${parsed.endVerse} 节`
+    : (parsed.verse ? ` ${parsed.verse} 节` : '');
+
+  hintEl.textContent = `${target}${span} · ${names.join(' / ')}${more} · ${T.letterbar.hint}`;
 }
 
 async function commit() {
@@ -200,8 +205,15 @@ async function commit() {
   const chapter = parsed.chapter || 1;
   const verse = parsed.verse || 1;
 
+  // 范围优先级：
+  //   CSJ2:1-10 → 第 2 章 1–10 节（明确起止）
+  //   CSJ4Z     → 第 4 章整章（to = 0 表示至末节）
+  //   CSJ4:14Z  → 第 4 章 14 节至末节
+  //   CSJ2:5    → 第 2 章第 5 节
   let range = null;
-  if (parsed.wholeChapter) {
+  if (parsed.endVerse > parsed.verse) {
+    range = { bookId: book.id, chapter, from: verse, to: parsed.endVerse };
+  } else if (parsed.wholeChapter) {
     range = { bookId: book.id, chapter, from: 1, to: 0 };    // to=0 → 至末节
   } else if (parsed.toEnd) {
     range = { bookId: book.id, chapter, from: verse, to: 0 };

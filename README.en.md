@@ -67,7 +67,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | --- | --- | --- |
 | Speech narration, accurate to the verse; continuous reading; playback bar | ❌ not implemented | The **no-speech edition contains no narration**, so this project implements none either |
 | Speech-synced highlighting (LRC style) and `+` / `-` playback speed | ❌ not implemented | Same reason: no speech, no LRC sync |
-| Pick verses via TOC, list box, letter input | ✅ TOC + list + letter bar | 66 books in 8 categories; the quick-pick bar takes letters for a book (`CSJ`), digits for a chapter (`CSJ34`), `CSJ4:14` for a verse, `CSJ4Z` / `CSJ4:14Z` for a whole chapter or chapter-to-end, auto-inserts separators on space, deletes with Backspace and cancels with `Esc` (needs an English IME) |
+| Pick verses via TOC, list box, letter input | ✅ TOC + list + letter bar | 66 books in 8 categories; the quick-pick bar takes letters for a book (`CSJ`), digits for a chapter (`CSJ34`), `CSJ4:14` for a verse, `CSJ2:1-10` for a verse span (1–10 shown together), `CSJ4Z` / `CSJ4:14Z` for a whole chapter or chapter-to-end, auto-inserts separators on space, deletes with Backspace and cancels with `Esc` (needs an English IME) |
 | Show several passages at once (multi-window) | ⚠️ partial | Up to 4 passages side by side in one window (`Ctrl` + `1`…`4` switches the active group); no separate multi-window display |
 | Background / font / size / color / shadow / line spacing | ✅ display settings | Font, size, line spacing, text color, background color, background image (local path, browse dialog, clear), italic, underline, verse references |
 | Text shadow | ✅ text shadow | Shadow colour, blur radius and offset are adjustable |
@@ -207,6 +207,7 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 | Letter abbreviation | Jump to a book, e.g. `CSJ` / `CAJ` / `LWJ` |
 | Letters + digits | Locate a chapter, e.g. `CSJ4` or `CSJ 4` |
 | `CSJ4:14` | Locate chapter 4, verse 14 |
+| `CSJ2:1-10` | Locate chapter 2, verses 1–10 (the whole span is shown) |
 | `CSJ4Z` / `CSJ4:14Z` | Whole chapter / from that verse to the end of the chapter |
 | Digits | Chapter N of the current book |
 | Space | Inserts a separator while typing; with an empty input it means "next verse" |
@@ -218,11 +219,11 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 | --- | --- |
 | `←` `→` / `↑` `↓` | Previous / next verse |
 | `Space` | Next verse |
-| `PageUp` / `PageDown` | Page by "verses per page" (1 verse by default) |
+| `PageUp` / `PageDown` | Page by "verses per page" (1 = whole chapter) |
 | `Home` / `End` | First / last verse of the chapter |
 | `Ctrl` + `←` / `→` | Previous / next book |
 | `Ctrl` + `PageUp` / `PageDown` | Previous / next chapter |
-| `Shift` + `>` / `<` | Verses per page +1 / -1 |
+| `Shift` + `>` / `<` | Grow / shrink the displayed verse span (original method 5): with a picked range it extends that range (e.g. `CSJ2:1-10` → verses 1-11), without one it changes "verses per page" |
 | `Ctrl` + `1`…`4` | Switch the active column-comparison group |
 | `F5` | Enter / leave projection mode (fullscreen) |
 | `F6` | Leave projection mode |

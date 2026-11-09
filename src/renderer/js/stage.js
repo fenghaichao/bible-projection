@@ -61,7 +61,7 @@ export async function ensureChapter(bookId, chapter) {
 }
 
 /** 当前显示范围（字母速选设定）：{ from, to }，to=0 表示到末节。 */
-function activeRange() {
+export function activeRange() {
   const range = state.range;
   if (!range) return null;
   const { bookId, chapter } = state.current;
@@ -198,7 +198,49 @@ export function displayVerses() {
     const start = clamp(verse - 1, 0, list.length - 1);
     return list.slice(start, start + perPage);
   }
+  // 普通模式：「每页节数」≥ 2 时按页开窗（Shift+> / Shift+< 可增减），
+  // = 1 时保持整章连续显示（原版的「整章」阅读习惯）。
+  if (perPage > 1 && list.length) {
+    const start = clamp(verse - 1, 0, list.length - 1);
+    return list.slice(start, start + perPage);
+  }
   return list;
+}
+
+/**
+ * 增减当前显示的经文节数（原版「方法5」）。
+ *  - 已有速选范围（如 CSJ2:1-10）：扩展 / 收缩末节；收到 1 节后再减一次即回到整章显示。
+ *  - 没有范围：返回 false，交给快捷键去调「每页节数」。
+ */
+export async function adjustRange(delta) {
+  const range = activeRange();
+  if (!range) return false;
+
+  const list = await ensureChapter(range.bookId, range.chapter);
+  const last = Math.max(1, list.length);
+  const from = Math.max(1, Number(range.from) || 1);
+  const to = range.to > 0 ? Math.max(from, Number(range.to) || from) : last;
+  const next = Math.min(last, Math.max(from, to + delta));
+
+  if (next === to) {
+    if (delta < 0 && to === from) {
+      // 只剩 1 节：再减一次 → 取消范围，回到整章显示
+      state.range = null;
+      renderStage();
+      bus.emit('navigate', { ...state.current, silent: true });
+      toast(T.toast.spanAll, 'ok', 1600);
+      return true;
+    }
+    toast(T.toast.spanLimit, 'info', 1600);
+    return false;
+  }
+
+  state.range = { bookId: range.bookId, chapter: range.chapter, from, to: next };
+  renderStage();
+  scrollToCurrent();
+  bus.emit('navigate', { ...state.current, silent: true });
+  toast(T.toast.span(next - from + 1), 'ok', 1600);
+  return true;
 }
 
 export function renderStage() {
@@ -254,6 +296,29 @@ export function renderStage() {
         for (const item of nextList) {
           frag.appendChild(verseNode(item, nextChapter, -1));
         }
+      }
+    }
+  }
+
+  // 普通模式 + 按页开窗：本页已到本章末节时，接上下一章开头，保持连续阅读
+  if (!state.projection && !range && perPage > 1 && visible.length && list.length) {
+    const lastShown = verseNumber(visible[visible.length - 1]);
+    const overflow = perPage - visible.length;
+    const nextChapter = chapter + 1;
+    const hasNext = book && nextChapter <= (Number(book.chapters) || 1);
+    if (overflow > 0 && lastShown >= list.length && hasNext) {
+      const nextList = state.chapterCache.get(`${bookId}:${nextChapter}`);
+      if (nextList && nextList.length) {
+        for (const item of nextList.slice(0, overflow)) {
+          frag.appendChild(verseNode(item, nextChapter, -1));
+        }
+      } else {
+        // 下一章尚未载入：取回后重绘（renderStage 是同步的，这里异步补一次）
+        ensureChapter(bookId, nextChapter)
+          .then(() => {
+            if (state.current.bookId === bookId && state.current.chapter === chapter) renderStage();
+          })
+          .catch(() => {});
       }
     }
   }
