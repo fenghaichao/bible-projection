@@ -91,15 +91,15 @@ src/renderer/
     ├── state.js       渲染层状态与设置归一化（mergeSettings）
     ├── shortcuts.js   全局快捷键处理（DOM keydown + IPC 通道）
     ├── sidebar.js     侧栏书目 / 章列表
-    ├── stage.js       经文显示、翻节、复制当前章 / 当前节 / 章节标题
+    ├── stage.js       经文显示、翻节、复制（复制经文 / 分节 / 分节分行 / 当前节 / 章节标题）
     ├── panels.js      抽屉面板的开关调度
-    ├── panel-search.js / panel-library.js / panel-help.js   各面板
+    ├── panel-search.js / panel-library.js / panel-help.js   各面板（查找面板含结果勾选与复制）
     ├── settings.js    显示设置的读写
     ├── projection.js  投影模式
     ├── draw.js        画笔 / 擦除 / 撤销 / 重做 / 文字标注
     ├── columns.js     多栏对照（最多 4 组经文）
     ├── letterbar.js   字母 + 数字速选定位（CSJ4:14 一类输入）
-    ├── contextmenu.js 显示区右键菜单（复制 ▸ 三种 / 全屏 / 停止播放 / 不显示经文）
+    ├── contextmenu.js 显示区右键菜单（停止播放_End / 全屏显示_F5 / 复制 ▸ 三种 / 不显示经文）
     ├── slideshow.js   投影模式自动翻页（幻灯放映）
     ├── bgm.js         背景音乐播放
     ├── highlight.js   查找结果高亮
@@ -623,7 +623,27 @@ stroke = {
 
 ---
 
-## 7. 目录速查
+## 7. 复制语义（对齐原版）
+
+原版术语：**章节**＝显示区标题，**经文**＝标题＋经文（help/12.jpg、help/16.jpg、doc §L155–157）。
+
+| 用户操作 | 实现 | 输出形态 |
+| --- | --- | --- |
+| `Ctrl` + `C` | `stage.js → copyCurrent()` | 显示区有选区 → 复制选区；否则 **复制经文**＝标题 ＋ 当前显示的经文连排（无节号，节间不断行；数据里残留的换行会被去掉） |
+| `Alt` + `C` | `stage.js → copyTitleOnly()` | **复制章节**＝仅标题 |
+| 右键 → 复制 ▸ → 复制经文_Ctrl+C | `stage.js → copyTextVariant('plain')` | 同 `Ctrl` + `C` |
+| 右键 → 复制 ▸ → 复制经文(分节) | `copyTextVariant('numbered')` | 标题 ＋ 每节一段，段间空行 |
+| 右键 → 复制 ▸ → 复制经文(分节分行) | `copyTextVariant('lines')` | 标题 ＋ 每节一行（带节号） |
+| 查找面板 `Ctrl` + `C` / 「复制经文」 | `panel-search.js → copySearchResults('both')` | 勾选的结果（未勾选＝当前已展示的结果），每行「章节 经文」 |
+| 查找面板「复制章节」 | `copySearchResults('title')` | 每行只有「章节」（`书卷 章:节`） |
+
+要点：
+
+- 复制的是**当前显示区**里的经文，受速选范围（`CSJ2:1-10`）与「每页节数」影响，不是整章。
+- 查找结果支持多选：结果行左侧复选框勾选后，复制按钮只复制勾选的那些（对应原版按所选列决定复制内容）。
+- `Ctrl` + `C` 的语义随上下文切换：查找抽屉打开时复制查找结果，否则复制显示区经文。
+
+## 8. 目录速查
 
 | 路径 | 作用 |
 | --- | --- |

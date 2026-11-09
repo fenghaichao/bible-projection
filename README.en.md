@@ -77,7 +77,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | Wireless remote control | ⚠️ partial | No dedicated remote support, but the keyboard media keys (previous / next track) work as a page-turner |
 | Multi-keyword text search | ✅ multi-keyword search | "Match all" and "Match any" modes; hits are highlighted, results are paged with a "showing N / M" hint and the keywords are kept |
 | Traditional and Simplified Chinese | ✅ toggle | Full text in both scripts; book names and category names are fully localised to the selected script |
-| Copy verses into other programs | ✅ clipboard | Whole chapter, per-verse or per-verse-per-line, plus chapter title only |
+| Copy verses into other programs | ✅ clipboard | Same names as the original: **copy verse text** (chapter title + verses, flowing) / **copy verse text (per verse)** / **copy verse text (per verse, one per line)**; **copy chapter** = title only (`Alt` + `C`); search results can be copied per column (chapter only / chapter + verse text) |
 | Simple drawing | ✅ brush annotation | Freehand, rectangle, circle, line and text notes (double-click to type), with eraser, undo and redo; strokes are saved per `book:chapter` into `userData/annotations.json` |
 | Bookmarks | ✅ my bookmarks | `Ctrl` + `S` bookmarks the current verse, up to 500 entries |
 | Continuous display across chapters / verse ranges | ✅ ranges | Verses can be shown continuously across chapter boundaries or as an explicit range |
@@ -235,13 +235,17 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 
 ### Text and copying
 
+> Same wording as the original: a **chapter** is the passage-area title, a **verse text** is title + verses. What gets copied is what is currently **displayed** (respecting the quick-jump range and verses-per-page).
+
 | Shortcut / action | Action |
 | --- | --- |
-| `Ctrl` + `C` | Copy the current chapter (or the text selection) |
+| `Ctrl` + `C` | Copy verse text: chapter title + the displayed verses (one flowing paragraph, no verse numbers; copies the selection when there is one) |
 | `Ctrl` + `Shift` + `C` | Copy the current verse only |
-| `Alt` + `C` | Copy the chapter title only |
-| Right-click | Copy ▸ copy text / copy text (per verse) / copy text (per verse, one per line) |
-| Right-click | Fullscreen / stop slideshow / hide verses |
+| `Alt` + `C` | Copy the chapter: title only |
+| Right-click | Copy ▸ copy verse text_Ctrl+C / copy verse text (per verse) / copy verse text (per verse, one per line) |
+| Right-click | Stop slideshow_End / fullscreen_F5 / hide verses |
+| `Ctrl` + `C` inside the search panel | Copy the search results (chapter + verse text) |
+| Search panel "copy verse text / copy chapter" | Copy the ticked results: chapter + verse text / chapter only |
 | `Ctrl` + `=` / `Ctrl` + `-` | Increase / decrease font size |
 | `Ctrl` + `0` / `Ctrl` + `/` | Reset the font size |
 | `Ctrl` + `D` | Cycle the passage font |

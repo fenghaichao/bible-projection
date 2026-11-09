@@ -55,7 +55,18 @@ function buildMenu() {
   if (!menu) return;
   menu.textContent = '';
 
-  // 复制 ▸
+  // 顺序对齐原版显示区右击菜单：停止播放_End / 全屏显示_F5 / 复制▸ / 不显示经文
+  menu.appendChild(menuItem(T.ctx.stopPlay, () => {
+    hideMenu();
+    stopSlideshow();
+  }));
+
+  menu.appendChild(menuItem(T.ctx.fullscreen, () => {
+    hideMenu();
+    enterProjection();
+  }));
+
+  // 复制 ▸（原版 F085：复制经文_Ctrl+C / 复制经文(分节) / 复制经文(分节分行)）
   const copyItem = el('div', { class: 'ctx-item ctx-sub' }, [
     el('span', { class: 'ctx-label', text: T.ctx.copy }),
     el('span', { class: 'ctx-arrow', text: '▸' }),
@@ -73,16 +84,6 @@ function buildMenu() {
   });
   menu.appendChild(copyItem);
   menu.appendChild(submenu);
-
-  menu.appendChild(menuItem(T.ctx.fullscreen, () => {
-    hideMenu();
-    enterProjection();
-  }));
-
-  menu.appendChild(menuItem(T.ctx.stopPlay, () => {
-    hideMenu();
-    stopSlideshow();
-  }));
 
   const hideItem = menuItem(state.hideVerses ? T.ctx.showVerses : T.ctx.hideVerses, () => {
     hideMenu();

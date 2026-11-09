@@ -4,7 +4,7 @@ import { isTypingTarget } from './util.js';
 import { state } from './state.js';
 import { T } from './i18n.js';
 import { toast } from './toast.js';
-import { openPanel, closePanel, isPanelOpen } from './panels.js';
+import { openPanel, closePanel, isPanelOpen, currentPanel } from './panels.js';
 import {
   copyCurrent,
   copyCurrentVerse,
@@ -17,6 +17,7 @@ import {
   adjustRange,
   activeRange,
 } from './stage.js';
+import { copySearchResults } from './panel-search.js';
 import { toggleProjection, exitProjection } from './projection.js';
 import { clearDraw, isDrawing, redoDraw, toggleDraw, toggleEraser, undoDraw } from './draw.js';
 import { pushSettings, cycleFont } from './settings.js';
@@ -119,7 +120,9 @@ function runShortcut(key, mods) {
         openPanel('settings');
         return true;
       case 'c':
-        copyCurrent();
+        // 原版 F060：查找对话框内 Ctrl+C 复制查找结果；其它位置复制当前显示的经文
+        if (currentPanel() === 'search') copySearchResults('both');
+        else copyCurrent();
         return true;
       case '=':
       case '+':

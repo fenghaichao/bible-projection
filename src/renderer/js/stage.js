@@ -363,28 +363,64 @@ const recordHistory = throttle(async () => {
   bus.emit('history-changed');
 }, 260);
 
-/** 当前章纯文本（用于复制）。 */
-async function chapterText() {
+/**
+ * 当前显示区标题（原版 F086：「章节」＝显示区标题）。
+ */
+export function currentTitle() {
   const { bookId, chapter } = state.current;
-  const cached = state.chapterCache.get(`${bookId}:${chapter}`) || [];
-  const last = Math.max(1, cached.length);
-  const range = await ipc.getRange(bookId, { chapter, verse: 1 }, { chapter, verse: last });
-  const rows = Array.isArray(range) && range.length ? range : cached;
-  const head = `${bookDisplayName(bookById(bookId))} ${T.stage.chapterLabel(chapter)}`;
-  const body = rows.map((item) => `${verseNumber(item)} ${verseText(item)}`).join('\n');
-  return `${head}\n${body}`;
+  const book = bookById(bookId);
+  if (!book) return '';
+  return `${bookDisplayName(book)} ${T.stage.chapterLabel(chapter)}`;
 }
 
-/** 复制：优先复制选区，否则复制当前整章。 */
-export async function copyCurrent() {
-  let selection = '';
-  try {
-    selection = String(window.getSelection() || '');
-  } catch {
-    selection = '';
+/**
+ * 规范化单节文本：去掉数据里残留的换行（Access memo 里常见），
+ * 保证「连排」「分节」「分节分行」三种复制格式各自成行。
+ */
+function normalizeVerse(text) {
+  return String(text == null ? '' : text).replace(/\s*\r?\n\s*/g, '');
+}
+
+/**
+ * 组装复制文本（原版 F083–F086）：
+ *   'text'    复制经文          —— 标题 + 经文连排（无节号）
+ *   'section' 复制经文(分节)    —— 标题 + 每节一段，段间空行
+ *   'line'    复制经文(分节分行) —— 标题 + 每节一行（带节号）
+ * 复制的是**当前显示区**里的经文（受速选范围 / 每页节数影响），不是整章。
+ */
+function buildCopyText(mode) {
+  const rows = displayVerses();
+  if (!rows.length) return '';
+  const head = currentTitle();
+  if (mode === 'section') {
+    return [head, ...rows.map((item) => normalizeVerse(verseText(item)))].join('\n\n');
   }
+  if (mode === 'line') {
+    return [head, ...rows.map((item) => `${verseNumber(item)} ${normalizeVerse(verseText(item))}`)].join('\n');
+  }
+  return [head, rows.map((item) => normalizeVerse(verseText(item))).join('')].join('\n');
+}
+
+/** 显示区内的文本选区（选区不在显示区时返回空）。 */
+function stageSelection() {
+  try {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return '';
+    const text = String(sel);
+    if (!text.trim()) return '';
+    const node = sel.anchorNode;
+    if (node && refs.stage && !refs.stage.contains(node)) return '';
+    return text;
+  } catch {
+    return '';
+  }
+}
+
+/** 复制：优先复制显示区选区，否则复制「标题 + 经文」（原版 Ctrl+C＝复制经文）。 */
+export async function copyCurrent() {
+  const selection = stageSelection();
   const useSelection = selection.trim().length > 0;
-  const text = useSelection ? selection : await chapterText();
+  const text = useSelection ? selection : buildCopyText('text');
   if (!text) {
     toast(T.toast.copyFailed, 'error');
     return;
@@ -420,11 +456,13 @@ export function currentVerseText() {
   return found ? verseText(found) : '';
 }
 
-/** Alt+C：只复制章节标题（原版「复制章节」）。 */
+/** Alt+C：只复制章节标题（原版「复制章节」＝仅显示区标题）。 */
 export async function copyTitleOnly() {
-  const { bookId, chapter } = state.current;
-  const book = bookById(bookId);
-  const head = `${bookDisplayName(book)} ${T.stage.chapterLabel(chapter)}`;
+  const head = currentTitle();
+  if (!head) {
+    toast(T.toast.copyFailed, 'error');
+    return;
+  }
   const ok = await ipc.copyText(head);
   if (ok === false || ok === null) {
     toast(T.toast.copyFailed, 'error');
@@ -434,31 +472,24 @@ export async function copyTitleOnly() {
 }
 
 /**
- * 右击菜单的复制变体：
- *   plain   —— 纯正文连排
- *   numbered—— 带节号连排
- *   lines   —— 每节一行（带节号）
+ * 右击菜单「复制 ▸」的三种方式（原版 F085）：
+ *   plain   → 复制经文          ＝ 标题 + 经文连排
+ *   numbered→ 复制经文(分节)    ＝ 标题 + 每节一段（段间空行）
+ *   lines   → 复制经文(分节分行) ＝ 标题 + 每节一行（带节号）
  */
 export async function copyTextVariant(mode) {
-  const rows = displayVerses();
-  if (!rows.length) {
+  const kind = mode === 'numbered' ? 'section' : mode === 'lines' ? 'line' : 'text';
+  const text = buildCopyText(kind);
+  if (!text) {
     toast(T.toast.copyFailed, 'error');
     return;
-  }
-  let text = '';
-  if (mode === 'plain') {
-    text = rows.map((item) => verseText(item)).join('');
-  } else if (mode === 'numbered') {
-    text = rows.map((item) => `${verseNumber(item)} ${verseText(item)}`).join(' ');
-  } else {
-    text = rows.map((item) => `${verseNumber(item)} ${verseText(item)}`).join('\n');
   }
   const ok = await ipc.copyText(text);
   if (ok === false || ok === null) {
     toast(T.toast.copyFailed, 'error');
     return;
   }
-  toast(T.toast.copiedVariant(mode), 'ok');
+  toast(T.toast.copiedVariant(kind), 'ok');
 }
 
 /** 右击菜单「不显示经文」：只留背景。 */

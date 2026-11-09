@@ -809,6 +809,29 @@ input[type="color"] {
   transition: all var(--dur) var(--ease);
 }
 
+/* 查找结果行：左侧复选框用于「选中后复制」（原版 F060） */
+.result-check {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  align-self: center;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.result-item.is-selected {
+  border-color: rgba(216, 166, 72, .6);
+  background: color-mix(in srgb, var(--gold) 10%, var(--bg-elev));
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+.btn-row .btn { flex: 1; }
+
 .result-item:hover {
   border-color: rgba(216, 166, 72, .5);
   transform: translateX(-2px);

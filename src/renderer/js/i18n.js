@@ -54,6 +54,9 @@ export const T = {
     jump: '跳转到该节',
     more: '显示更多',
     moreHint: (shown, total) => `已显示 ${shown} / ${total} 条`,
+    copyVerse: '复制经文',
+    copyTitle: '复制章节',
+    selectForCopy: '选中该条（用于复制）',
   },
 
   settings: {
@@ -172,11 +175,11 @@ export const T = {
       {
         title: '文字与复制',
         rows: [
-          ['Ctrl + C', '复制当前章（或选区）经文'],
+          ['Ctrl + C', '复制经文：章节标题 + 当前显示的经文（连排，无节号）'],
           ['Ctrl + Shift + C', '仅复制当前节经文'],
-          ['Alt + C', '仅复制章节标题'],
-          ['鼠标右键', '复制 ▸ 复制经文 / 复制经文（分节）/ 复制经文（分节分行）'],
-          ['鼠标右键', '全屏显示 / 停止播放 / 不显示经文'],
+          ['Alt + C', '复制章节：仅复制显示区标题'],
+          ['鼠标右键', '复制 ▸ 复制经文_Ctrl+C / 复制经文(分节) / 复制经文(分节分行)'],
+          ['鼠标右键', '停止播放_End / 全屏显示_F5 / 不显示经文'],
           ['Ctrl + = / Ctrl + -', '放大 / 缩小字号'],
           ['Ctrl + 0 / Ctrl + /', '恢复默认字号'],
           ['Ctrl + D', '切换经文字体'],
@@ -191,6 +194,8 @@ export const T = {
           ['Ctrl + H / F4', '打开最近阅读'],
           ['Ctrl + S', '收藏当前节'],
           ['Ctrl + ,', '打开设置'],
+          ['查找面板 Ctrl + C', '复制查找结果（章节与经文）'],
+          ['查找面板「复制经文 / 复制章节」', '复制勾选的结果：章节与经文 / 仅章节'],
         ],
       },
       {
@@ -262,11 +267,11 @@ export const T = {
 
   ctx: {
     copy: '复制',
-    copyPlain: '复制经文',
-    copyNumbered: '复制经文（分节）',
-    copyLines: '复制经文（分节分行）',
-    fullscreen: '全屏显示（F5）',
-    stopPlay: '停止播放（End）',
+    copyPlain: '复制经文_Ctrl+C',
+    copyNumbered: '复制经文(分节)',
+    copyLines: '复制经文(分节分行)',
+    fullscreen: '全屏显示_F5',
+    stopPlay: '停止播放_End',
     hideVerses: '不显示经文',
     showVerses: '显示经文',
   },
@@ -299,13 +304,14 @@ export const T = {
   },
 
   toast: {
-    copied: '已复制当前章经文到剪贴板',
+    copied: '已复制经文（标题＋经文）到剪贴板',
     copiedSelection: '已复制选中的经文到剪贴板',
     copiedVerse: '已复制当前节经文到剪贴板',
     copiedTitle: '已复制章节标题到剪贴板',
     notesOn: '已显示出处标注',
     notesOff: '已隐藏出处标注',
-    copiedVariant: (mode) => (mode === 'plain' ? '已复制经文' : mode === 'numbered' ? '已复制分节经文' : '已复制分节分行经文'),
+    copiedVariant: (kind) => (kind === 'section' ? '已复制分节经文' : kind === 'line' ? '已复制分节分行经文' : '已复制经文'),
+    copiedResults: (n) => `已复制 ${n} 条查找结果到剪贴板`,
     copyFailed: '复制失败',
     noBridge: '未检测到主进程桥接（window.bible），请检查 preload 配置',
     ipcFailed: (m) => `操作失败：${m}`,
