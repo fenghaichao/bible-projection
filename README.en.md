@@ -31,6 +31,12 @@ at the top right and a shortcut hint bar at the bottom right.
 
 ![Projection mode](docs/images/projection-mode.png)
 
+Settings panel: font / size / line height / text and background colour / background image and background music /
+text shadow / title font and title colour / verse-number colour / padding / verses per page / simplified–traditional /
+floating panel, and more.
+
+![Settings panel](docs/images/settings-panel.png)
+
 ## Why rewrite
 
 The original 5.20-SP2 "no-speech" build has a fatal defect in its natively-compiled VB6 runtime:
