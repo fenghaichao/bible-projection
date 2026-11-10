@@ -629,12 +629,12 @@ stroke = {
 
 | 用户操作 | 实现 | 输出形态 |
 | --- | --- | --- |
-| `Ctrl` + `C` | `stage.js → copyCurrent()` | **复制经文**＝`【创1:10-11】` 章节引用 ＋ 当前显示的经文（原版同形，引用与正文同一行）；格式由设置项 `copyFormat` 决定（`text` 连排一行 / `section` 每节一段、段间空行 / `line` 每节一行，两种分节格式每节都带自己的【小节引用】）。显示区重绘后会清除旧选区，因此 `Ctrl` + `C` 永远复制当前显示内容 |
+| `Ctrl` + `C` | `stage.js → copyCurrent()` | **复制经文**＝`【创1:10-11】` 章节引用 ＋ 当前显示的经文（原版同形，引用与正文同一行）；格式由设置项 `copyFormat` 决定（`text` 连排一行不带节号 / `section` 各节带节号连成一行 / `line` 引用独占一行＋每节一行带节号）。显示区重绘后会清除旧选区，因此 `Ctrl` + `C` 永远复制当前显示内容 |
 | `Alt` + `C` | `stage.js → copyTitleOnly()` | **复制章节**＝仅章节引用 `【创1:10-11】` |
 | 右键 → 复制 ▸ → 复制章节_Alt+C | `stage.js → copyTitleOnly()` | **复制章节**＝仅标题（原版该项在「复制」子菜单内） |
 | 右键 → 复制 ▸ → 复制经文_Ctrl+C | `stage.js → copyTextVariant('plain')` | 同 `Ctrl` + `C` 的连排形态 |
-| 右键 → 复制 ▸ → 复制经文(分节) | `copyTextVariant('numbered')` | 标题 ＋ 每节一段，段间空行 |
-| 右键 → 复制 ▸ → 复制经文(分节分行) | `copyTextVariant('lines')` | 标题 ＋ 每节一行（带节号） |
+| 右键 → 复制 ▸ → 复制经文(分节) | `copyTextVariant('numbered')` | `【创1:2-5】` ＋ 各节正文带节号连成一行（`2地是空虚混沌…3神说…`） |
+| 右键 → 复制 ▸ → 复制经文(分节分行) | `copyTextVariant('lines')` | `【创1:2-5】` 独占一行 ＋ 每节一行、每行带节号 |
 | 右键 → 打开画笔_Ctrl+P / 画笔颜色 ▸ / 画笔粗细 ▸ / 白色画笔_Ctrl+B / 橡皮擦_E / 清除画笔_Ctrl+E | `draw.js → toggleDraw() / setDrawColor() / setDrawWidth() / toggleEraser() / clearDraw()` | 与原版 5.20 SP2 实测菜单一致（画笔只在投影模式下生效，菜单动作会先进入投影） |
 | 右键 → 播放进度 ▸ / 不显示经文 / 扩展桌面_F9 / 主题设置 ▸ | `slideshow.js / stage.js / settings.js` | 自动翻页的暂停 / 继续 / 停止、隐藏经文、桌面扩展提示、深色 / 浅色主题 |
 | 查找面板 `Ctrl` + `C` / 「复制经文」 | `panel-search.js → copySearchResults('both')` | 勾选的结果（未勾选＝当前已展示的结果），每行「章节 经文」 |

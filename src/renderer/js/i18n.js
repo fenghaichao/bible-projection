@@ -113,7 +113,7 @@ export const T = {
     themeDark: '深色',
     themeLight: '浅色',
     copyFormat: '复制经文格式（Ctrl+C / 右击“复制”）',
-    copyFormatHint: '连排＝【创1:10-11】＋正文连排成一行；分节＝每节一段，每段带【创1:10】小节引用；分节分行＝每节一行，每行带【创1:10】小节引用',
+    copyFormatHint: '连排＝【创1:10-11】＋正文连排成一行；分节＝【创1:10-11】＋各节正文带节号连成一行；分节分行＝【创1:10-11】独占一行＋每节一行、每行带节号',
     copyFormatText: '连排',
     copyFormatSection: '分节',
     copyFormatLine: '分节分行',

@@ -438,24 +438,24 @@ export function copyRef(rows) {
 }
 
 /**
- * 组装复制文本（与原版 5.20 SP2 一致）：
- *   'text'    复制经文          —— 【创1:10-11】+ 正文连排（同一行，无节号）
- *   'section' 复制经文(分节)    —— 每节一段，每段带自己的【创1:10】小节引用，段间空行
- *   'line'    复制经文(分节分行) —— 每节一行，每行带自己的【创1:10】小节引用
+ * 组装复制文本（与原版 5.20 SP2 逐字一致）：
+ *   'text'    复制经文          —— 【创1:10-11】+ 正文连排（同一行，不带节号）
+ *   'section' 复制经文(分节)    —— 【创1:2-5】+ 各节正文带节号连成一行（2地是…3神说…）
+ *   'line'    复制经文(分节分行) —— 【创1:2-5】独占一行 + 每节一行、每行带节号
  * 复制的是**当前显示区**里的经文（受速选范围 / 每页节数影响），不是整章。
  */
 function buildCopyText(mode) {
   const rows = displayVerses();
   if (!rows.length) return '';
+  const sameChapter = rows.every((item) => (Number(item.chapter) || 0) === (Number(rows[0].chapter) || 0));
+  const label = (item) => (sameChapter
+    ? String(verseNumber(item))
+    : `${Number(item.chapter) || state.current.chapter}:${verseNumber(item)}`);
   if (mode === 'section') {
-    return rows
-      .map((item) => `${copyRef([item])}${normalizeVerse(verseText(item))}`)
-      .join('\n\n');
+    return `${copyRef(rows)}${rows.map((item) => `${label(item)}${normalizeVerse(verseText(item))}`).join('')}`;
   }
   if (mode === 'line') {
-    return rows
-      .map((item) => `${copyRef([item])}${normalizeVerse(verseText(item))}`)
-      .join('\n');
+    return `${copyRef(rows)}\n${rows.map((item) => `${label(item)}${normalizeVerse(verseText(item))}`).join('\n')}`;
   }
   return `${copyRef(rows)}${rows.map((item) => normalizeVerse(verseText(item))).join('')}`;
 }
@@ -535,10 +535,10 @@ export async function copyTitleOnly() {
 }
 
 /**
- * 右击菜单「复制 ▸」的三种方式（原版 F085）：
- *   plain   → 复制经文          ＝【创1:10-11】+ 正文连排（同一行）
- *   numbered→ 复制经文(分节)    ＝ 每节一段，每段带【创1:10】小节引用
- *   lines   → 复制经文(分节分行) ＝ 每节一行，每行带【创1:10】小节引用
+ * 右击菜单「复制 ▸」的三种方式（与原版 F085 逐字同形）：
+ *   plain   → 复制经文          ＝【创1:10-11】+ 正文连排（同一行，不带节号）
+ *   numbered→ 复制经文(分节)    ＝【创1:2-5】+ 各节正文带节号连成一行（2地是…3神说…）
+ *   lines   → 复制经文(分节分行) ＝【创1:2-5】独占一行 + 每节一行、每行带节号
  */
 export async function copyTextVariant(mode) {
   const kind = mode === 'numbered' ? 'section' : mode === 'lines' ? 'line' : 'text';

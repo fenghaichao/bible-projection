@@ -239,7 +239,7 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 
 | Shortcut / action | Action |
 | --- | --- |
-| `Ctrl` + `C` | Copy verse text: **【创1:10-11】** chapter reference + the verses currently displayed (one flowing line by default; the format can be switched in Settings → copy format: flowing / per verse / per verse one per line) |
+| `Ctrl` + `C` | Copy verse text: **【创1:10-11】** chapter reference + the verses currently displayed (one flowing line by default; the format can be switched in Settings → copy format: flowing / numbered verses / numbered verses one per line) |
 | `Ctrl` + `Shift` + `C` | Copy the current verse only |
 | `Alt` + `C` | Copy the chapter reference only, e.g. **【创1:10-11】** |
 | Right-click | Copy ▸ copy verse text_Ctrl+C / copy verse text (per verse) / copy verse text (per verse, one per line) / copy chapter_Alt+C |
