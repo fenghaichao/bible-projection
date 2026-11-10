@@ -19,6 +19,8 @@ import { openPanel } from './panels.js';
 
 let refs = {};
 let navigating = false;
+let lastUserScrollAt = 0;     // 用户手动滚动的时刻
+let smartScrollUntil = 0;     // 导航后短时间内，重绘完可以补一次智能滚动
 
 export function initStage() {
   refs.stage = $('#stage');
@@ -29,6 +31,8 @@ export function initStage() {
   refs.foot = $('#stage-foot');
 
   refs.scroll.addEventListener('wheel', onWheel, { passive: false });
+  // 用户自己滚动过显示区（智能滚动就不该再把画面拉回去）
+  refs.scroll.addEventListener('wheel', () => { lastUserScrollAt = Date.now(); }, { passive: true });
   // 原版遥控习惯：双击显示区=历史面板；三击=清屏（隐藏经文只留背景）
   if (refs.stage) {
     refs.stage.addEventListener('dblclick', () => {
@@ -88,7 +92,15 @@ export async function goToVerse(bookId, chapter, verse, opts = {}) {
   state.range = opts.range || null;
 
   renderStage();
-  if (opts.scroll !== false) scrollToCurrent();
+  if (opts.scroll !== false) {
+    if (opts.scrollMode === 'smart') {
+      // 等一帧再量位置：刚重绘完时布局可能还没稳定（字体、异步补章）。
+      smartScrollUntil = Date.now() + 1200;
+      requestAnimationFrame(() => smartScrollToCurrent());
+    } else {
+      scrollToCurrent();
+    }
+  }
   if (opts.record !== false) recordHistory();
   bus.emit('navigate', { ...state.current, silent: !!opts.silent });
   return true;
@@ -115,6 +127,7 @@ export async function moveVerse(delta) {
       if (nextFrom >= 1 && nextFrom + len - 1 <= list.length) {
         await goToVerse(bookId, chapter, nextFrom, {
           range: { bookId, chapter, from: nextFrom, to: nextFrom + len - 1 },
+          scrollMode: 'smart',
         });
         return;
       }
@@ -150,7 +163,7 @@ export async function moveVerse(delta) {
       target = 1;
     }
 
-    await goToVerse(bookIdNext, chapterNext, target);
+    await goToVerse(bookIdNext, chapterNext, target, { scrollMode: 'smart' });
   } finally {
     navigating = false;
   }
@@ -342,9 +355,19 @@ export function renderStage() {
     }
   }
 
+  // 重绘会清空列表容器，必须把滚动位置原样带回去，
+  // 否则异步补章 / 其它重绘会把读者已经翻到的地方弹回顶部。
+  const keepScroll = refs.scroll ? refs.scroll.scrollTop : 0;
   refs.list.textContent = '';
   refs.list.appendChild(frag);
+  if (refs.scroll) refs.scroll.scrollTop = keepScroll;
   clearStaleSelection();
+
+  // 导航后的一小段时间里，如果因为异步补章等原因又重绘了一次，
+  // 再补一次智能滚动，把当前节带回舒适区（用户自己滚过就不动）。
+  if (Date.now() < smartScrollUntil && Date.now() - lastUserScrollAt > 600) {
+    requestAnimationFrame(() => smartScrollToCurrent());
+  }
 }
 
 /**
@@ -389,6 +412,55 @@ function scrollToCurrent() {
   const node = refs.list && refs.list.querySelector('.verse.is-current');
   if (node && typeof node.scrollIntoView === 'function') {
     node.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+}
+
+/**
+ * 阅读舒适区（占滚动视口高度的比例）。
+ * 人的视线通常落在屏幕中部偏上，所以「当前节」只要落在这个区间里就不动屏幕；
+ * 偏到下边去了才把内容缓慢往上带一带，避免每翻一节就把上一节顶出画面。
+ */
+const READ_ZONE = { top: 0.14, bottom: 0.46 };
+
+/** 平滑滚动（缓动），新的一次滚动会打断上一次。 */
+let scrollAnim = 0;
+function smoothScrollBy(scroller, delta, duration = 420) {
+  if (!scroller || Math.abs(delta) < 1) return;
+  if (scrollAnim) cancelAnimationFrame(scrollAnim);
+  const start = scroller.scrollTop;
+  const end = start + delta;
+  const t0 = performance.now();
+  const step = (now) => {
+    const p = Math.min(1, (now - t0) / duration);
+    const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;   // easeInOutCubic
+    scroller.scrollTop = start + (end - start) * e;
+    scrollAnim = p < 1 ? requestAnimationFrame(step) : 0;
+  };
+  scrollAnim = requestAnimationFrame(step);
+}
+
+/**
+ * 智能滚动（翻节用）：
+ *  - 当前节已经在舒适区 → 屏幕完全不动，上一节仍然留在画面里；
+ *  - 当前节偏到下方 → 缓慢向上移动，把它带回舒适区；
+ *  - 当前节偏到上方（往上翻） → 缓慢向下移动。
+ */
+function smartScrollToCurrent() {
+  const node = refs.list && refs.list.querySelector('.verse.is-current');
+  const scroller = refs.scroll;
+  if (!node || !scroller) return;
+  const vh = scroller.clientHeight;
+  if (!vh) return;
+  const rect = node.getBoundingClientRect();
+  const box = scroller.getBoundingClientRect();
+  const zoneTop = box.top + vh * READ_ZONE.top;
+  const zoneBottom = box.top + vh * READ_ZONE.bottom;
+  if (rect.top > zoneBottom) {
+    // 偏下 → 把内容往上带（scrollTop 增大，元素在视口里的位置随之变高）
+    smoothScrollBy(scroller, rect.top - zoneBottom);
+  } else if (rect.top < zoneTop) {
+    // 偏上 → 把内容往下带
+    smoothScrollBy(scroller, -(zoneTop - rect.top));
   }
 }
 

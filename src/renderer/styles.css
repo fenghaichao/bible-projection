@@ -510,6 +510,18 @@ body::after {
   text-shadow: 0 0 22px rgba(216, 166, 72, .55);
 }
 
+/* 当前节：经文正文变色（金色），配合左侧竖条，视线一眼就能找到读到哪儿了 */
+.verse.is-current .verse-text {
+  color: var(--gold);
+  text-shadow: 0 0 26px rgba(216, 166, 72, .22);
+  transition: color .18s ease, text-shadow .18s ease;
+}
+
+body.projection .verse.is-current .verse-text {
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(216, 166, 72, .35);
+}
+
 .verse.is-current .verse-body::before {
   content: "";
   position: absolute;
