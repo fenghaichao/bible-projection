@@ -486,9 +486,30 @@ function main() {
 
   // 待校验目标：仓库内置译本始终校验；--repo-only 表示只看仓库内置，不扫描用户目录
   const targets = [];
-  for (const b of BUNDLED) {
-    if (fs.existsSync(b.file)) targets.push({ file: b.file, id: b.id, name: b.name });
-    else console.error(`缺少仓库内置数据: ${b.file}`);
+  const seenFiles = new Set();
+  const pushTarget = (file, id, name) => {
+    const key = path.resolve(file).toLowerCase();
+    if (seenFiles.has(key)) return;
+    seenFiles.add(key);
+    targets.push({ file, id, name });
+  };
+  // 内置译本以 manifest.json 的 bundled:true 为准（内置文件可能在 data/ 根下或 data/versions/ 下）
+  const manifestPath = path.join(DATA_DIR, 'versions', 'manifest.json');
+  let manifestEntries = [];
+  try {
+    manifestEntries = (loadJson(manifestPath).versions || []);
+  } catch (err) {
+    console.error(`读取译本清单失败（${manifestPath}）: ${err.message}`);
+  }
+  for (const entry of manifestEntries) {
+    if (!entry || !entry.bundled || !entry.file) continue;
+    const candidates = [
+      path.join(DATA_DIR, entry.file),
+      path.join(DATA_DIR, 'versions', entry.file),
+    ];
+    const found = candidates.find((f) => fs.existsSync(f));
+    if (found) pushTarget(found, entry.id, entry.name);
+    else console.error(`缺少仓库内置数据: ${entry.name}（${entry.file}）`);
   }
   const dirs = opts.dirs.length ? opts.dirs : [];
   if (!dirs.length && !opts.repoOnly && fs.existsSync(DEFAULT_USER_DIR)) {
@@ -503,7 +524,7 @@ function main() {
       .readdirSync(dir)
       .filter((n) => n.endsWith('.json') && !n.endsWith('.meta.json') && n !== 'manifest.json')
       .sort();
-    for (const n of names) targets.push({ file: path.join(dir, n) });
+    for (const n of names) pushTarget(path.join(dir, n));
   }
 
   if (!targets.length) {

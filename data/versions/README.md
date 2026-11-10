@@ -1,10 +1,12 @@
-# `data/versions/` —— 译本清单
+# `data/versions/` —— 译本清单与吕振中正文
 
-本目录**只放清单与说明**，不放任何译本正文：
+本目录放**译本清单**、**公有领域的吕振中译本正文**与本说明；
+**受版权保护的译本正文不入库**：
 
 | 文件 | 说明 |
 | --- | --- |
 | `manifest.json` | 译本清单（**只有元信息，没有经文正文**）。应用通过它知道有哪些译本、哪些随程序分发、各自的版权归属与来源 |
+| `lcc.json` | 吕振中译本正文，31,081 节，**公有领域，随仓库与安装包分发** |
 | `README.md` | 本文件 |
 
 > **受版权保护的译本正文不入库。** 本仓库是公开的，把受版权保护的译本打包进来
@@ -38,9 +40,21 @@
     {
       "id": "lcc",
       "name": "吕振中译本",
-      "bundled": false,
+      "bundled": true,
+      "file": "lcc.json",
       "fhlVersion": "lcc",
-      "copyright": "© 吕振中 / 环球天道圣经机构",
+      "offlineDownload": true,
+      "copyright": "© 吕振中 / 环球天道圣经机构（依 FHL 版权说明页，该译本已超过中国著作权保护期 50 年，属公有领域）",
+      "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
+      "lang": "zh-Hans"
+    },
+    {
+      "id": "rcuv",
+      "name": "和合本修订版 2010",
+      "bundled": false,
+      "fhlVersion": "rcuv",
+      "offlineDownload": false,
+      "copyright": "© 香港圣经公会",
       "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
       "lang": "zh-Hans"
     }
@@ -52,9 +66,10 @@
 | --- | --- |
 | `id` | 译本标识，也是 `settings.version` 的取值 |
 | `name` | 界面显示名 |
-| `bundled` | `true` = 正文随仓库与安装包分发；`false` = 正文不随仓库分发，需自行下载或导入。**当前只有和合本简 / 繁两条为 `true`** |
-| `file` | 正文文件名，相对 `data/` 目录。**仅 `bundled: true` 的条目才有**（和合本简 / 繁是 `bible-simplified.json` / `bible-traditional.json`） |
-| `fhlVersion` | 信望愛 FHL API 的版本参数，用于在线下载；和合本无此字段 |
+| `bundled` | `true` = 正文随仓库与安装包分发；`false` = 正文不随仓库分发，需自行下载或导入。**当前 3 条为 `true`**（和合本简 / 繁、吕振中） |
+| `file` | 正文文件名，相对 `data/` 目录。**仅 `bundled: true` 的条目才有**（和合本简 / 繁是 `bible-simplified.json` / `bible-traditional.json`，吕振中是 `versions/lcc.json`） |
+| `fhlVersion` | 信望愛 FHL API 的版本参数，用于在线下载 |
+| `offlineDownload` | 是否开放离线下载授权（对应 FHL `abv.php` 的 `candownload`）。`false` 时界面加「需授权确认」标签并在下载前弹确认框；**当前只有 `rcuv` / `csb` / `tcv2019` / `ncv` 为 `false`** |
 | `copyright` / `source` | 版权归属与正文来源，界面与文档都会显示 |
 | `lang` | 语言标记（`zh-Hans` / `zh-Hant`） |
 
@@ -66,11 +81,23 @@
 | --- | --- | --- | --- | --- |
 | `simplified` | 和合本（简体） | ✅ `data/bible-simplified.json` | 公有领域（1919 年中文和合本） | 原版《语音投影圣经》Access 数据库 `bibleNosound.dat` |
 | `traditional` | 和合本（繁体） | ✅ `data/bible-traditional.json` | 公有领域（1919 年中文和合本） | 同上 |
-| `lcc` | 吕振中译本 | ❌ 按需下载 | © 吕振中 / 环球天道圣经机构 | [FHL API](https://bible.fhl.net/api/qb.php) |
-| `rcuv` | 和合本修订版 2010 | ❌ 按需下载 | © 香港圣经公会 | 同上 |
-| `csb` | 中文标准译本 | ❌ 按需下载 | © 全球圣经促进会 GBI | 同上 |
-| `tcv2019` | 现代中文译本 2019 | ❌ 按需下载 | © 联合国圣经翻译中文委员会 | 同上 |
-| `ncv` | 环球新译本 | ❌ 按需下载 | © 环球圣经公会 | 同上 |
+| `lcc` | 吕振中译本 | ✅ `data/versions/lcc.json` | 公有领域（依 FHL 版权说明页，1952 / 1970 年出版，已超过中国著作权保护期 50 年） | [FHL API](https://bible.fhl.net/api/qb.php) |
+| `rcuv` | 和合本修订版 2010 | ❌ 按需下载（需授权确认） | © 香港圣经公会 | 同上 |
+| `csb` | 中文标准译本 | ❌ 按需下载（需授权确认） | © 全球圣经促进会 GBI | 同上 |
+| `tcv2019` | 现代中文译本 2019 | ❌ 按需下载（需授权确认） | © 联合国圣经翻译中文委员会 | 同上 |
+| `ncv` | 环球新译本 | ❌ 按需下载（需授权确认） | © 环球圣经公会 | 同上 |
+
+### 随仓库分发的 3 个译本正文
+
+| 文件 | 译本 | 经节数 | 文件大小 | SHA-256 | 说明 |
+| --- | --- | --- | --- | --- | --- |
+| `data/bible-simplified.json` | 和合本（简体） | 31,102 | 3,611,875 字节 | `909fc75b4439a72d0d8fd1b4aa9219b4468f7999aec41485a67f204a02de0a14` | 随仓库分发，公有领域 |
+| `data/bible-traditional.json` | 和合本（繁体） | 31,102 | 3,609,279 字节 | `add8da202b31033bbc6f94e139c82e0cb7e87f0fe4cdca1477feabf1f968a640` | 随仓库分发，公有领域 |
+| `data/versions/lcc.json` | 吕振中译本 | 31,081 | 3,967,569 字节 | `e0ea9f3b2f28fb62404e51ef02c050551d4834ee0992a873530a406cb8cd4483` | 随仓库分发，公有领域 |
+
+> 复核：`Get-FileHash data\versions\lcc.json -Algorithm SHA256`
+> （或 `sha256sum data/versions/lcc.json`）。
+> `data/` 目录整体约 11.2 MB，未含吕振中时约 7.2 MB；安装包体积相应增加约 3.97 MB。
 
 > **分节差异**：各译本的节数不同（31,061 – 31,102），这是译本自身的分节体系差异，不是数据损坏。
 > 应用**不跨译本用节号定位经文**——历史、收藏与标注只记「卷:章:节」。
@@ -129,25 +156,27 @@
 
 顶栏「获取译本」面板里：
 
-- 未安装的译本点「下载安装」——应用按清单里的 `fhlVersion` 从信望愛 FHL API 逐卷下载，
+- 和合本简 / 繁与吕振中译本**已内置**，直接「使用此译本」即可，无需下载；
+- 未安装的 4 个受版权译本点「下载安装」——应用按清单里的 `fhlVersion` 从信望愛 FHL API 逐卷下载，
   写入 `%APPDATA%\BibleProjection\versions\<id>.json`（另有一份 `<id>.meta.json` 记录元信息），
-  下载中显示进度条，可「停止跟踪」；完成后自动切换到该译本；
+  下载中显示进度条，可「停止跟踪」；这 4 个译本会先弹**授权确认框**，取消则不下载；
+  完成后自动切换到该译本；
 - 已有文件的可点面板底部「从本地文件导入…」，选一个上面那种格式的 JSON。
 
 ### 命令行抓取
 
 ```bash
-# 抓取全部 5 个可下载译本到 %APPDATA%\BibleProjection\versions
+# 抓取全部 4 个可下载译本到 %APPDATA%\BibleProjection\versions
 python tools/fetch-versions.py
 
 # 只抓指定译本 / 指定输出目录
-python tools/fetch-versions.py --versions lcc,rcuv
+python tools/fetch-versions.py --versions rcuv,csb
 python tools/fetch-versions.py --out D:\vers --versions ncv
 ```
 
 | 参数 | 默认值 | 说明 |
 | --- | --- | --- |
-| `--versions` | 全部 5 个 | 逗号分隔的译本 id（`lcc` / `rcuv` / `csb` / `tcv2019` / `ncv`） |
+| `--versions` | 全部 4 个 | 逗号分隔的译本 id（`rcuv` / `csb` / `tcv2019` / `ncv`） |
 | `--out` | `%APPDATA%\BibleProjection\versions` | 输出目录 |
 | `--workers` | `6` | 并发线程数 |
 | `--delay` | `0.12` | 每次请求之间的间隔（秒） |
@@ -158,19 +187,23 @@ python tools/fetch-versions.py --out D:\vers --versions ncv
 > ℹ️ `tools/clean-versions.js` 会遍历目录下所有 `.json` 文件，
 > 现在已**自动跳过 `manifest.json`**（提示「目录里没有译本数据」），
 > 因此可以直接对 `data/versions/` 运行，不会再抛 `TypeError: rows is not iterable`。
+> 实测对内置的 `lcc.json` 运行：`31081 行，修正 0 行，丢弃空节 0 行`（已是干净数据）。
 
 ### 校验
 
 ```bash
-node tools/verify-versions.js data/versions      # 校验仓库内的译本清单 + 内置和合本
+node tools/verify-versions.js data/versions      # 校验仓库内的译本清单 + 内置译本
 node tools/verify-versions.js                    # 校验仓库内置数据 + 默认用户译本目录
 node tools/verify-versions.js D:\vers            # 校验指定目录
 node tools/verify-versions.js D:\vers --strict   # 节数与和合本不一致也判 FAIL
 ```
 
-> ℹ️ `tools/verify-versions.js --repo-only` 的语义已修正为「**只校验仓库内置数据**」，
-> 即只检查 `data/` 下随仓库分发的和合本简 / 繁；不带该参数则校验用户译本目录
-> （`%APPDATA%\BibleProjection\versions`）。
+> ℹ️ `tools/verify-versions.js --repo-only` 的语义为「**只校验仓库内置数据**」，
+> 即只检查 `data/` 下随仓库分发的和合本简 / 繁与吕振中三个文件；
+> 不带该参数则校验用户译本目录（`%APPDATA%\BibleProjection\versions`）。
+>
+> ℹ️ 该脚本的「仓库内置文件清单」直接读 `data/versions/manifest.json` 的 `bundled: true` 条目，
+> 增删内置译本不需要改脚本；内置文件既可放在 `data/<file>` 也可放在 `data/versions/<file>`。
 
 校验内容：JSON 可解析、每行是 `[bookId, chapter, verse, text]`、行序升序、键不重复、
 每章节号连续、文本非空、每卷节数与和合本比对、与和合本的键集合差异、
@@ -184,8 +217,13 @@ node tools/verify-versions.js D:\vers --strict   # 节数与和合本不一致�
 ## 6. 版权提示
 
 - **和合本（1919）属公有领域**，其正文可自由使用与再分发，随程序分发。
-- **其余 5 个译本受版权保护**，版权归上表所列机构所有；
+- **吕振中译本（`lcc`）同样属公有领域**：依信望愛版权说明页，该译本 1952 年由香港圣书公会
+  出版《新约新译修稿》、1970 年正式出版全书，**已超过中国著作权保护期 50 年**；
+  FHL 模块清单 `abv.php` 中它的 `candownload` 为 `1`（开放离线下载授权）。
+  因此 `lcc.json` 随仓库与安装包分发。
+- **其余 4 个译本受版权保护**，版权归上表所列机构所有；
   **本仓库与安装包均不含它们的正文**，也不提供镜像、压缩包或直链。
+  程序对这 4 个译本加「需授权确认」标签、下载前弹确认框。
 - 两种获取方式：应用内「获取译本」面板在线下载，或从本地 JSON 文件导入；
   下载的文件只写入本机 `%APPDATA%\BibleProjection\versions\`。
 - **下载并使用即表示你已自行取得使用授权**——请先阅读信望愛 FHL 的版权声明：

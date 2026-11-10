@@ -714,22 +714,23 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 | --- | --- |
 | `id` | 译本标识，同时也是 `settings.version` 的取值 |
 | `name` | 界面显示名（如「和合本（简体）」） |
-| `bundled` | `true` 表示正文随仓库与安装包分发；`false` 表示不随仓库分发，需自行下载或导入。**当前只有和合本简 / 繁两条为 `true`** |
-| `file` | 正文文件名，相对 `data/` 目录；**仅 `bundled: true` 的条目有**（和合本简 / 繁是 `data/bible-*.json`） |
+| `bundled` | `true` 表示正文随仓库与安装包分发；`false` 表示不随仓库分发，需自行下载或导入。**当前有 3 条为 `true`：和合本简 / 繁、吕振中译本**（三者均属公有领域） |
+| `file` | 正文文件名，相对 `data/` 目录；**仅 `bundled: true` 的条目有**（和合本简 / 繁是 `data/bible-*.json`，吕振中是 `data/versions/lcc.json`） |
 | `fhlVersion` | 信望愛 API 的版本参数，用于在线下载 |
 | `copyright` / `source` | 版权归属与正文来源，界面会显示 |
 | `lang` | 语言标记，如 `zh-Hans` / `zh-Hant` |
+| `offlineDownload` | FHL `abv.php` 的 `candownload`：该译本是否开放离线下载授权。`false` 的译本在面板上带「需授权确认」标签，下载前会弹确认框 |
 
 读取失败（文件缺失或格式不对）时，`versions.loadManifest()` 回退到 `versions.js` 内置的
 `DEFAULT_MANIFEST`（**只有和合本简 / 繁两条**），应用不会因此启动失败；
-此时译本列表会退化为这两个译本，其余 5 个译本需把清单文件补回 `data/versions/manifest.json`。
+此时译本列表会退化为这两个译本，其余 5 个译本（吕振中 + 4 个受版权译本）需把清单文件补回 `data/versions/manifest.json`。
 
 ### 8.3 译本文件的解析顺序
 
 `versions.resolveVersionFile(id)` 按下面的顺序定位正文文件：
 
-1. 清单条目 `bundled === true` 且 `file` 存在 → `data/<file>`（仓库内；目前只有和合本简 / 繁，
-   即 `data/bible-simplified.json` / `data/bible-traditional.json`）；
+1. 清单条目 `bundled === true` 且 `file` 存在 → 依次尝试 `data/<file>` 与 `data/versions/<file>`
+   （仓库内；目前是 `data/bible-simplified.json` / `data/bible-traditional.json` / `data/versions/lcc.json`）；
 2. 否则 → `%APPDATA%\BibleProjection\versions/<id>.json`（用户下载 / 导入目录）；
 3. 两者都不存在 → 返回 `null`，`versions.isInstalled(id)` 为 `false`。
 
@@ -743,7 +744,7 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 | `loadManifest()` | 读取并缓存 `data/versions/manifest.json`，失败回退内置清单 |
 | `listVersions()` | 合并清单与本地已安装状态；本地存在但清单里没有的译本（如手工导入）也会补进来 |
 | `resolveVersionFile(id)` / `isInstalled(id)` | 按 8.3 的顺序定位正文、判断是否可读 |
-| `installVersion(id, { onProgress })` | 从 FHL API 下载 66 卷 → 清洗文本 → 写入 `%APPDATA%\BibleProjection\versions\<id>.json` + `<id>.meta.json`；**清单里 `bundled: true` 的条目直接返回「该译本已内置」，不会下载**（和合本简 / 繁） |
+| `installVersion(id, { onProgress })` | 从 FHL API 下载 66 卷 → 清洗文本 → 写入 `%APPDATA%\BibleProjection\versions\<id>.json` + `<id>.meta.json`；**清单里 `bundled: true` 的条目直接返回「该译本已内置」，不会下载**（和合本简 / 繁、吕振中） |
 | `importVersionFile(path)` | 导入本地译本 JSON（`[书卷号, 章, 节, 正文]` 数组）；译本 id 取文件名 |
 | `cleanText(raw)` | 去掉标题标签、`<br>`、行内注释（`([...])` / `（[...]）`）并压缩空白，规则与 `tools/fetch-versions.py` 一致 |
 
@@ -772,7 +773,7 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 
 | 控件 | 位置 | 行为 |
 | --- | --- | --- |
-| `#version-select` 译本下拉框 | 顶栏 | 列出 `listVersions()` 返回的全部译本（当前 7 个：和合本简 / 繁随程序内置，其余 5 个需先下载或导入）。只有文件缺失的译本才显示「XXX（未安装）」，**选中未安装的译本不会切换**，只 toast 提示「尚未安装，请先在「获取译本」中下载」并打开该面板；选中已安装的译本则写入 `settings.version` 并重新取数 |
+| `#version-select` 译本下拉框 | 顶栏 | 列出 `listVersions()` 返回的全部译本（当前 7 个：和合本简 / 繁、吕振中随程序内置，其余 4 个需先下载或导入）。只有文件缺失的译本才显示「XXX（未安装）」，**选中未安装的译本不会切换**，只 toast 提示「尚未安装，请先在「获取译本」中下载」并打开该面板；选中已安装的译本则写入 `settings.version` 并重新取数 |
 | `#btn-versions` 「获取译本」按钮 | 顶栏 | 打开右侧抽屉里的 `#panel-versions` 面板并刷新列表 |
 
 `#panel-versions` 面板（`src/renderer/js/panel-versions.js`）的约定：
@@ -785,9 +786,11 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 - 面板底部是「从本地文件导入…」与「刷新列表」；
 - 安装或导入完成后主进程广播 `bible:versions-changed`，渲染层刷新列表并**自动切换到刚装好的译本**。
 
-> 和合本简 / 繁随程序内置（带「内置」标签且始终已安装）；其余 5 个译本默认是「未安装」，
+> 和合本简 / 繁、吕振中随程序内置（带「内置」标签且始终已安装）；其余 4 个译本默认是「未安装」，
 > 面板里的主操作是「下载安装」——主进程按清单里的 `fhlVersion` 从信望愛 FHL 逐卷抓取，
 > 写入 `%APPDATA%\BibleProjection\versions\`，下载中显示进度条，可「停止跟踪」；
+> 其中 FHL 未开放离线下载授权（`candownload=0`，即和合本2010 / 中文标准 / 现代中文2019 / 环球新译本）
+> 的译本会先弹「需授权确认」框，用户确认后才开始下载；
 > 面板底部还可「从本地文件导入…」或「刷新列表」。
 >
 > 注意：主进程对 `bundled: true` 的条目**不会真的下载**，直接返回「该译本已内置」。
