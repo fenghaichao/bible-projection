@@ -7,8 +7,9 @@ const { contextBridge, ipcRenderer } = require('electron');
  */
 const bible = {
   getBooks: () => ipcRenderer.invoke('bible:getBooks'),
-  getChapter: (bookId, chapter) => ipcRenderer.invoke('bible:getChapter', bookId, chapter),
-  getRange: (bookId, from, to) => ipcRenderer.invoke('bible:getRange', bookId, from, to),
+  // version 可选：不传＝当前译本；多版本对照时传各栏自己的译本 id
+  getChapter: (bookId, chapter, version) => ipcRenderer.invoke('bible:getChapter', bookId, chapter, version),
+  getRange: (bookId, from, to, version) => ipcRenderer.invoke('bible:getRange', bookId, from, to, version),
   search: (payload) => ipcRenderer.invoke('bible:search', payload),
 
   getSettings: () => ipcRenderer.invoke('bible:getSettings'),

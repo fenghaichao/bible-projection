@@ -46,6 +46,12 @@ confirmation, and a local JSON file can be imported.
 
 ![Translations panel](docs/images/versions-panel.png)
 
+Multi-version comparison: after ticking 2–4 installed translations and pressing "compare current passage",
+**every verse is followed by the same verse from each ticked translation** (no side-by-side columns) —
+here Genesis 1:1–1:2 in CUV (Simplified), the Lü Zhenzhong Translation and CUV 2010.
+
+![Multi-version comparison](docs/images/compare-versions.png)
+
 ## Why rewrite
 
 The original 5.20-SP2 "no-speech" build has a fatal defect in its natively-compiled VB6 runtime:
@@ -88,6 +94,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | Multi-keyword text search | ✅ multi-keyword search | "Match all" and "Match any" modes; hits are highlighted, results are paged with a "showing N / M" hint and the keywords are kept |
 | Traditional and Simplified Chinese | ✅ translation switching | **CUV (Simplified)** and **CUV (Traditional)** are two *separate* translation entries, switched from the top-bar dropdown; book and category names are localised to the selected script |
 | — (new) | ✅ 7 Chinese translations (3 bundled, the rest on demand) | The **Chinese Union Version (Simplified / Traditional)** and the **Lü Zhenzhong Translation** ship with the app (both public domain); **CUV 2010**, **Chinese Standard Bible**, **Today's Chinese Version 2019** and **New Chinese Version** are copyrighted and therefore **not shipped** — download them in the "Get translations" panel after confirming you have obtained the necessary authorisation (data comes from the FHL API) or import a local JSON file; see [docs/versions.md](docs/versions.md) |
+| — (new) | ✅ per-verse translation comparison | In the "Get translations" panel, tick **2–4 installed translations** and press "compare current passage": **every verse is followed by the same verse from each ticked translation** (no side-by-side columns); each line is prefixed with a small "translation chapter:verse" label; the data refreshes automatically when you page or change chapter; press "stop comparison" to return to the single-translation view |
 | Copy verses into other programs | ✅ clipboard | Same names as the original: **copy verse text** (chapter title + verses, flowing) / **copy verse text (per verse)** / **copy verse text (per verse, one per line)**; **copy chapter** = title only (`Alt` + `C`); search results can be copied per column (chapter only / chapter + verse text) |
 | Simple drawing | ✅ brush annotation | Freehand, rectangle, circle, line and text notes (double-click to type), with eraser, undo and redo; strokes are saved per `book:chapter` into `userData/annotations.json` |
 | Bookmarks | ✅ my bookmarks | `Ctrl` + `S` bookmarks the current verse, up to 500 entries |
@@ -165,6 +172,11 @@ the other **four are under copyright and downloaded on demand** (after a licence
 | Chinese Standard Bible | `csb` | ❌ on demand (licence confirmation) | © 全球圣经促进会 GBI |
 | Today's Chinese Version 2019 | `tcv2019` | ❌ on demand (licence confirmation) | © 联合国圣经翻译中文委员会 |
 | New Chinese Version | `ncv` | ❌ on demand (licence confirmation) | © 环球圣经公会 |
+
+**Several translations can be compared verse by verse**: tick the installed translations
+at the bottom of the "Get translations" panel and press "compare current passage" — every verse is then
+followed by the same verse from each ticked translation;
+the details are in the "multi-version comparison" section of [docs/versions.md](docs/versions.md).
 
 #### The three bundled translations (public domain)
 

@@ -306,6 +306,72 @@ body::after {
 
 .version-progress-text { margin: 4px 0 0; color: var(--tx-3); font-size: 12px; }
 
+/* ── 多版本对比（获取译本面板底部） ───────────────────────────── */
+.version-compare {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.compare-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 8px;
+}
+
+.compare-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tx-2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 160ms var(--ease), color 160ms var(--ease), background 160ms var(--ease);
+}
+
+.compare-chip:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--gold); }
+
+.compare-chip.is-selected {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+}
+
+.compare-chip.is-disabled,
+.compare-chip:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+#compare-status.is-warn { color: var(--tx-3); }
+
+/* ── 多版本对比：每节下面逐个译本列出 ─────────────────────────── */
+.verse-compare-row {
+  display: block;
+  margin: .35em 0 .7em;
+  padding-left: .2em;
+}
+
+.verse-compare-label {
+  display: block;
+  margin-bottom: .15em;
+  font-size: .62em;
+  letter-spacing: .06em;
+  color: var(--gold-dim);
+}
+
+.verse-compare-text {
+  display: block;
+  line-height: 1.75;
+  color: var(--tx-1);
+}
+
+.verse.is-current .verse-compare-text {
+  color: var(--current-verse-color, var(--gold));
+}
+
 /* ── layout ─────────────────────────────────────────────────── */
 .layout {
   position: relative;
@@ -1200,6 +1266,17 @@ body:not(.projection) .stage-scroll:has(#columns:not([hidden])) .columns { margi
   font-size: 13px;
   letter-spacing: .08em;
   color: var(--tx-1);
+}
+
+/* 栏头右侧的译本名（多版本对比） */
+.column-version {
+  margin-left: auto;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--gold-dim);
 }
 
 .column-body { font-size: 15px; line-height: 1.75; color: var(--tx-2); }

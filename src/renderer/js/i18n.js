@@ -324,6 +324,7 @@ export const T = {
     addHint: '新增一组经文用于对照（最多 4 组）',
     switchTo: (n) => `切换到第 ${n} 组`,
     limit: '最多只能同时显示 4 组经文',
+    versionLabel: (name) => `译本：${name}`,
   },
 
   letterbar: {
@@ -378,6 +379,16 @@ export const T = {
     importError: (msg) => `导入译本失败：${msg || '未知错误'}`,
     stopTracking: '停止跟踪',
     stoppedHint: '已停止跟踪该译本的下载进度（后台下载可能仍在继续）',
+    compareTitle: '多版本对比',
+    compareHint: '选择 2–4 个已安装译本，正文里每一节下面会逐个译本列出。',
+    compareAction: '对比当前经文',
+    compareClear: '结束对比',
+    compareNeed: (n) => (n < 2 ? `请至少选择 2 个译本（已选 ${n} 个）` : `已选 ${n} 个译本，可以开始对比`),
+    compareReady: (n) => `已选 ${n} 个译本，可以开始对比`,
+    compareLimit: '最多同时对比 4 个译本',
+    compareStarted: (n) => `已开始 ${n} 个译本的逐节对照`,
+    compareFailed: '开始多版本对比失败',
+    compareStopped: '已结束多版本对比',
   },
 
   toast: {

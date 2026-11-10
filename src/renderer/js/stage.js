@@ -113,6 +113,8 @@ export async function goToVerse(bookId, chapter, verse, opts = {}) {
   state.anchor = opts.anchor !== undefined ? opts.anchor : null;
 
   renderStage();
+  // 多版本对比开启时，换章后要把各译本的新章节正文取回来
+  if (compareActive()) refreshCompare();
   if (opts.scroll !== false) {
     if (opts.scrollMode === 'smart') {
       // 等一帧再量位置：刚重绘完时布局可能还没稳定（字体、异步补章）。
@@ -412,15 +414,31 @@ function clearStaleSelection() {
 function verseNode(item, chapter, currentVerse) {
   const num = verseNumber(item);
   const isCurrent = num === currentVerse;
-  const textSpan = el('span', { class: 'verse-text' });
-  const keywords = state.searchKeywords;
-  if (keywords && keywords.length) {
-    textSpan.appendChild(highlightFragment(verseText(item), keywords));
+  const body = [];
+
+  const cmp = state.compare;
+  if (cmp && cmp.versions && cmp.versions.length) {
+    // 多版本对比：同一节下面逐个译本列出正文（不做左右分栏）
+    for (const vid of cmp.versions) {
+      const label = cmp.names[vid] || vid;
+      const map = (cmp.texts[vid] || {})[chapter] || {};
+      const text = map[num];
+      body.push(el('span', { class: 'verse-compare-row' }, [
+        el('span', { class: 'verse-compare-label', text: `${label} ${chapter}:${num}` }),
+        el('span', { class: 'verse-compare-text', text: text || '' }),
+      ]));
+    }
   } else {
-    textSpan.textContent = verseText(item);
+    const textSpan = el('span', { class: 'verse-text' });
+    const keywords = state.searchKeywords;
+    if (keywords && keywords.length) {
+      textSpan.appendChild(highlightFragment(verseText(item), keywords));
+    } else {
+      textSpan.textContent = verseText(item);
+    }
+    body.push(textSpan);
   }
 
-  const body = [textSpan];
   if (state.settings.showNotes) {
     body.push(el('span', { class: 'verse-ref', text: verseRef(item, chapter) }));
   }
@@ -429,6 +447,73 @@ function verseNode(item, chapter, currentVerse) {
     el('span', { class: 'verse-no', text: String(num) }),
     el('span', { class: 'verse-body' }, body),
   ]);
+}
+
+/**
+ * 开启多版本对比：抓取各译本在当前章（及下一章）的正文，
+ * 之后每一节下面逐个译本列出（不做左右分栏）。
+ */
+export async function startCompare(versions, names) {
+  const ids = Array.isArray(versions) ? versions.filter((v) => !!v) : [];
+  if (ids.length < 2) return false;
+  const { bookId, chapter } = state.current;
+  const texts = await fetchCompareTexts(ids, bookId, compareChapters(bookId, chapter));
+  state.compare = { versions: ids, names: names || {}, texts };
+  renderStage();
+  return true;
+}
+
+/** 结束多版本对比，恢复单译本显示。 */
+export function stopCompare() {
+  if (!state.compare) return;
+  state.compare = null;
+  renderStage();
+}
+
+/** 多版本对比是否开启。 */
+export function compareActive() {
+  return !!(state.compare && state.compare.versions && state.compare.versions.length);
+}
+
+/** 对比模式换章后重新取各译本正文。 */
+export async function refreshCompare() {
+  if (!compareActive()) return;
+  const { bookId, chapter } = state.current;
+  const texts = await fetchCompareTexts(state.compare.versions, bookId, compareChapters(bookId, chapter));
+  if (!compareActive()) return;
+  state.compare.texts = texts;
+  renderStage();
+}
+
+/** 需要取数的章：当前章 + 下一章（普通模式会接上下一章连续显示）。 */
+function compareChapters(bookId, chapter) {
+  const book = bookById(bookId);
+  const chapters = [chapter];
+  const next = chapter + 1;
+  if (book && next <= (Number(book.chapters) || 1)) chapters.push(next);
+  return chapters;
+}
+
+/** 逐个译本抓取整章正文，返回 { [译本id]: { [章]: { [节]: 正文 } } }。 */
+async function fetchCompareTexts(ids, bookId, chapters) {
+  const texts = {};
+  for (const vid of ids) {
+    texts[vid] = {};
+    for (const ch of chapters) {
+      let rows = [];
+      try {
+        rows = await ipc.getChapter(bookId, ch, vid);
+      } catch {
+        rows = [];
+      }
+      const map = {};
+      for (const row of Array.isArray(rows) ? rows : []) {
+        map[verseNumber(row)] = verseText(row);
+      }
+      texts[vid][ch] = map;
+    }
+  }
+  return texts;
 }
 
 /**

@@ -22,6 +22,7 @@ import { initColumns } from './columns.js';
 import { initContextMenu } from './contextmenu.js';
 import { initFloatLink } from './floatlink.js';
 import { initVersions, refreshVersionList } from './panel-versions.js';
+import { initCompare } from './compare.js';
 import { clearChapterCache } from './version.js';
 
 /** 全局兜底：任何未捕获异常都要给出提示，避免「白屏无提示」。 */
@@ -71,6 +72,7 @@ async function start() {
   initContextMenu();
   initFloatLink();
   initVersions();
+  initCompare();
 
   bindStageControls();
 

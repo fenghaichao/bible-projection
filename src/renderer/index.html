@@ -319,6 +319,16 @@
           <button class="btn btn-ghost" type="button" id="versions-refresh" data-i18n="versions.refresh">刷新列表</button>
         </div>
         <p class="field-hint" data-i18n="versions.copyrightHint">译本版权与使用范围请以各译本出版方说明为准；导入的译本仅在本机使用。</p>
+        <div class="version-compare">
+          <h3 class="group-label" data-i18n="versions.compareTitle">多版本对比</h3>
+          <p class="field-hint" data-i18n="versions.compareHint">选择 2–4 个已安装译本，正文里每一节下面会逐个译本列出。</p>
+          <div class="compare-chips" id="compare-chips"></div>
+          <p class="field-hint" id="compare-status"></p>
+          <div class="field field-row">
+            <button class="btn btn-accent" type="button" id="compare-start" data-i18n="versions.compareAction">对比当前经文</button>
+            <button class="btn btn-ghost" type="button" id="compare-clear" data-i18n="versions.compareClear">结束对比</button>
+          </div>
+        </div>
       </div>
     </section>
 

@@ -2,7 +2,7 @@
 
 本目录存放 README 与文档引用的界面截图。
 
-**当前已有 4 张真实截图**，均由 Electron 运行时抓取（`webContents.capturePage()`）或 CDP `Page.captureScreenshot`
+**当前已有 5 张真实截图**，均由 Electron 运行时抓取（`webContents.capturePage()`）或 CDP `Page.captureScreenshot`
 在实际运行的窗口中取得，不是示意图或渲染稿。
 
 | 文件 | 尺寸 | 内容 |
@@ -11,6 +11,7 @@
 | `projection-mode.png` | 1920 × 1080 | 投影模式：整屏单节居中、右上角绘制工具栏、右下角快捷键提示条 |
 | `settings-panel.png` | 1264 × 781 | 设置面板：字体/字号/行距/颜色/背景图/背景音乐/阴影/标题字体与标题颜色/节号颜色/四边缩进等 |
 | `versions-panel.png` | 1264 × 781 | 「获取译本」面板：译本列表（名称 + 「内置 / 已安装 / 需授权确认」标签）、来源与版权、当前译本 / 使用此译本 / 下载安装。**共 7 个译本：和合本简 / 繁与吕振中带「内置」标签，其余 4 个受版权保护的译本显示「需授权确认」** |
+| `compare-versions.png` | 1264 × 781 | 多版本对比：**每一节下面逐个译本列出同一节正文**（不做左右分栏），每条带「译本名 章:节」小标签——图中是创世记 1:1–1:2 的和合本（简体）/ 吕振中译本 / 和合本修订版 2010 三种译文 |
 
 引用方式（相对仓库根目录）：
 
@@ -19,6 +20,7 @@
 ![投影模式](docs/images/projection-mode.png)
 ![设置面板](docs/images/settings-panel.png)
 ![获取译本面板](docs/images/versions-panel.png)
+![多版本对比](docs/images/compare-versions.png)
 ```
 
 ## 约定与后续补充

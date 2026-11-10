@@ -80,8 +80,9 @@ export const bridgeMissing = !usable;
 /** 渲染层实际使用的 IPC 集合（与 preload 契约一一对应）。 */
 export const ipc = {
   getBooks: () => call('getBooks'),
-  getChapter: (bookId, chapter) => call('getChapter', bookId, chapter),
-  getRange: (bookId, from, to) => call('getRange', bookId, from, to),
+  // version 可选：不传＝当前译本；传译本 id＝取该译本的经文（多版本对比用）
+  getChapter: (bookId, chapter, version) => call('getChapter', bookId, chapter, version),
+  getRange: (bookId, from, to, version) => call('getRange', bookId, from, to, version),
   search: (params) => call('search', params),
   getHistory: () => call('getHistory'),
   addHistory: (entry) => call('addHistory', entry),

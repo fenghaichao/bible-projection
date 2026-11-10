@@ -119,6 +119,13 @@ export const state = {
   /** 多栏对照：最多 4 栏，每栏 { bookId, chapter, verse, enabled } */
   columns: [],
   activeColumn: 0,
+  /**
+   * 多版本对比（非左右分栏）：每一节下面逐个译本列出正文。
+   * 结构 { versions: string[], names: { id: 译本名 }, texts: { id: { 章: { 节: 正文 } } } }
+   */
+  compare: null,
+  /** 「获取译本」面板里勾选待对比的译本 id 列表 */
+  compareSelection: [],
 };
 
 export function setBooks(books) {

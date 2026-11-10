@@ -237,11 +237,12 @@ function registerIpc() {
 
   ipcMain.handle('bible:getBooks', () => bible.getBooks());
 
-  ipcMain.handle('bible:getChapter', (_e, bookId, chapter) =>
-    safe(() => bible.getChapter(Number(bookId), Number(chapter), currentVersion()), []));
+  // 第三个参数 version 可选：不传＝当前译本；多版本对照时各栏用各自的译本取数
+  ipcMain.handle('bible:getChapter', (_e, bookId, chapter, version) =>
+    safe(() => bible.getChapter(Number(bookId), Number(chapter), version || currentVersion()), []));
 
-  ipcMain.handle('bible:getRange', (_e, bookId, from, to) =>
-    safe(() => bible.getRange(Number(bookId), from, to, currentVersion()), []));
+  ipcMain.handle('bible:getRange', (_e, bookId, from, to, version) =>
+    safe(() => bible.getRange(Number(bookId), from, to, version || currentVersion()), []));
 
   ipcMain.handle('bible:search', (_e, payload) => safe(() => bible.search(payload || {}, currentVersion()), []));
 

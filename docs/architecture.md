@@ -141,8 +141,8 @@ src/renderer/
 | 方法 | 参数 | 返回 | 说明 |
 | --- | --- | --- | --- |
 | `bible:getBooks` | — | `Book[]` | 全部 66 卷的书目信息（来自 `src/shared/books.js`；该文件缺失时返回空数组） |
-| `bible:getChapter` | `bookId: number`, `chapter: number` | `Verse[]` | 整章经文，按节号升序；章不存在返回 `[]` |
-| `bible:getRange` | `bookId: number`, `from: {chapter,verse}`, `to: {chapter,verse}` | `Verse[]` | 闭区间连续经文，可跨章；起止颠倒时自动交换 |
+| `bible:getChapter` | `bookId: number`, `chapter: number`, `version?: string` | `Verse[]` | 整章经文，按节号升序；章不存在返回 `[]`。`version` 可选：省略＝当前译本，传入译本 id＝取该译本（多版本对照用） |
+| `bible:getRange` | `bookId: number`, `from: {chapter,verse}`, `to: {chapter,verse}`, `version?: string` | `Verse[]` | 闭区间连续经文，可跨章；起止颠倒时自动交换。`version` 可选，语义同 `bible:getChapter` |
 | `bible:search` | `{ keywords?: string[] \| string, mode?: 'all' \| 'any', limit?: number }` | `SearchHit[]` | 多关键字查找，见 §3 |
 
 其中：
@@ -831,6 +831,33 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 
 > 已安装译本与内置和合本**同构**（同样的 `[书卷号, 章, 节, 正文]` 数组与同样的索引键
 > `"卷:章:节"`），所以数据加载与查找策略（§3）对所有译本一致，只是数据文件来源不同。
+
+### 8.9 多版本对比（逐节对照）如何取数
+
+「获取译本」面板底部的「多版本对比」区块（`src/renderer/js/compare.js`）**不做左右分栏**：
+正文仍是单栏，每一节下面逐个译本列出同一节正文。
+
+| 位置 | 内容 |
+| --- | --- |
+| `state.compare` | `{ versions: string[], names: { id: 译本名 }, texts: { id: { 章: { 节: 正文 } } } }` |
+| `state.compareSelection` | 面板里勾选待对比的译本 id 列表（最多 4 个） |
+| 取数 | `ipc.getChapter(bookId, chapter, version)`→ 主进程 `bible.getChapter(bookId, chapter, version)` |
+| 取数范围 | `compareChapters()`：当前章 + 下一章（普通模式会接上下一章连续显示） |
+| 缓存 | `state.compare.texts[译本id][章][节]`，各译本互不串味 |
+| 渲染 | `stage.js` 的 `verseNode()`：对比开启时每节生成 `.verse-compare-row`（`.verse-compare-label` = 「译本名 章:节」，`.verse-compare-text` = 正文）；关闭时回到普通的 `.verse-text`（含关键字高亮） |
+
+对比的建立流程（`stage.startCompare()`）：
+
+1. 取所选译本 id 列表（`compare.js` 的 `onStart()`，不足 2 个则不启动）；
+2. `compareChapters()` 算出要取哪几章；
+3. `fetchCompareTexts()` 逐译本逐章调 `ipc.getChapter()`，整理成 `texts` 映射；
+4. 写入 `state.compare` 并 `renderStage()`；面板随即 `closePanel()`。
+
+翻节 / 换章时 `goToVerse()` 会调用 `refreshCompare()` 重新取数，对照因此始终跟随当前位置；
+「结束对比」（`stopCompare()`）清空 `state.compare` 并恢复单译本显示。
+
+主进程侧只做了一处改动：`bible:getChapter` / `bible:getRange` 接受**可选**的 `version` 参数
+（省略＝`currentVersion()`），因此不传时行为与从前完全一致。
 
 ## 9. 目录速查
 

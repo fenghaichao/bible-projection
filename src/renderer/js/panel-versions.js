@@ -91,7 +91,20 @@ export async function refreshVersionList() {
   versions = Array.isArray(list) && list.length ? list.filter((v) => v && v.id) : FALLBACK_VERSIONS.slice();
   fillSelect();
   renderPanel();
+  bus.emit('versions-list', versions.slice());
   return versions;
+}
+
+/** 当前译本列表（副本）。 */
+export function versionList() {
+  return versions.slice();
+}
+
+/** 译本显示名；取不到时回退到 id。 */
+export function versionName(id) {
+  if (!id) return '';
+  const found = versions.find((v) => v.id === id);
+  return found ? (found.name || found.id) : id;
 }
 
 /** 当前生效的译本 id。 */
