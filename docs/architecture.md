@@ -190,11 +190,14 @@ type SearchHit = Verse & { bookName: string };
 | `titleFontFamily` | `string` | `''` | 标题字体（空字符串 = 跟随 `fontFamily`） |
 | `titleColor` | `string` | `''` | 标题颜色（空字符串 = 跟随 `textColor`） |
 | `verseNumberColor` | `string` | `''` | 节号颜色（空字符串 = 跟随主题强调色） |
+| `currentVerseColor` | `string` | `''` | 当前节（翻节高亮）经文颜色（空字符串 = 跟随主题强调色 `var(--gold)`） |
 | `padding` | `number` | `0` | 经文区四边缩进（px，0–120，背景图仍满屏） |
 
 > 这四个字段已由主进程预留，并由渲染层设置面板接入、实际生效（见
 > [docs/feature-audit.md](feature-audit.md)）。渲染层把它们映射为 CSS 变量
 > `--title-font` / `--title-color` / `--verse-no-color` / `--stage-pad`。
+> `currentVerseColor` 映射为 `--current-verse-color`（留空时直接移除该变量，
+> 由 CSS 的 `var(--current-verse-color, var(--gold))` 回退到主题金色）。
 
 > `traditional` 同时决定经文取数版本：`false` → `simplified`，`true` → `traditional`。
 > 取数版本由主进程根据当前设置解析，渲染层不需要在每个请求里重复传参。

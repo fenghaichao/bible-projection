@@ -197,6 +197,14 @@
           <button class="btn btn-ghost" type="button" id="set-verse-color-reset" data-i18n="settings.followAccent">跟随主题色</button>
         </div>
 
+        <div class="field field-row">
+          <span class="field-label" data-i18n="settings.currentVerseColor">当前节高亮颜色</span>
+          <input type="color" id="set-current-color" value="#d8a648" />
+          <code class="hex" id="set-current-color-hex">—</code>
+          <button class="btn btn-ghost" type="button" id="set-current-color-reset" data-i18n="settings.followAccent">跟随主题色</button>
+        </div>
+        <p class="field-hint" data-i18n="settings.currentVerseColorHint">翻节时当前节经文的颜色（留空＝跟随主题金色）</p>
+
         <label class="field">
           <span class="field-label"><span data-i18n="settings.padding">四边留白（像素）</span> <output id="set-padding-out">0</output></span>
           <input type="range" id="set-padding" min="0" max="120" step="4" value="0" />

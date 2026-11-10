@@ -25,6 +25,9 @@ export function initSettings() {
   refs.verseColor = $('#set-verse-color');
   refs.verseColorHex = $('#set-verse-color-hex');
   refs.verseColorReset = $('#set-verse-color-reset');
+  refs.currentColor = $('#set-current-color');
+  refs.currentColorHex = $('#set-current-color-hex');
+  refs.currentColorReset = $('#set-current-color-reset');
   refs.padding = $('#set-padding');
   refs.paddingOut = $('#set-padding-out');
   refs.size = $('#set-size');
@@ -82,6 +85,8 @@ export function initSettings() {
   // 标题颜色 / 节号颜色（留空＝跟随主题）
   bindColor(refs.titleColor, refs.titleColorHex, refs.titleColorReset, 'titleColor', () => state.settings.textColor);
   bindColor(refs.verseColor, refs.verseColorHex, refs.verseColorReset, 'verseNumberColor', () => accentColor());
+  // 当前节高亮颜色（留空＝跟随主题金色）
+  bindColor(refs.currentColor, refs.currentColorHex, refs.currentColorReset, 'currentVerseColor', () => accentColor());
   if (refs.padding) {
     refs.padding.addEventListener('input', () => {
       refs.paddingOut.textContent = refs.padding.value;
@@ -260,6 +265,9 @@ export function applySettings(next = state.settings) {
     : 'var(--font-display)');
   root.style.setProperty('--title-color', s.titleColor || 'var(--stage-color)');
   root.style.setProperty('--verse-no-color', s.verseNumberColor || 'var(--gold)');
+  // 当前节高亮颜色（留空＝跟随主题金色：直接移除变量，让 CSS 回退到 var(--gold)）
+  if (s.currentVerseColor) root.style.setProperty('--current-verse-color', s.currentVerseColor);
+  else root.style.removeProperty('--current-verse-color');
   root.style.setProperty('--stage-pad', `${Math.max(0, Math.round(Number(s.padding) || 0))}px`);
 
   const verses = $('#verses');

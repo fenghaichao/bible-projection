@@ -75,6 +75,8 @@ export const T = {
     titleColor: '标题颜色',
     followText: '跟随正文色',
     verseColor: '节号颜色',
+    currentVerseColor: '当前节高亮颜色',
+    currentVerseColorHint: '翻节时当前节经文的颜色（留空＝跟随主题金色）',
     followAccent: '跟随主题色',
     padding: '四边留白（像素）',
     paddingHint: '经文舞台四边的留白范围',

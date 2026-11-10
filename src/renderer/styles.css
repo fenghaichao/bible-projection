@@ -508,18 +508,21 @@ body::after {
 .verse.is-current .verse-no {
   opacity: 1;
   text-shadow: 0 0 22px rgba(216, 166, 72, .55);
+  text-shadow: 0 0 22px color-mix(in srgb, var(--verse-no-color, var(--gold)) 55%, transparent);
 }
 
-/* 当前节：经文正文变色（金色），配合左侧竖条，视线一眼就能找到读到哪儿了 */
+/* 当前节：经文正文变色（默认金色，可在设置里自定义），配合左侧竖条，视线一眼就能找到读到哪儿了 */
 .verse.is-current .verse-text {
-  color: var(--gold);
+  color: var(--current-verse-color, var(--gold));
   text-shadow: 0 0 26px rgba(216, 166, 72, .22);
+  text-shadow: 0 0 26px color-mix(in srgb, var(--current-verse-color, var(--gold)) 22%, transparent);
   transition: color .18s ease, text-shadow .18s ease;
 }
 
 body.projection .verse.is-current .verse-text {
-  color: var(--gold);
+  color: var(--current-verse-color, var(--gold));
   text-shadow: 0 0 30px rgba(216, 166, 72, .35);
+  text-shadow: 0 0 30px color-mix(in srgb, var(--current-verse-color, var(--gold)) 35%, transparent);
 }
 
 .verse.is-current .verse-body::before {
@@ -528,7 +531,7 @@ body.projection .verse.is-current .verse-text {
   left: 0; top: .18em; bottom: .18em;
   width: 2px;
   border-radius: 2px;
-  background: var(--gold);
+  background: var(--current-verse-color, var(--gold));
   box-shadow: 0 0 16px rgba(216, 166, 72, .6);
 }
 

@@ -32,7 +32,7 @@ at the top right and a shortcut hint bar at the bottom right.
 ![Projection mode](docs/images/projection-mode.png)
 
 Settings panel: font / size / line height / text and background colour / background image and background music /
-text shadow / title font and title colour / verse-number colour / padding / verses per page / simplified–traditional /
+text shadow / title font and title colour / verse-number colour / current-verse highlight colour / padding / verses per page / simplified–traditional /
 floating panel, and more.
 
 ![Settings panel](docs/images/settings-panel.png)
@@ -72,6 +72,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | Background / font / size / color / shadow / line spacing | ✅ display settings | Font, size, line spacing, text color, background color, background image (local path, browse dialog, clear), italic, underline, verse references |
 | Text shadow | ✅ text shadow | Shadow colour, blur radius and offset are adjustable |
 | Independent title font / title colour / verse-number colour / padding | ✅ independent typography settings | Title font and title colour can be set on their own (empty = follow the body text), the verse-number colour can be set on its own (empty = follow the theme accent colour), and the padding can be 0–120 px on all four sides (the background image still fills the screen) |
+| Current-verse highlight | ✅ smart verse stepping + configurable highlight colour | `↓` / `↑` switch the current verse and highlight it in the **highlight colour** (theme gold by default, pick your own; empty = follow the theme); the screen stays still while the verse sits in the comfortable reading zone and only glides up slowly when it drifts too low |
 | Remember and save visited passages | ✅ history | Up to 200 entries; nothing is written on startup, every verse in a multi-verse run is recorded, entries carry the verse text, clearable |
 | Floating panel / slideshow / quick controls | ✅ floating panel + auto-advance | A dedicated `float.html` window with 5 tabs (passage, search, format, New Testament, Old Testament — the last two list all 27 / 39 books and jump to chapter 1 on click), revealed by hovering the left edge, with a master switch in the top bar; the slideshow auto-advances on the configured interval |
 | Wireless remote control | ⚠️ partial | No dedicated remote support, but the keyboard media keys (previous / next track) work as a page-turner |

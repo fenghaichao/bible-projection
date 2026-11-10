@@ -34,6 +34,8 @@ const DEFAULT_SETTINGS = {
   titleFontFamily: '',
   titleColor: '',
   verseNumberColor: '',
+  // 当前节高亮颜色：空字符串＝跟随主题强调色
+  currentVerseColor: '',
   padding: 0,
   // 复制经文格式：text=连排 / section=分节 / line=分节分行（带节号）
   copyFormat: 'text',

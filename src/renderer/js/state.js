@@ -29,6 +29,8 @@ export const DEFAULT_SETTINGS = {
   titleFontFamily: '',
   titleColor: '',
   verseNumberColor: '',
+  // 当前节高亮颜色：空字符串＝跟随主题强调色（var(--gold)）
+  currentVerseColor: '',
   padding: 0,
   // 渲染层扩展项：后端 JsonStore.set 用 Object.assign 合并，额外键同样会被持久化
   bgmLoop: true,
@@ -83,6 +85,7 @@ export function mergeSettings(raw) {
     titleFontFamily: str(s.titleFontFamily, DEFAULT_SETTINGS.titleFontFamily),
     titleColor: hex(s.titleColor, DEFAULT_SETTINGS.titleColor),
     verseNumberColor: hex(s.verseNumberColor, DEFAULT_SETTINGS.verseNumberColor),
+    currentVerseColor: hex(s.currentVerseColor, DEFAULT_SETTINGS.currentVerseColor),
     padding: Math.round(num(s.padding, DEFAULT_SETTINGS.padding, 0, 120)),
     bgmLoop: s.bgmLoop === undefined ? DEFAULT_SETTINGS.bgmLoop : !!s.bgmLoop,
     mouseAdvance: s.mouseAdvance === undefined ? DEFAULT_SETTINGS.mouseAdvance : !!s.mouseAdvance,
