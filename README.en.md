@@ -17,8 +17,8 @@ This project is a **clean-room modern rewrite** of that feature set — not a po
 
 - **Electron 33 + plain JavaScript** (no frontend framework, no bundler, no renderer build step)
 - Verse data ships as JSON in the repository — **fully offline** after install
-- The **Chinese Union Version (Simplified / Traditional)** plus five further copyrighted translations
-  are **all bundled** and selectable straight after installation (see [docs/versions.md](docs/versions.md))
+- The **Chinese Union Version (Simplified / Traditional)** ships with the app (public domain); five further
+  copyrighted translations are **downloadable on demand** from inside the app (see [docs/versions.md](docs/versions.md))
 - UI, shortcuts and display settings redesigned; the original's crash defect is fixed
 
 ## Screenshots
@@ -38,11 +38,11 @@ text shadow / title font and title colour / verse-number colour / current-verse 
 floating panel, and more.
 
 ![Settings panel](docs/images/settings-panel.png)
-Multiple translations: the "Get translations" panel lists all 7 translations (**all bundled**), with source and copyright shown, plus local JSON import.
+Multiple translations: the "Get translations" panel lists all 7 translations — the Chinese Union Version
+(Simplified / Traditional) ships with the app, the other five are installed on this machine — with source and
+copyright shown, plus local JSON import.
 
 ![Translations panel](docs/images/versions-panel.png)
-> The screenshot was taken while "Modern Chinese Version 1995" was still in the list (the panel header
-> counts 8 translations); the current list has 7.
 
 ## Why rewrite
 
@@ -85,7 +85,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | Wireless remote control | ⚠️ partial | No dedicated remote support, but the keyboard media keys (previous / next track) work as a page-turner |
 | Multi-keyword text search | ✅ multi-keyword search | "Match all" and "Match any" modes; hits are highlighted, results are paged with a "showing N / M" hint and the keywords are kept |
 | Traditional and Simplified Chinese | ✅ translation switching | **CUV (Simplified)** and **CUV (Traditional)** are two *separate* translation entries, switched from the top-bar dropdown; book and category names are localised to the selected script |
-| — (new) | ✅ 7 Chinese translations (all bundled, usable out of the box) | **CUV (Simplified / Traditional)**, **Lü Zhenzhong**, **CUV 2010**, **Chinese Standard Bible**, **Today's Chinese Version 2019** and **New Chinese Version** — all 7 ship with the app and are switched from the top-bar dropdown; a translation can also be **imported from a local JSON file**, see [docs/versions.md](docs/versions.md) |
+| — (new) | ✅ 7 Chinese translations (CUV bundled, the rest on demand) | **CUV (Simplified / Traditional)** ship with the app (public domain); **Lü Zhenzhong**, **CUV 2010**, **Chinese Standard Bible**, **Today's Chinese Version 2019** and **New Chinese Version** are copyrighted and therefore **not shipped** — download them in the "Get translations" panel (data comes from the FHL API) or import a local JSON file; see [docs/versions.md](docs/versions.md) |
 | Copy verses into other programs | ✅ clipboard | Same names as the original: **copy verse text** (chapter title + verses, flowing) / **copy verse text (per verse)** / **copy verse text (per verse, one per line)**; **copy chapter** = title only (`Alt` + `C`); search results can be copied per column (chapter only / chapter + verse text) |
 | Simple drawing | ✅ brush annotation | Freehand, rectangle, circle, line and text notes (double-click to type), with eraser, undo and redo; strokes are saved per `book:chapter` into `userData/annotations.json` |
 | Bookmarks | ✅ my bookmarks | `Ctrl` + `S` bookmarks the current verse, up to 500 entries |
@@ -100,7 +100,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | — (new) | ✅ click-to-advance in projection | Clicking the projected text advances one verse; can be switched off in the settings |
 | — (new) | ✅ remote-style navigation | Jump to a chapter by number, media keys, space to advance |
 | — (new) | ✅ dark / light theme | Driven by display settings |
-| — (new) | ✅ fully offline | No network requests; works disconnected |
+| — (new) | ✅ fully offline | Verses and every feature run locally; only an explicit translation download needs the network, and everything works disconnected |
 
 ---
 
@@ -151,32 +151,48 @@ Only `src/`, `data/` and `package.json` are bundled (see `build.files` in `packa
 
 ### Translations and copyright
 
-This project **bundles 7 Chinese translations**; all of them are selectable from the top-bar dropdown
-straight after installation:
+This project supports **7 Chinese translations**. Only the **Chinese Union Version** ships with the app;
+the other five are copyrighted and therefore **neither in the repository nor in the installer** — you get them
+on demand:
 
-| Translation | id | Bundled file | Verses | Copyright holder |
-| --- | --- | --- | --- | --- |
-| Chinese Union Version (Simplified) | `simplified` | `data/bible-simplified.json` | 31,102 | public domain (CUV, 1919) |
-| Chinese Union Version (Traditional) | `traditional` | `data/bible-traditional.json` | 31,102 | public domain (CUV, 1919) |
-| Lü Zhenzhong Translation | `lcc` | `data/versions/lcc.json` | 31,081 | © Lü Zhenzhong / 环球天道圣经机构 |
-| Chinese Union Version 2010 | `rcuv` | `data/versions/rcuv.json` | 31,094 | © 香港圣经公会 |
-| Chinese Standard Bible | `csb` | `data/versions/csb.json` | 31,087 | © 全球圣经促进会 GBI |
-| Today's Chinese Version 2019 | `tcv2019` | `data/versions/tcv2019.json` | 31,087 | © 联合国圣经翻译中文委员会 |
-| New Chinese Version | `ncv` | `data/versions/ncv.json` | 31,061 | © 环球圣经公会 |
+| Translation | id | Bundled | Copyright holder |
+| --- | --- | --- | --- |
+| Chinese Union Version (Simplified) | `simplified` | ✅ yes (`data/bible-simplified.json`) | public domain (CUV, 1919) |
+| Chinese Union Version (Traditional) | `traditional` | ✅ yes (`data/bible-traditional.json`) | public domain (CUV, 1919) |
+| Lü Zhenzhong Translation | `lcc` | ❌ no | © Lü Zhenzhong / 环球天道圣经机构 |
+| Chinese Union Version 2010 | `rcuv` | ❌ no | © 香港圣经公会 |
+| Chinese Standard Bible | `csb` | ❌ no | © 全球圣经促进会 GBI |
+| Today's Chinese Version 2019 | `tcv2019` | ❌ no | © 联合国圣经翻译中文委员会 |
+| New Chinese Version | `ncv` | ❌ no | © 环球圣经公会 |
 
-- The **Chinese Union Version** was published in Shanghai in 1919; its copyright has long expired, so the
+- The **Chinese Union Version** was published in 1919; its copyright has long expired, so the
   text is **public domain** and may be freely copied, modified and redistributed.
 - The other **5 translations are still under copyright** (Lü Zhenzhong / 环球天道圣经机构, 香港圣经公会,
-  全球圣经促进会 GBI, 联合国圣经翻译中文委员会, 环球圣经公会). Their text was obtained from the
-  **信望愛 FHL API** (<https://bible.fhl.net/api/qb.php>) and is bundled here **at the repository owner's
-  request**. **Confirm for yourself that this complies with each rights holder's terms before
-  redistributing**; if in doubt, consider setting the repository to **private**.
+  全球圣经促进会 GBI, 联合国圣经翻译中文委员会, 环球圣经公会). Their text is **not redistributed here**.
+  Two ways to get them:
+  1. **Download inside the app**: top bar → "Get translations" → pick a translation → "Download and install".
+     The app fetches the text verse by verse from the **信望愛 FHL API**
+     (<https://bible.fhl.net/api/qb.php>) and stores it on this machine
+     (`%APPDATA%\BibleProjection\versions\`); after that one download everything works offline.
+  2. **Import a local JSON file**: "Get translations" → "Import from a local file…", choosing a JSON file
+     holding an array of `[book, chapter, verse, text]`.
+- The text belongs to its respective copyright holders; **downloading and using it means you have obtained
+  the necessary authorisation yourself** — check each translation's terms before use.
+- The **FHL API page states** (<https://bible.fhl.net/api/>):
+
+  > 注意，信望愛站上各個聖經譯本，有些僅授權給信望愛站使用，請查閱版權說明
+  > （<https://www.fhl.net/main/fhl/fhl8.html>），請勿任意使用，以免違法。
+
+  In other words: some translations are licensed **to the FHL site only** — *do not use them arbitrarily*.
+  FHL's copyright page lists the terms per translation (for example the New Chinese Version requires the
+  source to be credited, and written permission from 环球圣经公会 before any commercial use),
+  so **check them one by one before you use a translation**.
 - Translations differ in how they **number verses** (31,061 – 31,102 verses). The app therefore does
   **not** address verses across translations by verse number — history and bookmarks only record the
   book / chapter / verse position.
 
-See [docs/versions.md](docs/versions.md) for the full list and the manifest fields, and
-[data/versions/README.md](data/versions/README.md) for the per-file checksums.
+See [docs/versions.md](docs/versions.md) for the full list, the manifest fields and the acquisition
+workflow, and [data/versions/README.md](data/versions/README.md) for the directory layout.
 
 ### How the text was obtained
 
@@ -193,25 +209,28 @@ for the field mapping and the exact extraction steps.
 > The extractor only converts the original program's data into an open format. It contains none of the
 > original program's code, and this repository ships no original executable, resource, or decompiled output.
 
-The other 5 translations were fetched from the **信望愛 FHL API** with `tools/fetch-versions.py`,
-cleaned with `tools/clean-versions.js`, and are **now bundled** under `data/versions/`:
+The other 5 translations are fetched from the **信望愛 FHL API** with `tools/fetch-versions.py` and
+cleaned with `tools/clean-versions.js`; where you keep them is up to you
+(**neither the repository nor the installer ships them**):
 
 ```bash
 python tools/fetch-versions.py                      # re-fetch every translation (needs network)
 python tools/fetch-versions.py --versions lcc,rcuv  # only the listed ones
-python tools/fetch-versions.py --out D:\vers        # fetch somewhere else (not into the repository)
-node tools/verify-versions.js data/versions         # validate the bundled translation files
+python tools/fetch-versions.py --out D:\vers        # fetch somewhere else
+node tools/clean-versions.js D:\vers                # clean the fetched files
+node tools/verify-versions.js D:\vers               # validate the translation files
 ```
 
 > `tools/fetch-versions.py` is a **user-side** helper (Python 3 + network). It is not bundled with the
-> installer and does not run in CI; the bundled translation files themselves need no network access.
+> installer and does not run in CI. Fetched files default to `%APPDATA%\BibleProjection\versions\`, the same
+> place the in-app download writes to.
 
 ### Copyright
 
 - Source code: MIT License — see [LICENSE](LICENSE)
-- CUV text: public domain
-- The other 5 translations remain the property of their respective copyright holders; they are bundled
-  at the owner's request, and **you are responsible for checking the redistribution terms**
+- CUV text: public domain, ships with the app
+- The other 5 translations remain the property of their respective copyright holders; they are **not
+  redistributed with this repository or the installer**, and you must obtain the authorisation yourself
 - 《语音投影圣经》 remains the property of its original authors; this project is not affiliated with or
   endorsed by them
 
@@ -221,7 +240,7 @@ node tools/verify-versions.js data/versions         # validate the bundled trans
 
 ```
 bible-projection/
-├── data/                   # bible-simplified.json / bible-traditional.json / versions/*.json + manifest.json
+├── data/                   # bible-simplified.json / bible-traditional.json / versions/manifest.json + README.md
 ├── docs/                   # architecture.md, data.md, versions.md, feature-audit.md, images/
 ├── src/
 │   ├── main/               # main process: window, IPC, clipboard, persistence
@@ -257,7 +276,7 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 
 | Shortcut / input | Action |
 | --- | --- |
-| Top-bar translation dropdown | Switch translation (CUV Simplified / Traditional, Lü Zhenzhong, CUV 2010, Chinese Standard, Today's Chinese 2019, New Chinese Version — 7 in total, **all bundled**); only a translation whose file is missing shows "XXX (not installed)", and picking it does **not** switch, it only points you to the "Get translations" panel |
+| Top-bar translation dropdown | Switch translation (CUV Simplified / Traditional, Lü Zhenzhong, CUV 2010, Chinese Standard, Today's Chinese 2019, New Chinese Version — 7 in total); the CUV pair ships with the app, the other five must be downloaded or imported first, and a translation that is not installed shows "XXX (not installed)" — picking it does **not** switch, it only points you to the "Get translations" panel |
 | Top bar "Get translations" | Open the translation panel: use / download & install / import from a local file / view the copyright |
 | Letter abbreviation | Jump to a book, e.g. `CSJ` / `CAJ` / `LWJ` |
 | Letters + digits | Locate a chapter, e.g. `CSJ4` or `CSJ 4` |
@@ -360,17 +379,17 @@ no-speech edition** and are not provided here either.
 
 - The top bar provides every action above: search, history, bookmarks, settings, projection mode,
   floating panel and help.
-- The top bar carries a **translation dropdown** listing all 7 translations; they are **all bundled**,
-  so picking one switches to it immediately. Only a translation whose file is missing shows
-  "XXX (not installed)" — picking it then does not switch anything and only points you to the
-  "Get translations" panel.
+- The top bar carries a **translation dropdown** listing all 7 translations. The CUV (Simplified / Traditional)
+  pair ships with the app, so picking one switches to it immediately; the other five have to be downloaded or
+  imported first and show "XXX (not installed)" until then — picking such an entry does not switch anything
+  and only points you to the "Get translations" panel.
 - The top bar **"Get translations"** button opens the "Get translations" panel in the right drawer: it
   lists every translation with a "bundled / installed / not installed" tag, the source and the
-  copyright. Available translations get a "use this translation" button (the current one reads
+  copyright. Installed translations get a "use this translation" button (the current one reads
   "current translation" and is disabled), a missing one gets a "download & install" button with a
   progress bar and a "stop tracking" action; the bottom of the panel offers "import from a local file…"
-  and "refresh list". Bundled translations are not re-downloaded — if a bundled file is missing, fetch it
-  with `tools/fetch-versions.py` and import it, or put the file back into `data/versions/`.
+  and "refresh list". Downloaded text is written to this machine only
+  (`%APPDATA%\BibleProjection\versions\`) and is not redistributed with the app.
 - **There is no separate "Simplified / Traditional" button** — pick "CUV (Traditional)" in the
   translation dropdown for Traditional text.
 - With the "show references" option enabled, each verse is followed by its reference (e.g. "John 3:16").
@@ -405,10 +424,12 @@ no-speech edition** and are not provided here either.
   simply reports that this version uses "project to a second screen" instead.
 - **The original `Ctrl` + `0`…`4` "hide all comparison panes" semantics were replaced**: `Ctrl` + `1`…`4`
   now switches the active comparison group and `Ctrl` + `0` resets the font size.
-- **The installer grows by roughly 19 MB** because five copyrighted translations are bundled
-  (the five JSON files under `data/versions/` add up to about 19.1 MB). **Confirm for yourself that
-  this complies with each rights holder's terms before redistributing**; if in doubt, consider setting
-  the repository to **private**.
+- **Apart from the Chinese Union Version, the other translations must be downloaded once over the
+  network** (from the top bar, "Get translations" → "Download and install"); after that download the app
+  works fully offline again.
+- **The download entry points at a third-party API** (the SigFHL / FHL service). Its availability and
+  behaviour are **not guaranteed by this project**; the same goes for the authorisation terms of the
+  downloaded text.
 - Switching translation re-fetches the text for the current version; translations differ in how they
   **number verses** (31,061 – 31,102 verses), so the app does **not** address verses across translations
   by verse number — history, bookmarks and annotations only record the book / chapter / verse position
