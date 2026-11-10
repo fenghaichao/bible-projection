@@ -168,7 +168,7 @@
 | 80 | 幻灯放映（自动翻页） | ✅ 设置间隔（秒），`0` 为关闭 |
 | 81 | 多栏对照 | ✅ 最多 4 组，「+ 对照栏」按钮增删，`Ctrl+1`…`4` 切换当前组 |
 | 82 | 标题字体 / 标题颜色 / 节号独立颜色 / 四边缩进 | ✅ 已补齐：标题字体留空＝跟随正文；标题颜色留空＝跟随正文色（另有「跟随正文色」复位按钮）；节号颜色留空＝跟随主题强调色（另有「跟随主题色」复位按钮）；四边留白 0–120 像素，作用在经文容器上，背景图仍满屏 |
-| 83 | 多译本（译本清单 / 在线下载 / 本地导入 / 顶栏切换） | ✅ 主进程 `src/main/versions.js` + `bible:listVersions` / `bible:installVersion` / `bible:importVersionFile`，事件 `bible:version-progress` / `bible:versions-changed`；渲染层 `js/panel-versions.js`（顶栏 `#version-select` 下拉 + `#btn-versions`「获取译本」面板，含下载安装 / 从本地文件导入 / 刷新列表）+ `js/version.js`（书名 · 短卷名 · 分类名按译本取值）。译本清单与版权见 [docs/versions.md](versions.md) |
+| 83 | 多译本（7 个译本全部内置 / 译本清单 / 本地导入 / 顶栏切换） | ✅ 主进程 `src/main/versions.js` + `bible:listVersions` / `bible:installVersion` / `bible:importVersionFile`，事件 `bible:version-progress` / `bible:versions-changed`；渲染层 `js/panel-versions.js`（顶栏 `#version-select` 下拉 + `#btn-versions`「获取译本」面板，含标签 / 来源 / 版权 / 下载安装 / 从本地文件导入 / 刷新列表）+ `js/version.js`（书名 · 短卷名 · 分类名按译本取值）。**7 个译本（和合本简 / 繁、吕振中、和合本修订版 2010、中文标准、现代中文 2019、环球新译本）全部内置在仓库，开箱可用、无需联网**；其中 5 个受版权保护的译本按仓库所有者要求内置，再分发前请确认授权条款。译本清单与版权见 [docs/versions.md](versions.md) |
 
 > 编号说明：**1–72 为基线功能项**；**73–82 为渲染层第二轮追加项**（第 73 行「标注落盘」属绘图能力，第 78–81 行对应 §3 的 N12 / N4 / N13 / N14）；**83 为第三轮的多译本追加项**。
 >
@@ -317,4 +317,4 @@ README 的对照表口径与本盘点一致：
 | 标题字体 / 标题颜色 / 节号颜色 / 四边缩进 = ✅ | 一致（§2 第 82 项、§4、§7） |
 | 浮动面板 5 标签页（新约 27 卷 / 旧约 39 卷可直接点选）= ✅ | 一致（§1、§2 第 78 行） |
 | 单字母键只在投影 / 绘制模式下生效 | 一致（§5、§8 第 6 条） |
-| 多译本 = ✅（内置和合本，其余译本按需下载） | 一致，见 §2 第 83 项与 [docs/versions.md](versions.md) |
+| 多译本 = ✅（7 个译本全部内置，开箱可用） | 一致，见 §2 第 83 项与 [docs/versions.md](versions.md) |

@@ -42,7 +42,9 @@ if (!fs.existsSync(dir)) {
   process.exit(2);
 }
 
-const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json') && !f.endsWith('.meta.json'));
+const files = fs.readdirSync(dir).filter(
+  (f) => f.endsWith('.json') && !f.endsWith('.meta.json') && f !== 'manifest.json'
+);
 if (!files.length) {
   console.log('目录里没有译本数据:', dir);
   process.exit(0);
@@ -50,7 +52,17 @@ if (!files.length) {
 
 for (const name of files) {
   const file = path.join(dir, name);
-  const rows = JSON.parse(fs.readFileSync(file, 'utf8'));
+  let rows;
+  try {
+    rows = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (err) {
+    console.log(`${name}: 跳过（不是合法 JSON：${err.message}）`);
+    continue;
+  }
+  if (!Array.isArray(rows)) {
+    console.log(`${name}: 跳过（不是译本数据数组）`);
+    continue;
+  }
   let changed = 0;
   let dropped = 0;
   const kept = [];

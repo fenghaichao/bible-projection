@@ -65,6 +65,24 @@ test('未安装的译本读取时抛出明确错误', () => {
   assert.throws(() => bible.loadVersion('not-a-version'), /未安装/);
 });
 
+test('五个版权译本不进仓库（bundled=false），改由应用内下载 / 本地导入', () => {
+  const list = versions.listVersions();
+  const ids = list.map((v) => v.id);
+  assert.ok(!ids.includes('tcv95'), '现代中文译本 1995 应已从清单移除');
+  for (const id of ['lcc', 'rcuv', 'csb', 'tcv2019', 'ncv']) {
+    const v = list.find((x) => x.id === id);
+    assert.ok(v, `${id} 应在清单里`);
+    assert.equal(v.bundled, false, `${id} 不应内置（版权译本不进仓库）`);
+    assert.ok(v.fhlVersion, `${id} 应保留 FHL 版本号以便下载`);
+    assert.ok(v.copyright, `${id} 应带版权声明`);
+  }
+  // 仓库里不应残留这些受版权保护的译本数据文件
+  const DATA = path.join(ROOT, 'data', 'versions');
+  for (const id of ['lcc', 'rcuv', 'csb', 'tcv2019', 'ncv']) {
+    assert.equal(fs.existsSync(path.join(DATA, `${id}.json`)), false, `仓库不应包含 ${id}.json`);
+  }
+});
+
 test('切换译本后读到的是该译本的经文（简 / 繁）', () => {
   const bible = require(path.join(ROOT, 'src', 'main', 'bible.js'));
   const simp = bible.getChapter(1, 1, 'simplified');

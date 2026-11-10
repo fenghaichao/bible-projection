@@ -25,7 +25,8 @@
       "fhlVersion": "lcc",
       "copyright": "© 吕振中 / 环球天道圣经机构",
       "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
-      "lang": "zh-Hans"
+      "lang": "zh-Hans",
+      "offlineDownload": true
     },
     {
       "id": "rcuv",
@@ -34,7 +35,8 @@
       "fhlVersion": "rcuv",
       "copyright": "© 香港圣经公会",
       "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
-      "lang": "zh-Hans"
+      "lang": "zh-Hans",
+      "offlineDownload": false
     },
     {
       "id": "csb",
@@ -43,16 +45,8 @@
       "fhlVersion": "csb",
       "copyright": "© 全球圣经促进会 GBI",
       "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
-      "lang": "zh-Hans"
-    },
-    {
-      "id": "tcv95",
-      "name": "现代中文译本 1995",
-      "bundled": false,
-      "fhlVersion": "tcv95",
-      "copyright": "© 联合国圣经翻译中文委员会",
-      "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
-      "lang": "zh-Hans"
+      "lang": "zh-Hans",
+      "offlineDownload": false
     },
     {
       "id": "tcv2019",
@@ -61,7 +55,8 @@
       "fhlVersion": "tcv2019",
       "copyright": "© 联合国圣经翻译中文委员会",
       "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
-      "lang": "zh-Hans"
+      "lang": "zh-Hans",
+      "offlineDownload": false
     },
     {
       "id": "ncv",
@@ -70,7 +65,8 @@
       "fhlVersion": "ncv",
       "copyright": "© 环球圣经公会",
       "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
-      "lang": "zh-Hans"
+      "lang": "zh-Hans",
+      "offlineDownload": false
     }
   ]
 }

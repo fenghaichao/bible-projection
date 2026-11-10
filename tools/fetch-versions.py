@@ -32,7 +32,6 @@ VERSIONS = {
     "lcc":     ("lcc",     "吕振中译本",        "© 吕振中 / 环球天道圣经机构"),
     "rcuv":    ("rcuv",    "和合本修订版 2010",  "© 香港圣经公会"),
     "csb":     ("csb",     "中文标准译本",      "© 全球圣经促进会 GBI"),
-    "tcv95":   ("tcv95",   "现代中文译本 1995",  "© 联合国圣经翻译中文委员会"),
     "tcv2019": ("tcv2019", "现代中文译本 2019",  "© 联合国圣经翻译中文委员会"),
     "ncv":     ("ncv",     "环球新译本",        "© 环球圣经公会"),
 }
@@ -140,7 +139,7 @@ def default_out_dir():
 
 def main():
     ap = argparse.ArgumentParser(description="抓取 FHL 中文译本到本地译本库")
-    ap.add_argument("--versions", default="lcc,rcuv,csb,tcv95,tcv2019,ncv")
+    ap.add_argument("--versions", default="lcc,rcuv,csb,tcv2019,ncv")
     ap.add_argument("--out", default=default_out_dir())
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--delay", type=float, default=0.12)

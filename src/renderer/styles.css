@@ -283,6 +283,7 @@ body::after {
 
 .version-tag.is-installed { border-color: var(--gold-dim); color: var(--gold); }
 .version-tag.is-bundled { border-color: var(--line-strong); color: var(--tx-2); }
+.version-tag.is-restricted { border-color: #8a5a2b; color: #d9a05b; }
 
 .version-meta { margin: 4px 0 0; color: var(--tx-3); font-size: 12px; }
 

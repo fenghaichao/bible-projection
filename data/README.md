@@ -9,18 +9,18 @@
 | --- | --- |
 | `bible-simplified.json` | 和合本简体经文，31,102 节 |
 | `bible-traditional.json` | 和合本繁体经文，31,102 节（与简体一一对应） |
-| `versions/manifest.json` | 译本清单：内置的 2 个和合本 + 6 个需用户自行下载的中文译本 |
+| `versions/manifest.json` | 译本清单：7 个中文译本，全部内置（和合本简/繁 + 吕振中 + 和合本2010 + 中文标准 + 现代中文2019 + 环球新译本） |
+| `versions/*.json` | 内置译本经文数据（`lcc` / `rcuv` / `csb` / `tcv2019` / `ncv`），详见 [`versions/README.md`](versions/README.md) |
 | `README.md` | 本文件 |
 
 ### `versions/manifest.json`
 
-仓库只内置**公有领域**的和合本（简 / 繁）；其余中文译本（`lcc` 吕振中、`rcuv` 和合本修订版 2010、
-`csb` 中文标准译本、`tcv95` / `tcv2019` 现代中文译本、`ncv` 环球新译本）受版权保护，
-**不随仓库分发**，由用户用 `tools/fetch-versions.py` 抓取或从应用内「获取译本」下载，
-保存在 `%APPDATA%\BibleProjection\versions\`。
+清单里 7 个条目**全部是 `bundled: true`**：
 
-清单里 `bundled: true` 的两个条目的 `file` 相对本目录（`data/`）解析；
-其余条目带 `fhlVersion`，供应用按 FHL API 下载。详见
+- 和合本（简 / 繁）：**公有领域**（1919 年中文和合本），文件为本目录下的 `bible-simplified.json` / `bible-traditional.json`；
+- 吕振中（`lcc`）、和合本修订版 2010（`rcuv`）、中文标准译本（`csb`）、现代中文译本 2019（`tcv2019`）、环球新译本（`ncv`）：**受版权保护**（分别为 © 吕振中/环球天道圣经机构、© 香港圣经公会、© 全球圣经促进会 GBI、© 联合国圣经翻译中文委员会、© 环球圣经公会），按仓库所有者要求一并内置，数据取自信望愛 FHL API。**再分发前请自行确认是否符合各权利人的授权条款**；如有疑虑建议将仓库设为 private。
+
+清单里 `bundled: true` 条目的 `file` 相对本目录（`data/`）解析；应用仍保留「获取译本」面板的本地导入能力，也可从 FHL API 重新抓取以更新内置文件。详见
 [`docs/data.md`](../docs/data.md) 的「多译本数据」章节。
 
 书卷元数据（书名、简繁体书名、缩写、分类、章数/节数、首节 ID、旧/新约）在

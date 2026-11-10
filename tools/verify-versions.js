@@ -43,6 +43,11 @@ const DATA_DIR = path.join(REPO_ROOT, 'data');
 const BUNDLED = [
   { id: 'simplified', file: path.join(DATA_DIR, 'bible-simplified.json'), name: '和合本（简体）' },
   { id: 'traditional', file: path.join(DATA_DIR, 'bible-traditional.json'), name: '和合本（繁体）' },
+  { id: 'lcc', file: path.join(DATA_DIR, 'versions', 'lcc.json'), name: '吕振中译本' },
+  { id: 'rcuv', file: path.join(DATA_DIR, 'versions', 'rcuv.json'), name: '和合本修订版 2010' },
+  { id: 'csb', file: path.join(DATA_DIR, 'versions', 'csb.json'), name: '中文标准译本' },
+  { id: 'tcv2019', file: path.join(DATA_DIR, 'versions', 'tcv2019.json'), name: '现代中文译本 2019' },
+  { id: 'ncv', file: path.join(DATA_DIR, 'versions', 'ncv.json'), name: '环球新译本' },
 ];
 const DEFAULT_USER_DIR = path.join(
   process.env.APPDATA || path.join(os.homedir(), '.config'),
@@ -474,13 +479,11 @@ function main() {
   opts.referenceKeys = referenceKeys;
   opts.referenceChapters = referenceChapters;
 
-  // 待校验目标
+  // 待校验目标：仓库内置译本始终校验；--repo-only 表示只看仓库内置，不扫描用户目录
   const targets = [];
-  if (!opts.repoOnly) {
-    for (const b of BUNDLED) {
-      if (fs.existsSync(b.file)) targets.push({ file: b.file, id: b.id, name: b.name });
-      else console.error(`缺少仓库内置数据: ${b.file}`);
-    }
+  for (const b of BUNDLED) {
+    if (fs.existsSync(b.file)) targets.push({ file: b.file, id: b.id, name: b.name });
+    else console.error(`缺少仓库内置数据: ${b.file}`);
   }
   const dirs = opts.dirs.length ? opts.dirs : [];
   if (!dirs.length && !opts.repoOnly && fs.existsSync(DEFAULT_USER_DIR)) {

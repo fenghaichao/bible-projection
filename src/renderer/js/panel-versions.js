@@ -171,6 +171,11 @@ function onSelectChange(id) {
 async function install(id) {
   const target = versions.find((v) => v.id === id);
   if (!target) return;
+  // 受版权保护且信望愛未开放离线下载授权的译本：先让用户确认自己已取得使用授权
+  if (target.offlineDownload === false) {
+    const ok = window.confirm(T.versions.confirmRestricted(target.name || id, target.copyright || ''));
+    if (!ok) return;
+  }
   stopped.delete(id);
   progressMap.set(id, { percent: 0, done: 0, total: 0 });
   pendingSwitch = id;
@@ -278,6 +283,9 @@ function versionItem(v, current) {
     }),
   ]);
   if (v.bundled) tags.appendChild(el('span', { class: 'version-tag is-bundled', text: T.versions.bundled }));
+  if (v.offlineDownload === false) {
+    tags.appendChild(el('span', { class: 'version-tag is-restricted', text: T.versions.restrictedTag }));
+  }
 
   const meta = [];
   if (v.source) meta.push(`${T.versions.source}：${v.source}`);
@@ -320,6 +328,7 @@ function versionItem(v, current) {
       el('i', { style: `width:${percent}%` }),
     ]));
     item.appendChild(el('p', { class: 'version-progress-text', text: T.versions.progress(percent) }));
+    item.appendChild(el('p', { class: 'version-progress-text', text: T.versions.downloadHint }));
     const stop = el('button', { class: 'btn btn-ghost', type: 'button', text: T.versions.stopTracking });
     stop.addEventListener('click', () => {
       stopped.add(v.id);

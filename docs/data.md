@@ -84,8 +84,8 @@ C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionP
 
 ## 3. 经文 JSON 的格式
 
-内置的两个文件结构完全一致，只是文字分别为简体与繁体；用户安装的其他译本（§8）
-用的是同一种行格式，只是分节与用字不同。
+和合本的简体与繁体两个文件结构完全一致，只是文字分别为简体与繁体；
+其余 5 个内置译本（§8）用的是同一种行格式，只是分节与用字不同。
 
 **顶层是一个二维数组**，每行是一个长度为 4 的数组：
 
@@ -127,7 +127,7 @@ const rows = JSON.parse(fs.readFileSync('data/bible-simplified.json', 'utf8'));
 ### 渲染层如何按译本取数
 
 内置的两个 JSON **结构完全一致、节数完全相同（各 31,102 节）、键集合完全一致**，
-差别只在第 3 项的正文用字；其余译本（`lcc` / `rcuv` / `csb` / `tcv95` / `tcv2019` / `ncv`）
+差别只在第 3 项的正文用字；其余 5 个内置译本（`lcc` / `rcuv` / `csb` / `tcv2019` / `ncv`）
 用的是同一种行格式，因此渲染层可以用同一套逻辑处理所有译本：
 
 | 环节 | 译本如何切换 |
@@ -292,6 +292,7 @@ module.exports = { CATEGORIES, BOOKS };
 | --- | --- |
 | 和合本（1919）经文正文 | **公有领域**——1919 年出版，著作权保护期早已届满 |
 | 卷名、简称、分类 | 公有领域的书目信息，随经文一并自由使用 |
+| 内置的 5 个中文译本正文（`lcc` / `rcuv` / `csb` / `tcv2019` / `ncv`） | **受版权保护**——版权归各自权利人；仓库按仓库所有者的要求内置，**再分发前请自行确认授权条款**（详见 §8.8） |
 | 本项目的源码与数据文件编排 | MIT License，见 [LICENSE](../LICENSE) |
 | 《语音投影圣经》原程序本身 | 版权归原作者所有；本项目与其无隶属或背书关系 |
 
@@ -326,22 +327,32 @@ C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionP
 
 ## 8. 多译本数据
 
-### 8.1 为什么仓库里只有和合本
+### 8.1 七个译本全部内置
 
-| 译本 | 版权 | 能否随仓库分发 |
+本项目内置 **7 个中文译本**，安装后即可在顶栏译本下拉里直接切换，**无需联网、无需下载**：
+
+| 译本 | 版权 | 是否随仓库分发 |
 | --- | --- | --- |
 | 和合本（1919，简体 / 繁体） | **公有领域**（1919 年出版，保护期早已届满） | ✅ 内置在 `data/` |
-| 其余 6 个中文译本 | **受版权保护**（香港圣经公会 / GBI / 环球天道圣经机构 / 联合国圣经翻译中文委员会 / 环球圣经公会） | ❌ 不进 Git 仓库 |
+| 吕振中译本 `lcc` | **受版权保护** © 吕振中 / 环球天道圣经机构 | ✅ 内置在 `data/versions/`（按仓库所有者要求） |
+| 和合本修订版 2010 `rcuv` | **受版权保护** © 香港圣经公会 | ✅ 内置在 `data/versions/`（按仓库所有者要求） |
+| 中文标准译本 `csb` | **受版权保护** © 全球圣经促进会 GBI | ✅ 内置在 `data/versions/`（按仓库所有者要求） |
+| 现代中文译本 2019 `tcv2019` | **受版权保护** © 联合国圣经翻译中文委员会 | ✅ 内置在 `data/versions/`（按仓库所有者要求） |
+| 环球新译本 `ncv` | **受版权保护** © 环球圣经公会 | ✅ 内置在 `data/versions/`（按仓库所有者要求） |
 
-仓库只保留公有领域的和合本；其余译本由**用户在本机获取**、保存在自己的用户数据目录里，
-使用与分发均依各译本的授权条款。用户自行获取的内容不随仓库分发，也不由本项目提供。
+- 这 5 个受版权保护的译本正文**随仓库分发**，安装包因此增大约 **19 MB**；
+  它们的原始数据取自信望愛 FHL API（<https://bible.fhl.net/api/qb.php>）。
+- **再分发本仓库前，请自行确认是否符合各权利人的授权条款；若有疑虑，建议把仓库设为 private。**
+- 「现代中文译本 1995」（`tcv95`）已从清单中移除，本项目不再提供。
+
+用户仍可在自己的用户数据目录里安装或导入其它译本（§8.4），它们不随仓库分发。
 
 ### 8.2 两个目录
 
 | 目录 | 内容 | 进 Git |
 | --- | --- | --- |
-| `<repo>/data/` | 内置和合本：`bible-simplified.json`、`bible-traditional.json`；译本清单 `data/versions/manifest.json` | ✅ |
-| `%APPDATA%\BibleProjection\versions\` | 用户安装的译本：`<id>.json`（经文）+ `<id>.meta.json`（名称、节数、版权、来源等元信息） | ❌ |
+| `<repo>/data/` | 内置和合本：`bible-simplified.json`、`bible-traditional.json`；内置的 5 个受版权译本：`versions/<id>.json`；译本清单 `data/versions/manifest.json` | ✅ |
+| `%APPDATA%\BibleProjection\versions\` | 用户自行安装 / 导入的译本：`<id>.json`（经文）+ `<id>.meta.json`（名称、节数、版权、来源等元信息） | ❌ |
 
 查找顺序：**内置优先，其次用户目录**（见 `src/main/versions.js` 的 `resolveVersionFile()`）。
 清单里没有、但用户目录里存在的译本（例如手工导入的），会在译本列表里以「本地导入」呈现。
@@ -354,32 +365,41 @@ C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionP
 | --- | --- |
 | `id` | 译本标识，同时是用户目录里的文件名（`<id>.json`） |
 | `name` | 显示名 |
-| `bundled` | 是否内置在仓库里（`true` 的 `file` 相对 `data/` 目录） |
+| `bundled` | 是否内置在仓库里（`true` 的 `file` 相对 `data/` 目录）。**当前 7 个条目全部为 `true`** |
 | `file` | 内置译本的数据文件名（仅 `bundled: true` 时有） |
-| `fhlVersion` | FHL API 的 `version` 参数（仅非内置译本；应用内「获取译本」据此下载） |
+| `fhlVersion` | FHL API 的 `version` 参数（应用内「获取译本」在文件缺失时据此下载） |
 | `copyright` | 版权归属，用于在界面上提示用户 |
 | `source` | 数据来源 |
 | `lang` | 语言标记（`zh-Hans` / `zh-Hant`） |
 
-内置的 8 个条目：
+内置的 7 个条目：
 
-| `id` | 名称 | 内置 | 版权归属 | 来源 |
-| --- | --- | --- | --- | --- |
-| `simplified` | 和合本（简体） | ✅ | 公有领域（1919 年中文和合本） | 原版《语音投影圣经》Access 数据库 `bibleNosound.dat` |
-| `traditional` | 和合本（繁体） | ✅ | 公有领域（1919 年中文和合本） | 同上 |
-| `lcc` | 吕振中译本 | ❌ | © 吕振中 / 环球天道圣经机构 | [FHL API](https://bible.fhl.net/api/qb.php) |
-| `rcuv` | 和合本修订版 2010 | ❌ | © 香港圣经公会 | [FHL API](https://bible.fhl.net/api/qb.php) |
-| `csb` | 中文标准译本 | ❌ | © 全球圣经促进会 GBI | [FHL API](https://bible.fhl.net/api/qb.php) |
-| `tcv95` | 现代中文译本 1995 | ❌ | © 联合国圣经翻译中文委员会 | [FHL API](https://bible.fhl.net/api/qb.php) |
-| `tcv2019` | 现代中文译本 2019 | ❌ | © 联合国圣经翻译中文委员会 | [FHL API](https://bible.fhl.net/api/qb.php) |
-| `ncv` | 环球新译本 | ❌ | © 环球圣经公会 | [FHL API](https://bible.fhl.net/api/qb.php) |
+| `id` | 名称 | 内置文件 | 内置 | 版权归属 | 来源 |
+| --- | --- | --- | --- | --- | --- |
+| `simplified` | 和合本（简体） | `data/bible-simplified.json` | ✅ | 公有领域（1919 年中文和合本） | 原版《语音投影圣经》Access 数据库 `bibleNosound.dat` |
+| `traditional` | 和合本（繁体） | `data/bible-traditional.json` | ✅ | 公有领域（1919 年中文和合本） | 同上 |
+| `lcc` | 吕振中译本 | `data/versions/lcc.json` | ✅ | © 吕振中 / 环球天道圣经机构 | [FHL API](https://bible.fhl.net/api/qb.php) |
+| `rcuv` | 和合本修订版 2010 | `data/versions/rcuv.json` | ✅ | © 香港圣经公会 | [FHL API](https://bible.fhl.net/api/qb.php) |
+| `csb` | 中文标准译本 | `data/versions/csb.json` | ✅ | © 全球圣经促进会 GBI | [FHL API](https://bible.fhl.net/api/qb.php) |
+| `tcv2019` | 现代中文译本 2019 | `data/versions/tcv2019.json` | ✅ | © 联合国圣经翻译中文委员会 | [FHL API](https://bible.fhl.net/api/qb.php) |
+| `ncv` | 环球新译本 | `data/versions/ncv.json` | ✅ | © 环球圣经公会 | [FHL API](https://bible.fhl.net/api/qb.php) |
+
+逐文件的大小、节数与 SHA-256 见 [data/versions/README.md](../data/versions/README.md)。
 
 ### 8.4 获取与安装
 
-**方式一：命令行抓取脚本**（适合一次性准备，或给多台机器预置）
+**7 个译本都已内置**，装好即可直接使用，不需要任何下载步骤。
+「获取译本」面板保留了两条备用通道：
+
+| 场景 | 做法 |
+| --- | --- |
+| 某个内置译本的文件缺失（例如自行裁剪过安装目录） | 面板里点「下载安装」——主进程按清单里的 `fhlVersion` 调用同一个 FHL API 下载到用户数据目录，下载中显示进度条，可「停止跟踪」 |
+| 想使用清单之外的译本 | 面板底部「从本地文件导入…」，或用命令行脚本抓取到用户数据目录 |
+
+**命令行抓取脚本**（适合更新内置文件，或给多台机器预置用户目录）：
 
 ```bash
-# 抓取全部 6 个译本到 %APPDATA%\BibleProjection\versions
+# 抓取全部 5 个可下载译本到 %APPDATA%\BibleProjection\versions
 python tools/fetch-versions.py
 
 # 只抓指定的译本，或指定输出目录
@@ -391,6 +411,10 @@ python tools/fetch-versions.py --out D:\vers --versions ncv
 （`[[bookId, chapter, verse, text], ...]`），并同时写出 `<id>.meta.json`。
 清洗后为空的节不会写入（避免投影时出现空行）。
 
+> 更新仓库里的内置文件时，建议先抓到临时目录、清洗后再把 `<id>.json` 拷回 `data/versions/`；
+> **不要直接对 `data/versions/` 运行 `clean-versions.js`**——该目录里的 `manifest.json` 不是数组，
+> 会让脚本报错中断。
+
 如果本地译本目录里是**旧版清洗规则**抓取的结果（文本里还带译注、脚注编号或空行），
 不必重新下载，就地重洗一遍即可：
 
@@ -399,20 +423,18 @@ node tools/clean-versions.js            # 默认重洗 %APPDATA%\BibleProjection
 node tools/clean-versions.js D:\vers    # 重洗指定目录
 ```
 
-**方式二：应用内「获取译本」**
-
-设置面板里选中译本 → 主进程按清单里的 `fhlVersion` 调用同一个 FHL API 下载，
-写入用户数据目录；下载过程中显示进度。
-也可从本地 JSON 文件导入（格式同上），导入的译本会出现在译本列表里。
-
 ### 8.5 校验
 
 ```bash
-node tools/verify-versions.js                    # 仓库内置数据 + 默认用户译本目录
+node tools/verify-versions.js data/versions      # 校验仓库内置的全部 7 个译本 + 译本清单
+node tools/verify-versions.js                    # 校验仓库内置数据 + 默认用户译本目录
 node tools/verify-versions.js <目录>              # 校验指定目录下的所有译本
-node tools/verify-versions.js --repo-only         # 只校验仓库内置数据
 node tools/verify-versions.js <目录> --strict     # 节数与和合本不一致也判 FAIL
 ```
+
+> 脚本头部的注释把 `--repo-only` 写成「只校验仓库内置数据」，
+> 但实现里它恰好是**跳过**仓库内置的两个和合本文件（只校验用户译本目录）；
+> 校验内置数据请用 `node tools/verify-versions.js data/versions`。
 
 对每个 `<id>.json` 检查：行数、每卷节数、每行键结构 `[bookId, chapter, verse, text]`、
 文本非空、无重复键、章内节号连续、整章是否缺失、与和合本的键集合差异，
@@ -429,7 +451,6 @@ node tools/verify-versions.js <目录> --strict     # 节数与和合本不一�
 | 和合本（简 / 繁） | 31,102 | 0 | — | 0 |
 | `lcc` 吕振中 | 31,081 | −21 | **+1 / 0** | 22 |
 | `rcuv` 和合本修订版 2010 | 31,094 | −8 | +3 / −7 | 4 |
-| `tcv95` 现代中文译本 1995 | 31,085 | −17 | +2 / −6 | 13 |
 | `tcv2019` 现代中文译本 2019 | 31,087 | −15 | +2 / −7 | 10 |
 | `csb` 中文标准译本 | 31,087 | −15 | +3 / −18 | 0 |
 | `ncv` 环球新译本 | 31,061 | −41 | +2 / −26 | 17 |
@@ -440,13 +461,13 @@ node tools/verify-versions.js <目录> --strict     # 节数与和合本不一�
   - 多数译本多出 `43:7:53`「约翰福音 7:53」（和合本据希腊文校勘删去）；
     `rcuv` / `csb` 还多出 `13:22:19`、`66:12:18`。
   - `rcuv` 不收 `40:23:14`、`42:17:36`、`42:23:17`、`44:8:37`、`44:15:34`。
-  - `tcv95` / `tcv2019` 另不收 `40:17:21`、`41:9:44`、`41:9:46`、`41:11:26`、`47:13:14`。
+  - `tcv2019` 另不收 `40:17:21`、`41:9:44`、`41:9:46`、`41:11:26`、`47:13:14`。
   - `csb` 依希伯来文重新分节（如出埃及记 3 章只有 1–8、11–39，没有 9、10）。
 - **清洗后为空的节被丢弃** = FHL 返回的该节正文只有脚注编号或注释，清洗后没有正文，
   为避免投影时出现空行而整节丢弃（`src/main/versions.js` 与 `tools/clean-versions.js` 都会这样做）。
 - **Δ = 版本学差异 − 丢弃的空节**（例如 `lcc`：+1 − 22 = −21）。
 
-**8 个译本的卷数（66）与章数（1,189）完全一致**，差异只发生在章内的节号上。
+**7 个译本的卷数（66）与章数（1,189）完全一致**，差异只发生在章内的节号上。
 
 由此得到两条实现约束：
 
@@ -475,7 +496,7 @@ node tools/verify-versions.js <目录> --strict     # 节数与和合本不一�
 
 | 残留 | 出现情况 |
 | --- | --- |
-| 译注 `( [ 3.16] …)` / `( 「…」或译…)` | `rcuv` 8 节、`tcv95` 1 节，其余译本 0 |
+| 译注 `( [ 3.16] …)` / `( 「…」或译…)` | `rcuv` 8 节、`ncv` 3 节，其余译本 0 |
 | 脚注标记 `【n】` | 0（已清理） |
 | 单个换行符 | 0（已清理） |
 | HTML 标签 | 0（已清理） |
@@ -487,7 +508,8 @@ node tools/verify-versions.js <目录> --strict     # 节数与和合本不一�
 
 ### 8.8 版权提示
 
-- 应用在译本列表里对每个非内置译本显示其版权归属（取自清单的 `copyright` 字段）。
-- 用户自行下载 / 导入的译本，其版权归该译本权利人；本项目仅提供获取与显示的通道，
-  不随仓库分发任何受版权保护的经文数据。
-- 仓库内置的和合本（1919）属公有领域，可自由使用。
+- 应用在译本列表里对每个译本显示其版权归属（取自清单的 `copyright` 字段）。
+- 仓库内置的和合本（1919）属公有领域，可自由使用与再分发。
+- 其余 5 个译本受版权保护，版权归各自权利人所有；仓库按仓库所有者的要求内置了它们的正文，
+  **再分发本仓库前请自行确认是否符合各权利人的授权条款；若有疑虑，建议把仓库设为 private**。
+- 用户自行下载 / 导入的译本，其版权归该译本权利人；本项目仅提供获取与显示的通道。

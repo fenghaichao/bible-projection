@@ -3,9 +3,14 @@
 /**
  * 译本注册表
  *
- * - 仓库内置（data/versions/manifest.json）：和合本（简体 / 繁体），公有领域，可随仓库分发
- * - 用户安装（%APPDATA%/BibleProjection/versions/<id>.json）：受版权保护的其他译本，
- *   由应用内「获取译本」从信望愛 FHL API 下载，或从本地 JSON 文件导入；不进 Git 仓库
+ * - 仓库内置（data/versions/manifest.json）：
+ *   和合本（简体 / 繁体）——公有领域（1919 年中文和合本），随仓库分发；
+ *   吕振中 / 和合本 2010 / 中文标准 / 现代中文 2019 / 环球新译本 ——版权归各自权利人，
+ *   按用户要求一并内置（数据取自信望愛 FHL API），仓库中保留版权与来源声明；
+ *   安装包与仓库体积因此增加约 19 MB。
+ * - 用户安装（%APPDATA%/BibleProjection/versions/<id>.json）：
+ *   仍可通过应用内「获取译本」从信望愛 FHL API 下载，或从本地 JSON 文件导入；
+ *   内置译本缺失时可用此路径补齐。
  */
 const fs = require('fs');
 const path = require('path');
@@ -137,6 +142,8 @@ function listVersions() {
     source: v.source || '',
     lang: v.lang || '',
     fhlVersion: v.fhlVersion || '',
+    // 信望愛 abv.php 的 candownload：该译本是否开放离线下载授权（1=可下载）
+    offlineDownload: v.offlineDownload !== false,
   }));
   // 本地存在但清单里没有的译本（例如手工导入的）
   const known = new Set(out.map((v) => v.id));
