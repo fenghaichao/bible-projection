@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/fenghaichao/bible-projection/actions/workflows/ci.yml/badge.svg)](https://github.com/fenghaichao/bible-projection/actions/workflows/ci.yml)
 
-[中文](README.md) · [Architecture](docs/architecture.md) · [Data](docs/data.md) · [Feature audit](docs/feature-audit.md)
+[中文](README.md) · [Architecture](docs/architecture.md) · [Data](docs/data.md) · [Translations](docs/versions.md) · [Feature audit](docs/feature-audit.md)
 
 ---
 
@@ -17,6 +17,8 @@ This project is a **clean-room modern rewrite** of that feature set — not a po
 
 - **Electron 33 + plain JavaScript** (no frontend framework, no bundler, no renderer build step)
 - Verse data ships as JSON in the repository — **fully offline** after install
+- The **Chinese Union Version (Simplified / Traditional)** is bundled; six further copyrighted
+  translations can be downloaded and installed on demand (see [docs/versions.md](docs/versions.md))
 - UI, shortcuts and display settings redesigned; the original's crash defect is fixed
 
 ## Screenshots
@@ -77,13 +79,14 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | Floating panel / slideshow / quick controls | ✅ floating panel + auto-advance | A dedicated `float.html` window with 5 tabs (passage, search, format, New Testament, Old Testament — the last two list all 27 / 39 books and jump to chapter 1 on click), revealed by hovering the left edge, with a master switch in the top bar; the slideshow auto-advances on the configured interval |
 | Wireless remote control | ⚠️ partial | No dedicated remote support, but the keyboard media keys (previous / next track) work as a page-turner |
 | Multi-keyword text search | ✅ multi-keyword search | "Match all" and "Match any" modes; hits are highlighted, results are paged with a "showing N / M" hint and the keywords are kept |
-| Traditional and Simplified Chinese | ✅ toggle | Full text in both scripts; book names and category names are fully localised to the selected script |
+| Traditional and Simplified Chinese | ✅ translation switching | **CUV (Simplified)** and **CUV (Traditional)** are two *separate* translation entries, switched from the top-bar dropdown; book and category names are localised to the selected script |
+| — (new) | ✅ multiple translations | The **Chinese Union Version (Simplified / Traditional)** is bundled; six further copyrighted translations can be downloaded and installed on demand (Lü Zhenzhong / CUV 2010 / Chinese Standard Bible / Today's Chinese Version 1995 & 2019 / New Chinese Version), and a translation can also be **imported from a local JSON file** — switched from the top-bar dropdown, see [docs/versions.md](docs/versions.md) |
 | Copy verses into other programs | ✅ clipboard | Same names as the original: **copy verse text** (chapter title + verses, flowing) / **copy verse text (per verse)** / **copy verse text (per verse, one per line)**; **copy chapter** = title only (`Alt` + `C`); search results can be copied per column (chapter only / chapter + verse text) |
 | Simple drawing | ✅ brush annotation | Freehand, rectangle, circle, line and text notes (double-click to type), with eraser, undo and redo; strokes are saved per `book:chapter` into `userData/annotations.json` |
 | Bookmarks | ✅ my bookmarks | `Ctrl` + `S` bookmarks the current verse, up to 500 entries |
 | Continuous display across chapters / verse ranges | ✅ ranges | Verses can be shown continuously across chapter boundaries or as an explicit range |
 | Projection / slideshow mode | ✅ projection mode | `F5` enters and leaves, `F6` leaves projection, `F11` is the system fullscreen; drawer panels no longer interrupt projection, text is not clipped and `Esc` leaves projection in one step |
-| Original window shapes: transparent window (`F7`), desktop extension (`F9`) | ❌ not implemented in this version | Both need extra main-process `BrowserWindow` capabilities that this version does not implement; `F5` for projection and `F11` for native fullscreen cover the common cases |
+| Original window shapes: transparent window (`F7`), desktop extension (`F9`) | ❌ not implemented in this version | Both need extra main-process `BrowserWindow` capabilities that this version does not implement; `F5` for projection and `F11` for native fullscreen cover the common cases (the right-click menu keeps an "extend desktop_F9" entry that simply reports that this version uses "project to a second screen" instead) |
 | Original `Ctrl` + `0`…`4` "hide all comparison panes" | ⚠️ deliberate deviation | Replaced by `Ctrl` + `1`…`4` to switch the active comparison group and `Ctrl` + `0` to reset the font size (see [docs/feature-audit.md](docs/feature-audit.md)) |
 | — (new) | ✅ verses per page | 1..20 verses per page, `Shift` + `>` / `<` adjusts |
 | — (new) | ✅ multi-column comparison | Up to 4 passages compared side by side, added with the "+ pane" button |
@@ -143,9 +146,25 @@ Only `src/`, `data/` and `package.json` are bundled (see `build.files` in `packa
 
 ### Text
 
-This project uses the **Chinese Union Version (1919)**. The CUV was published in Shanghai in 1919; its
+This project **bundles the Chinese Union Version (1919)**. The CUV was published in Shanghai in 1919; its
 copyright has long expired, so the text is **public domain** and may be freely copied, modified and
 redistributed.
+
+Six further translations are supported, but they are **still under copyright and their text is not
+distributed with this repository**. Users have to download and install them locally:
+
+| Translation | id | Copyright holder |
+| --- | --- | --- |
+| Lü Zhenzhong Translation | `lcc` | © Lü Zhenzhong / 环球天道圣经机构 |
+| Chinese Union Version 2010 | `rcuv` | © 香港圣经公会 |
+| Chinese Standard Bible | `csb` | © 全球圣经促进会 GBI |
+| Today's Chinese Version 1995 | `tcv95` | © 联合国圣经翻译中文委员会 |
+| Today's Chinese Version 2019 | `tcv2019` | © 联合国圣经翻译中文委员会 |
+| New Chinese Version | `ncv` | © 环球圣经公会 |
+
+See [docs/versions.md](docs/versions.md) for the full list, the data sources and the install steps.
+This repository ships **no mirror, no archive and no download link** for those translations, and it
+does not decide on behalf of the user whether their use is authorised.
 
 ### How the text was obtained
 
@@ -162,10 +181,26 @@ for the field mapping and the exact extraction steps.
 > The extractor only converts the original program's data into an open format. It contains none of the
 > original program's code, and this repository ships no original executable, resource, or decompiled output.
 
+The other translations are fetched by the user from the **信望愛 FHL API** with
+`tools/fetch-versions.py`, which writes into the per-user data directory
+(`%APPDATA%\BibleProjection\versions\`). The app can also download them directly from the
+**Get translations** dialog:
+
+```bash
+python tools/fetch-versions.py                      # fetch every installable translation
+python tools/fetch-versions.py --versions lcc,rcuv  # only the listed ones
+python tools/fetch-versions.py --out D:\vers        # custom output directory
+```
+
+> `tools/fetch-versions.py` is a **user-side** helper (Python 3 + network). It is not bundled with the
+> installer and does not run in CI.
+
 ### Copyright
 
 - Source code: MIT License — see [LICENSE](LICENSE)
 - CUV text: public domain
+- The other six translations remain the property of their respective copyright holders; their text is
+  not distributed here and users are responsible for obtaining it and for their own authorisation
 - 《语音投影圣经》 remains the property of its original authors; this project is not affiliated with or
   endorsed by them
 
@@ -175,12 +210,13 @@ for the field mapping and the exact extraction steps.
 
 ```
 bible-projection/
-├── data/                   # bible-simplified.json / bible-traditional.json
-├── docs/                   # architecture.md, data.md, feature-audit.md, images/
+├── data/                   # bible-simplified.json / bible-traditional.json / versions/manifest.json
+├── docs/                   # architecture.md, data.md, versions.md, feature-audit.md, images/
 ├── src/
 │   ├── main/               # main process: window, IPC, clipboard, persistence
 │   │   ├── main.js
 │   │   ├── bible.js        # verse data access layer
+│   │   ├── versions.js     # translation registry (manifest / resolve / download / import)
 │   │   └── store.js        # JSON persistence
 │   ├── preload/preload.js  # contextBridge security bridge
 │   ├── renderer/           # UI (plain JS, no framework, no build step)
@@ -189,7 +225,12 @@ bible-projection/
 │   │   └── js/             # ES module renderer code
 │   └── shared/books.js     # 66 books and 8 categories metadata
 ├── test/                   # node --test unit tests
-├── tools/extract-mdb.ps1   # reproducible extractor for the verse data
+├── tools/
+│   ├── extract-mdb.ps1     # reproducible extractor for the verse data
+│   ├── fetch-versions.py   # user-side fetcher for the non-public-domain translations
+│   ├── verify-data.js      # validation of the bundled CUV data
+│   ├── verify-versions.js  # structural validation of translation files (offline)
+│   └── clean-versions.js   # text cleanup for downloaded translations
 ├── .github/                # CI, issue and PR templates
 ├── package.json
 └── README.md
@@ -205,6 +246,8 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 
 | Shortcut / input | Action |
 | --- | --- |
+| Top-bar translation dropdown | Switch translation (CUV Simplified / Traditional, Lü Zhenzhong, CUV 2010, Chinese Standard, Today's Chinese 1995 / 19, New Chinese Version, …); translations that are not installed are shown as "XXX (not installed)" — picking one does **not** switch, it only points you to the "Get translations" panel |
+| Top bar "Get translations" | Open the translation panel: download & install / import from a local file / view the copyright |
 | Letter abbreviation | Jump to a book, e.g. `CSJ` / `CAJ` / `LWJ` |
 | Letters + digits | Locate a chapter, e.g. `CSJ4` or `CSJ 4` |
 | `CSJ4:14` | Locate chapter 4, verse 14 |
@@ -244,14 +287,13 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 | `Ctrl` + `Shift` + `C` | Copy the current verse only |
 | `Alt` + `C` | Copy the chapter reference only, e.g. **【创1:10-11】** |
 | Right-click | Copy ▸ copy verse text_Ctrl+C / copy verse text (per verse) / copy verse text (per verse, one per line) / copy chapter_Alt+C |
-| Right-click | fullscreen_F5 / Copy ▸ / slideshow progress ▸ / hide verses / open pen_Ctrl+P / pen colour ▸ / pen width ▸ / white pen_Ctrl+B / eraser_E / clear pen_Ctrl+E / extend desktop_F9 / theme settings ▸ (dark, light) |
-| `Ctrl` + `C` inside the search panel | Copy the search results (chapter + verse text) |
-| Search panel "copy verse text / copy chapter" | Copy the ticked results: chapter + verse text / chapter only |
+| Right-click | fullscreen_F5 / Copy ▸ / slideshow progress ▸ / show current verses ("hide verses" when they are already hidden) / open pen_Ctrl+P / pen colour ▸ / pen width ▸ / white pen_Ctrl+B / eraser_E / clear pen_Ctrl+E / extend desktop_F9 / theme settings ▸ (dark, light) |
+| `Ctrl` + `P` | Open / close the brush (the original used `Ctrl` + `F`; here `Ctrl` + `F` opens the search) |
+| `Ctrl` + `B` | White pen (also enters projection and opens the brush) |
 | `Ctrl` + `=` / `Ctrl` + `-` | Increase / decrease font size |
 | `Ctrl` + `0` / `Ctrl` + `/` | Reset the font size |
 | `Ctrl` + `D` | Cycle the passage font |
 | `Ctrl` + `T` | Show / hide verse references |
-| Top bar "简 / 繁" | Switch between Simplified and Traditional text |
 
 ### Search and bookmarks
 
@@ -261,12 +303,14 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 | `Ctrl` + `H` / `F4` | Open the "recently read" panel |
 | `Ctrl` + `S` | Bookmark the current verse |
 | `Ctrl` + `,` | Open the settings panel |
+| `Ctrl` + `C` inside the search panel | Copy the search results (chapter + verse text) |
+| Search panel "copy verse text / copy chapter" | Copy the ticked results: chapter + verse text / chapter only |
 
 ### Drawing and annotation (inside projection mode)
 
 | Shortcut / gesture | Action |
 | --- | --- |
-| `Ctrl` + `B` / `Ctrl` + `P` / `D` | Toggle the canvas (drawing mode) |
+| `Ctrl` + `P` / `D` | Toggle the canvas (drawing mode) |
 | Left-drag | Freehand line |
 | `Shift` + drag | Rectangle |
 | `Ctrl` + drag | Circle |
@@ -281,8 +325,8 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 
 > **Single-letter keys only work in projection / drawing mode**: `E`, `1`…`6`,
 > `W` / `G` / `L` / `B` / `Y` / `R`, `Z`, `X` and `D` are taken by the letter quick-pick bar in normal
-> mode (the original also prioritises letter input). Use `Ctrl` + `B` or `Ctrl` + `P` to toggle the
-> canvas in normal mode.
+> mode (the original also prioritises letter input). Use `Ctrl` + `P` to toggle the canvas in normal
+> mode, or `Ctrl` + `B` to call up the white pen directly.
 
 ### Projection and remote control
 
@@ -303,8 +347,19 @@ no-speech edition** and are not provided here either.
 
 ### UI notes
 
-- The top bar provides every action above: Simplified / Traditional toggle, search, history,
-  bookmarks, settings, projection mode, floating panel and help.
+- The top bar provides every action above: search, history, bookmarks, settings, projection mode,
+  floating panel and help.
+- The top bar carries a **translation dropdown** listing every translation: installed ones show just
+  the name, the others show "XXX (not installed)". **Picking a translation that is not installed does
+  not switch anything** — it only points you to the "Get translations" panel.
+- The top bar **"Get translations"** button opens the "Get translations" panel in the right drawer: it
+  lists every translation with an "installed / not installed / bundled" tag, the source and the
+  copyright. Installed translations get a "use this translation" button (the current one reads
+  "current translation" and is disabled), the others get a "download & install" button with a progress
+  bar and a "stop tracking" action; the bottom of the panel offers "import from a local file…" and
+  "refresh list".
+- **There is no separate "Simplified / Traditional" button** — pick "CUV (Traditional)" in the
+  translation dropdown for Traditional text.
 - With the "show references" option enabled, each verse is followed by its reference (e.g. "John 3:16").
 - The wheel scrolls the passage area in normal mode; while projecting the wheel turns to the next verse,
   and the pointer hides itself after 3 s without mouse movement.
@@ -315,8 +370,8 @@ no-speech edition** and are not provided here either.
 | --- | --- | --- |
 | `Ctrl` + `S` | Change the font | Bookmark the current verse |
 | `Ctrl` + `←` / `→` | Switch between remembered passages | Previous / next book |
-| `Ctrl` + `B` | Bookmark | Toggle the canvas (drawing mode) |
 | `Ctrl` + `0` | Hide all comparison columns | Reset the font size |
+| Simplified / Traditional switching | Two built-in texts switched directly | Replaced by the translation dropdown — CUV (Simplified) and CUV (Traditional) are two separate translation entries |
 
 ---
 
@@ -333,11 +388,16 @@ no-speech edition** and are not provided here either.
   can be used as a page-turner.
 - **The original transparent window (`F7`) and desktop extension (`F9`) are not implemented**: both rely on
   extra main-process `BrowserWindow` capabilities this version does not have; use `F5` for projection and
-  `F11` for the native system fullscreen.
+  `F11` for the native system fullscreen. The right-click menu keeps an "extend desktop_F9" entry that
+  simply reports that this version uses "project to a second screen" instead.
 - **The original `Ctrl` + `0`…`4` "hide all comparison panes" semantics were replaced**: `Ctrl` + `1`…`4`
   now switches the active comparison group and `Ctrl` + `0` resets the font size.
-- Switching script re-fetches the text for the current version; history and bookmarks are keyed by
-  `book:chapter:verse`, so they carry across both scripts.
+- **The six non-CUV translations are not shipped with the installer**: they are under copyright, so users
+  must download them themselves (in-app **Get translations** or `tools/fetch-versions.py`); the first
+  download needs a network connection, afterwards they work offline as well.
+- Switching translation re-fetches the text for the current version; history, bookmarks and annotations
+  are keyed by `book:chapter:verse`, so they carry across translations (the wording follows the
+  translation in use).
 
 ---
 

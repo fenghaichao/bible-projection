@@ -39,7 +39,19 @@ KindSN 8 (启示录, n=9): 希伯来书、雅各书、彼得前书、彼得后�
 启示录 22:21  繁: 愿主耶穌的恩惠常與眾圣徒同在。阿們。
 
 --- output files ---
-E:\AI\projects\bibleProjection\data\bible-simplified.json | bytes=3611879 | sha256=f14272b94595aa39fa7ae1f2fc77fdd4d34b9a564a6e5b8fab4c23ca71bdbf03
-E:\AI\projects\bibleProjection\data\bible-traditional.json | bytes=3609283 | sha256=0053afb0c5023d252ff381bcb401e69c43221f8e36a9d19e7917218565900f4b
-E:\AI\projects\bibleProjection\src\shared\books.js | bytes=15641 | sha256=6ad82cf17532c0f2ccfdc90bf0aaea118e458c64daa093f1d45d61a28d7ba897
+E:\AI\projects\bibleProjection\data\bible-simplified.json | bytes=3611875 | sha256=909fc75b4439a72d0d8fd1b4aa9219b4468f7999aec41485a67f204a02de0a14
+E:\AI\projects\bibleProjection\data\bible-traditional.json | bytes=3609279 | sha256=add8da202b31033bbc6f94e139c82e0cb7e87f0fe4cdca1477feabf1f968a640
+E:\AI\projects\bibleProjection\src\shared\books.js | bytes=16502 | sha256=de55bf6af3e27de37308b99e6fd08446620fc034f42d3fa05fd6d9eb77eb703e
 data rows: simplified=31102 traditional=31102
+
+--- post-run adjustments (2026-11-10) ---
+  * The source Memo column carries a trailing CR/LF on one row (Romans 7:1). It survived the first
+    extraction as a literal "\r\n" inside the verse text and would render as a blank line in
+    projection mode. extract-mdb.ps1 now applies .TrimEnd() to every verse text, and the two JSON
+    files were patched in place accordingly (1 row each, row counts unchanged).
+  * The two JSON hashes above therefore differ from the ones printed by the original 2026-11-09 run
+    (simplified f14272b9..., traditional 0053afb0...); byte counts differ by 4 (2 x CR + 2 x LF).
+  * src/shared/books.js was extended after this report was generated (CATEGORIES_TRADITIONAL,
+    getCategoryName, categoryNameTraditional); the hash above is the current file on disk and is
+    NOT what extract-mdb.ps1 emits - the extractor regenerates the 66-book list without those
+    additions, so do not re-run it over the current books.js without re-applying them.

@@ -9,3 +9,7 @@ Thumbs.db
 .idea/
 tmp/
 shots/
+
+# 本地译本数据（受版权保护，不进仓库；安装到 %APPDATA%/BibleProjection/versions）
+data/versions/local/
+*.bpro

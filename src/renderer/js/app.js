@@ -21,6 +21,8 @@ import { initSlideshow } from './slideshow.js';
 import { initColumns } from './columns.js';
 import { initContextMenu } from './contextmenu.js';
 import { initFloatLink } from './floatlink.js';
+import { initVersions, refreshVersionList } from './panel-versions.js';
+import { clearChapterCache } from './version.js';
 
 /** 全局兜底：任何未捕获异常都要给出提示，避免「白屏无提示」。 */
 function reportRuntimeError(message, err) {
@@ -68,8 +70,8 @@ async function start() {
   initColumns();
   initContextMenu();
   initFloatLink();
+  initVersions();
 
-  bindTopbar();
   bindStageControls();
 
   if (bridgeMissing) toast(T.toast.noBridge, 'error', 8000);
@@ -81,9 +83,16 @@ async function start() {
 
   ipc.onSettingsChanged((next) => {
     if (!next) return;
+    const prevVersion = state.settings ? state.settings.version : null;
     state.settings = mergeSettings(next);
     applySettings(state.settings);
     bus.emit('settings', state.settings);
+    // 译本在别处被改动（另一个窗口 / 主进程）：清缓存并重载当前章
+    if (prevVersion && state.settings.version && prevVersion !== state.settings.version) {
+      clearChapterCache();
+      const { bookId, chapter, verse } = state.current;
+      if (bookId) goToVerse(bookId, chapter, verse, { record: false });
+    }
   });
 
   // 书卷
@@ -100,24 +109,9 @@ async function start() {
   if (first) {
     await goToVerse(first.id, 1, 1, { silent: true, record: false });
   }
-}
 
-function bindTopbar() {
-  const lang = $('#btn-lang');
-  if (lang) {
-    lang.addEventListener('click', async () => {
-      const next = !state.settings.traditional;
-      const merged = await ipc.setSettings({ traditional: next });
-      if (!merged) return;
-      state.settings = mergeSettings(merged);
-      // 简繁切换后需重新拉取经文
-      state.chapterCache.clear();
-      applySettings(state.settings);
-      bus.emit('settings', state.settings);
-      const { bookId, chapter, verse } = state.current;
-      if (bookId) await goToVerse(bookId, chapter, verse, { record: false });
-    });
-  }
+  // 译本列表（顶栏下拉框 + 获取译本面板）
+  await refreshVersionList();
 }
 
 function bindStageControls() {

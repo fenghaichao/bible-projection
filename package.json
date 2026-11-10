@@ -1,5 +1,6 @@
 {
   "name": "bible-projection",
+  "productName": "BibleProjection",
   "version": "0.1.0",
   "description": "圣经投影 Bible Projection —— 开源的圣经经文投影与查经工具（现代重写版，Electron）",
   "main": "src/main/main.js",

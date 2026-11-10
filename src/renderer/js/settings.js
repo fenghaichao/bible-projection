@@ -63,7 +63,6 @@ export function initSettings() {
   refs.vpp = $('#set-vpp');
   refs.theme = $$('input[name="theme"]');
   refs.copyFormat = $$('input[name="copyFormat"]');
-  refs.langTag = $('.lang-tag');
 
   for (const preset of T.settings.fontPresets) {
     const btn = el('button', { class: 'chip-btn', type: 'button', text: preset });
@@ -288,8 +287,6 @@ export function applySettings(next = state.settings) {
     stage.style.backgroundRepeat = 'no-repeat';
     if (url) verifyImage(url);
   }
-
-  if (refs.langTag) refs.langTag.textContent = s.traditional ? '繁' : '简';
 
   applyBgm(s);
   syncInputs();

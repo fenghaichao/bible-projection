@@ -117,7 +117,7 @@ export async function goToVerse(bookId, chapter, verse, opts = {}) {
     if (opts.scrollMode === 'smart') {
       // 等一帧再量位置：刚重绘完时布局可能还没稳定（字体、异步补章）。
       smartScrollUntil = Date.now() + 1200;
-      requestAnimationFrame(() => smartScrollToCurrent());
+      scheduleSoon(() => smartScrollToCurrent());
     } else {
       scrollToCurrent();
     }
@@ -389,7 +389,7 @@ export function renderStage() {
   // 导航后的一小段时间里，如果因为异步补章等原因又重绘了一次，
   // 再补一次智能滚动，把当前节带回舒适区（用户自己滚过就不动）。
   if (Date.now() < smartScrollUntil && Date.now() - lastUserScrollAt > 600) {
-    requestAnimationFrame(() => smartScrollToCurrent());
+    scheduleSoon(() => smartScrollToCurrent());
   }
 }
 
@@ -453,14 +453,14 @@ export async function selectVerse(chapter, verse) {
 
   smartScrollUntil = Date.now() + 1200;
   if (n === state.current.verse) {
-    requestAnimationFrame(() => smartScrollToCurrent());
+    scheduleSoon(() => smartScrollToCurrent());
     return;
   }
 
   state.current = { bookId, chapter: targetChapter, verse: n };
   recordHistory();
   bus.emit('navigate', { ...state.current, silent: true });
-  requestAnimationFrame(() => smartScrollToCurrent());
+  scheduleSoon(() => smartScrollToCurrent());
 }
 
 function scrollToCurrent() {
@@ -477,11 +477,36 @@ function scrollToCurrent() {
  */
 const READ_ZONE = { top: 0.14, bottom: 0.46 };
 
+/**
+ * 安排一次「尽快执行」：优先用 requestAnimationFrame（与绘制同步）；
+ * 页面被遮挡/隐藏时 Chromium 会把 rAF 降到 1Hz，因此再用定时器兜底，
+ * 保证翻节后的智能滚动在投影、副屏等场景下也会执行。
+ */
+function scheduleSoon(fn) {
+  let done = false;
+  const run = () => {
+    if (done) return;
+    done = true;
+    fn();
+  };
+  requestAnimationFrame(run);
+  setTimeout(run, 60);
+}
+
 /** 平滑滚动（缓动），新的一次滚动会打断上一次。 */
-let scrollAnim = 0;
+let scrollAnimRaf = 0;
+let scrollAnimTimer = 0;
+
+function cancelScrollAnim() {
+  if (scrollAnimRaf) cancelAnimationFrame(scrollAnimRaf);
+  if (scrollAnimTimer) clearTimeout(scrollAnimTimer);
+  scrollAnimRaf = 0;
+  scrollAnimTimer = 0;
+}
+
 function smoothScrollBy(scroller, delta, duration = 420) {
   if (!scroller || Math.abs(delta) < 1) return;
-  if (scrollAnim) cancelAnimationFrame(scrollAnim);
+  cancelScrollAnim();
   const start = scroller.scrollTop;
   const end = start + delta;
   const t0 = performance.now();
@@ -489,9 +514,17 @@ function smoothScrollBy(scroller, delta, duration = 420) {
     const p = Math.min(1, (now - t0) / duration);
     const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;   // easeInOutCubic
     scroller.scrollTop = start + (end - start) * e;
-    scrollAnim = p < 1 ? requestAnimationFrame(step) : 0;
+    if (p < 1) {
+      // rAF 与定时器双保险：窗口被遮挡时 rAF 不触发，定时器仍能推进动画。
+      scrollAnimRaf = requestAnimationFrame(step);
+      scrollAnimTimer = setTimeout(() => step(performance.now()), 32);
+    } else {
+      scrollAnimRaf = 0;
+      scrollAnimTimer = 0;
+    }
   };
-  scrollAnim = requestAnimationFrame(step);
+  scrollAnimRaf = requestAnimationFrame(step);
+  scrollAnimTimer = setTimeout(() => step(performance.now()), 32);
 }
 
 /**

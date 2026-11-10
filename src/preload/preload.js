@@ -35,6 +35,11 @@ const bible = {
   getAnnotations: (key) => ipcRenderer.invoke('bible:getAnnotations', key),
   saveAnnotations: (key, strokes) => ipcRenderer.invoke('bible:saveAnnotations', key, strokes),
 
+  // 译本管理
+  listVersions: () => ipcRenderer.invoke('bible:listVersions'),
+  installVersion: (id) => ipcRenderer.invoke('bible:installVersion', id),
+  importVersionFile: () => ipcRenderer.invoke('bible:importVersionFile'),
+
   // 浮动控制面板
   toggleFloatPanel: (visible) => ipcRenderer.invoke('bible:toggleFloatPanel', visible),
   sendFloatState: (payload) => ipcRenderer.invoke('bible:floatState', payload),
@@ -87,6 +92,24 @@ const bible = {
     const listener = (_event, payload) => callback(payload || {});
     ipcRenderer.on('bible:float-state', listener);
     return () => ipcRenderer.removeListener('bible:float-state', listener);
+  },
+
+  /**
+   * 订阅译本下载进度，返回取消订阅函数。
+   */
+  onVersionProgress: (callback) => {
+    const listener = (_event, info) => callback(info || {});
+    ipcRenderer.on('bible:version-progress', listener);
+    return () => ipcRenderer.removeListener('bible:version-progress', listener);
+  },
+
+  /**
+   * 订阅译本列表变化（安装/导入完成后触发），返回取消订阅函数。
+   */
+  onVersionsChanged: (callback) => {
+    const listener = (_event, list) => callback(Array.isArray(list) ? list : []);
+    ipcRenderer.on('bible:versions-changed', listener);
+    return () => ipcRenderer.removeListener('bible:versions-changed', listener);
   },
 };
 

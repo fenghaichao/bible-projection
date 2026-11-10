@@ -9,7 +9,19 @@
 | --- | --- |
 | `bible-simplified.json` | 和合本简体经文，31,102 节 |
 | `bible-traditional.json` | 和合本繁体经文，31,102 节（与简体一一对应） |
+| `versions/manifest.json` | 译本清单：内置的 2 个和合本 + 6 个需用户自行下载的中文译本 |
 | `README.md` | 本文件 |
+
+### `versions/manifest.json`
+
+仓库只内置**公有领域**的和合本（简 / 繁）；其余中文译本（`lcc` 吕振中、`rcuv` 和合本修订版 2010、
+`csb` 中文标准译本、`tcv95` / `tcv2019` 现代中文译本、`ncv` 环球新译本）受版权保护，
+**不随仓库分发**，由用户用 `tools/fetch-versions.py` 抓取或从应用内「获取译本」下载，
+保存在 `%APPDATA%\BibleProjection\versions\`。
+
+清单里 `bundled: true` 的两个条目的 `file` 相对本目录（`data/`）解析；
+其余条目带 `fhlVersion`，供应用按 FHL API 下载。详见
+[`docs/data.md`](../docs/data.md) 的「多译本数据」章节。
 
 书卷元数据（书名、简繁体书名、缩写、分类、章数/节数、首节 ID、旧/新约）在
 [`src/shared/books.js`](../src/shared/books.js)，以 CommonJS 模块导出：
@@ -44,7 +56,7 @@ const { CATEGORIES, BOOKS } = require('../src/shared/books.js');
 | --- | --- | --- |
 | 经节数 | 31,102 | 31,102 |
 | 文件大小 | 3,611,879 字节 | 3,609,283 字节 |
-| SHA-256 | `f14272b94595aa39fa7ae1f2fc77fdd4d34b9a564a6e5b8fab4c23ca71bdbf03` | `0053afb0c5023d252ff381bcb401e69c43221f8e36a9d19e7917218565900f4b` |
+| SHA-256 | `909fc75b4439a72d0d8fd1b4aa9219b4468f7999aec41485a67f204a02de0a14` | `add8da202b31033bbc6f94e139c82e0cb7e87f0fe4cdca1477feabf1f968a640` |
 
 > 复核上面的 SHA-256：  
 > `Get-FileHash data\bible-simplified.json -Algorithm SHA256`  

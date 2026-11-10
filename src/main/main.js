@@ -4,6 +4,7 @@ const { app, BrowserWindow, ipcMain, clipboard, shell, Menu, dialog } = require(
 const path = require('path');
 const { JsonStore } = require('./store');
 const bible = require('./bible');
+const versions = require('./versions');
 
 const DEFAULT_SETTINGS = {
   fontFamily: '微软雅黑',
@@ -16,6 +17,8 @@ const DEFAULT_SETTINGS = {
   underline: false,
   showNotes: false,
   versesPerPage: 1,
+  // 当前译本：simplified=和合本(简) / traditional=和合本(繁)，其余为用户安装的译本 id
+  version: 'simplified',
   traditional: false,
   theme: 'dark',
   // 文字阴影（原版功能 5）
@@ -58,7 +61,12 @@ function createStores() {
 }
 
 function currentVersion() {
-  return settingsStore.get().traditional ? 'traditional' : 'simplified';
+  const settings = settingsStore.get();
+  // 兼容旧设置：没有 version 但有 traditional 时按繁体处理
+  if (!settings.version) return settings.traditional ? 'traditional' : 'simplified';
+  // 译本文件缺失（例如被用户删除）时回落到内置和合本，避免整页空白
+  if (!versions.isInstalled(settings.version)) return 'simplified';
+  return settings.version;
 }
 
 function createWindow() {
@@ -77,6 +85,9 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false,
       spellcheck: false,
+      // 投影/放映时窗口常被遮挡或放到副屏：关闭后台节流，
+      // 否则 Chromium 会把渲染进程的 rAF/定时器降到 1Hz，翻节的智能滚动会停摆。
+      backgroundThrottling: false,
     },
   });
 
@@ -167,6 +178,7 @@ function createFloatWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      backgroundThrottling: false,
     },
   });
 
@@ -319,6 +331,47 @@ function registerIpc() {
   });
 
   ipcMain.handle('bible:appVersion', () => app.getVersion());
+
+  // ---- 译本管理 ----
+  ipcMain.handle('bible:listVersions', () => versions.listVersions());
+
+  ipcMain.handle('bible:installVersion', async (_e, id) => {
+    try {
+      const res = await versions.installVersion(String(id || ''), {
+        onProgress: (info) => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('bible:version-progress', info);
+          }
+        },
+      });
+      if (res.ok && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('bible:versions-changed', versions.listVersions());
+      }
+      return res;
+    } catch (err) {
+      console.error('[ipc] 安装译本失败:', err.message);
+      return { ok: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('bible:importVersionFile', async () => {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: '导入译本数据文件',
+      properties: ['openFile'],
+      filters: [{ name: '译本数据 (JSON)', extensions: ['json'] }],
+    });
+    if (res.canceled || !res.filePaths.length) return { ok: false, canceled: true };
+    try {
+      const out = versions.importVersionFile(res.filePaths[0]);
+      if (out.ok && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('bible:versions-changed', versions.listVersions());
+      }
+      return out;
+    } catch (err) {
+      console.error('[ipc] 导入译本失败:', err.message);
+      return { ok: false, error: err.message };
+    }
+  });
 
   // ---- 文件选择（背景图 / 背景音乐） ----
   ipcMain.handle('bible:pickImage', async () => {

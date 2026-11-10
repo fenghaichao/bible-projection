@@ -2,17 +2,15 @@
 
 /**
  * 经文数据访问层
- * - 简体 / 繁体两份 JSON，各自按需加载并常驻内存
+ * - 多译本：仓库内置和合本（简/繁），其余译本由用户安装到用户数据目录
+ * - 各译本按需加载并常驻内存
  * - 章、节范围、关键字查找
  */
 const fs = require('fs');
 const path = require('path');
+const versions = require('./versions.js');
 
 const DATA_DIR = process.env.BIBLE_DATA_DIR || path.join(__dirname, '..', '..', 'data');
-const FILES = {
-  simplified: 'bible-simplified.json',
-  traditional: 'bible-traditional.json',
-};
 
 let booksMeta = { BOOKS: [], CATEGORIES: [] };
 try {
@@ -22,25 +20,27 @@ try {
   console.warn('[bible] 未找到 src/shared/books.js，书卷列表为空:', err.message);
 }
 
-const cache = {
-  simplified: null,
-  traditional: null,
-};
+const cache = new Map();
 
 /** 读取指定版本经文，返回 Map<"book:chapter:verse", text> */
 function loadVersion(version) {
-  if (cache[version]) return cache[version];
-  const file = path.join(DATA_DIR, FILES[version]);
-  if (!fs.existsSync(file)) {
-    throw new Error(`缺少数据文件: ${file}`);
+  if (cache.has(version)) return cache.get(version);
+  const file = versions.resolveVersionFile(version);
+  if (!file) {
+    throw new Error(`该译本未安装: ${version}`);
   }
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
   const map = new Map();
   for (const row of raw) {
     map.set(`${row[0]}:${row[1]}:${row[2]}`, row[3]);
   }
-  cache[version] = map;
+  cache.set(version, map);
   return map;
+}
+
+/** 该译本是否使用繁体书名（目前仅和合本繁体） */
+function isTraditional(version) {
+  return version === 'traditional';
 }
 
 function getBooks() {
@@ -118,9 +118,9 @@ function search({ keywords = [], mode = 'all', limit = 500 } = {}, version = 'si
         chapter: Number(c),
         verse: Number(v),
         text,
-        bookName: (version === 'traditional' ? book.nameTraditional : book.name) || `第${b}卷`,
+        bookName: (isTraditional(version) ? book.nameTraditional : book.name) || `第${b}卷`,
         bookNameTraditional: book.nameTraditional || book.name || `第${b}卷`,
-        categoryName: (version === 'traditional' ? book.categoryNameTraditional : book.categoryName) || '',
+        categoryName: (isTraditional(version) ? book.categoryNameTraditional : book.categoryName) || '',
       });
       if (hits.length >= limit) break;
     }
@@ -128,4 +128,4 @@ function search({ keywords = [], mode = 'all', limit = 500 } = {}, version = 'si
   return hits;
 }
 
-module.exports = { getBooks, getBook, getChapter, getRange, search, loadVersion };
+module.exports = { getBooks, getBook, getChapter, getRange, search, loadVersion, listVersions: versions.listVersions };

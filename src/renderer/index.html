@@ -24,6 +24,7 @@
   <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1-4.2L15.6 5.2l3.2 3.2L8.2 19z"/><path d="M14.2 6.6l3.2 3.2"/></symbol>
   <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2 2 0 0 1 6 3.5h13v15H6a2 2 0 0 0-2 2z"/><path d="M4 18.5A2 2 0 0 1 6 16.5h13"/></symbol>
   <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M9 4.5v15"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3.5v11M8 11l4 4 4-4M4.5 19.5h15"/></symbol>
 </defs></svg>
 
 <!-- ── top bar ─────────────────────────────────────────────────── -->
@@ -34,7 +35,10 @@
     <span class="brand-latin">SACRED&nbsp;PROJECTION</span>
   </div>
   <nav class="topbar-actions">
-    <button class="btn" id="btn-lang" type="button" title="简 / 繁" data-i18n-title="topbar.lang"><span class="lang-tag">简</span><span class="lang-label" data-i18n="topbar.lang">简 / 繁</span></button>
+    <div class="version-picker">
+      <select class="version-select" id="version-select" title="译本" data-i18n-title="topbar.version" aria-label="译本"></select>
+      <button class="btn" id="btn-versions" type="button" title="获取译本" data-i18n-title="topbar.versions"><svg class="icon"><use href="#i-download"></use></svg><span data-i18n="topbar.versions">获取译本</span></button>
+    </div>
     <button class="btn" type="button" data-open-panel="search"><svg class="icon"><use href="#i-search"></use></svg><span data-i18n="topbar.search">查找</span></button>
     <button class="btn" type="button" data-open-panel="history"><svg class="icon"><use href="#i-clock"></use></svg><span data-i18n="topbar.history">历史</span></button>
     <button class="btn" type="button" data-open-panel="saved"><svg class="icon"><use href="#i-star"></use></svg><span data-i18n="topbar.saved">收藏</span></button>
@@ -302,6 +306,19 @@
       <header class="panel-head"><h2 data-i18n="saved.title">我的收藏</h2><button class="icon-btn" type="button" data-close-panel><svg class="icon"><use href="#i-close"></use></svg></button></header>
       <div class="panel-body">
         <div class="result-list" id="saved-list"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-versions" hidden>
+      <header class="panel-head"><h2 data-i18n="versions.title">获取译本</h2><button class="icon-btn" type="button" data-close-panel><svg class="icon"><use href="#i-close"></use></svg></button></header>
+      <div class="panel-body">
+        <p class="panel-status" id="versions-status"></p>
+        <div class="version-list" id="version-list"></div>
+        <div class="field field-row">
+          <button class="btn btn-ghost" type="button" id="versions-import" data-i18n="versions.import">从本地文件导入…</button>
+          <button class="btn btn-ghost" type="button" id="versions-refresh" data-i18n="versions.refresh">刷新列表</button>
+        </div>
+        <p class="field-hint" data-i18n="versions.copyrightHint">译本版权与使用范围请以各译本出版方说明为准；导入的译本仅在本机使用。</p>
       </div>
     </section>
 

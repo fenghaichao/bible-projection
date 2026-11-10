@@ -117,7 +117,10 @@ function Read-VerseRows {
     $list = New-Object System.Collections.Generic.List[object]
     foreach ($row in $dt.Rows) {
         $t = $row['strjw']
-        if ($t -is [System.DBNull]) { $t = $null } else { $t = [string]$t }
+        # TrimEnd(): the source Memo column carries trailing CR/LF on some rows
+        # (e.g. Romans 7:1). Left in place they render as a blank line in
+        # projection mode, so strip trailing whitespace at the source.
+        if ($t -is [System.DBNull]) { $t = $null } else { $t = ([string]$t).TrimEnd() }
         $list.Add([pscustomobject]@{
             Book   = [int]$row['VolumeSN']
             Chapter = [int]$row['ChapterSN']
@@ -323,6 +326,8 @@ Write-VerseJson -Path $tradPath -Rows $versesF
 # Write src/shared/books.js
 # --------------------------------------------------------------------------------------
 $CATEGORIES = @('摩西五经', '旧约历史', '诗歌智慧', '大先知', '小先知', '福音书', '书信', '启示录')
+# 与 CATEGORIES 一一对应的繁体分类名（KindSN 1..8）
+$CATEGORIES_TRADITIONAL = @('摩西五經', '舊約歷史', '詩歌智慧', '大先知', '小先知', '福音書', '書信', '啟示錄')
 
 # Real per-book counts taken from the extracted verse rows (bibleid.VerseNumber is wrong
 # for 启示录: it says 403 while the 和合本 text table actually holds 404 verses).
@@ -357,6 +362,26 @@ for ($i = 0; $i -lt $CATEGORIES.Count; $i++) {
 }
 [void]$sb.AppendLine('];')
 [void]$sb.AppendLine('')
+[void]$sb.AppendLine('/** 与 CATEGORIES 一一对应的繁体分类名（KindSN 1..8） */')
+[void]$sb.AppendLine('const CATEGORIES_TRADITIONAL = [')
+for ($i = 0; $i -lt $CATEGORIES_TRADITIONAL.Count; $i++) {
+    $comma = if ($i -lt $CATEGORIES_TRADITIONAL.Count - 1) { ',' } else { '' }
+    [void]$sb.AppendLine('  ' + (ConvertTo-JsString $CATEGORIES_TRADITIONAL[$i]) + $comma)
+}
+[void]$sb.AppendLine('];')
+[void]$sb.AppendLine('')
+[void]$sb.AppendLine('/**')
+[void]$sb.AppendLine(' * 取分类名。')
+[void]$sb.AppendLine(' * @param {number} category KindSN（1..8）')
+[void]$sb.AppendLine(' * @param {boolean} traditional 是否繁体')
+[void]$sb.AppendLine(' */')
+[void]$sb.AppendLine('function getCategoryName(category, traditional) {')
+[void]$sb.AppendLine('  const idx = Number(category) - 1;')
+[void]$sb.AppendLine('  if (idx < 0) return '''';')
+[void]$sb.AppendLine('  if (traditional) return CATEGORIES_TRADITIONAL[idx] || CATEGORIES[idx] || '''';')
+[void]$sb.AppendLine('  return CATEGORIES[idx] || '''';')
+[void]$sb.AppendLine('}')
+[void]$sb.AppendLine('')
 [void]$sb.AppendLine('const BOOKS = [')
 foreach ($b in ($books | Sort-Object { $_.SN })) {
     $t = $booksF | Where-Object { $_.SN -eq $b.SN } | Select-Object -First 1
@@ -364,6 +389,7 @@ foreach ($b in ($books | Sort-Object { $_.SN })) {
     $shortT = if ($null -ne $t) { $t.ShortName } else { $b.ShortName }
     $cat = $b.KindSN
     $catName = if ($cat -ge 1 -and $cat -le $CATEGORIES.Count) { $CATEGORIES[$cat - 1] } else { '未分类' }
+    $catNameT = if ($cat -ge 1 -and $cat -le $CATEGORIES_TRADITIONAL.Count) { $CATEGORIES_TRADITIONAL[$cat - 1] } else { '未分類' }
     $testament = if ($b.NewOrOld) { '新约' } else { '旧约' }
     [void]$sb.AppendLine('  { id: ' + $b.SN +
         ', name: ' + (ConvertTo-JsString $b.FullName) +
@@ -373,6 +399,7 @@ foreach ($b in ($books | Sort-Object { $_.SN })) {
         ', abbr: ' + (ConvertTo-JsString $b.PY) +
         ', category: ' + $cat +
         ', categoryName: ' + (ConvertTo-JsString $catName) +
+        ', categoryNameTraditional: ' + (ConvertTo-JsString $catNameT) +
         ', chapters: ' + $actual[$b.SN].Chapters +
         ', verses: ' + $actual[$b.SN].Verses +
         ', firstVerseId: ' + $b.FirstSN +
@@ -382,6 +409,8 @@ foreach ($b in ($books | Sort-Object { $_.SN })) {
 [void]$sb.AppendLine('')
 [void]$sb.AppendLine('module.exports = {')
 [void]$sb.AppendLine('  CATEGORIES,')
+[void]$sb.AppendLine('  CATEGORIES_TRADITIONAL,')
+[void]$sb.AppendLine('  getCategoryName,')
 [void]$sb.AppendLine('  BOOKS,')
 [void]$sb.AppendLine('};')
 [void]$sb.Append('')

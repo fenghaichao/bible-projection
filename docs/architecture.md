@@ -14,6 +14,7 @@
 │ 主进程  src/main/                                        │
 │   main.js    窗口创建、菜单、IPC 注册、剪贴板、外部链接     │
 │   bible.js   经文数据访问层（读 JSON、查章、查范围、查找）  │
+│   versions.js 译本注册表（清单、解析、下载、导入，见 §8）   │
 │   store.js   极简 JSON 持久化（设置 / 历史 / 收藏 / 标注）  │
 └───────────────┬──────────────────────────────────────────┘
                 │  ipcMain.handle  /  ipcMain.send
@@ -104,6 +105,8 @@ src/renderer/
     ├── bgm.js         背景音乐播放
     ├── highlight.js   查找结果高亮
     ├── float.js / floatlink.js   浮动控制面板及其与主窗口的联动
+    ├── version.js     译本取值统一入口（当前译本 id、书名 / 短卷名 / 分类名）
+    ├── panel-versions.js  顶栏译本下拉 + 「获取译本」面板（下载安装 / 本地导入 / 刷新）
     ├── i18n.js        文案表（含帮助面板的快捷键表）
     ├── util.js        通用小工具
     └── toast.js       轻提示
@@ -113,17 +116,17 @@ src/renderer/
 
 | 区域 | 关键节点 | 作用 |
 | --- | --- | --- |
-| 顶栏 `topbar` | `btn-lang`、`data-open-panel`、`btn-projection` | 简/繁切换、打开各面板、进入投影模式 |
+| 顶栏 `topbar` | `data-open-panel`、`btn-projection`、`#version-select` / `#btn-versions` | 打开各面板、进入投影模式、译本下拉与「获取译本」 |
 | 侧栏 `sidebar` | `sidebar-body` | 66 卷书目（8 分类）与章列表 |
 | 舞台 `stage` | `#verses`、`#stage-scroll`、`canvas#draw-canvas`、`#draw-tools`、`#stage-foot` | 经文显示区 + 标注画布 + 绘画工具条 |
-| 抽屉 `drawer` | `#panel-search` / `#panel-settings` / `#panel-history` / `#panel-saved` / `#panel-help` | 查找、设置、历史、收藏、帮助五个面板 |
+| 抽屉 `drawer` | `#panel-search` / `#panel-settings` / `#panel-history` / `#panel-saved` / `#panel-help` / `#panel-versions` | 查找、设置、历史、收藏、帮助、获取译本六个面板 |
 
 渲染层**不直接触碰 `ipcRenderer`**，所有特权调用都经过 `src/renderer/js/bridge.js`：
 
 - 它是 `window.bible` 的唯一调用点，页面其余代码只依赖 bridge 导出的函数；
 - 当 bridge 不可用（例如在浏览器里直接打开 `index.html`）时，bridge 会退化为
   **stub 替身**并用 toast 提示，而不是抛出未捕获异常；
-- bridge 负责把 IPC 的原始返回整理成渲染层可用的结构，并统一处理简繁切换等派生状态。
+- bridge 负责把 IPC 的原始返回整理成渲染层可用的结构，并统一处理译本切换等派生状态。
 
 ---
 
@@ -229,8 +232,8 @@ type SearchHit = Verse & { bookName: string };
 - 历史记录**按 `bookId:chapter:verse` 去重并置顶**，上限 200 条；收藏上限 500 条且不重复添加。
 - 渲染层只在**真正翻到某一节时**才写历史，因此启动时不会误写一条空记录；
   连续翻阅多节时，中间经过的每一节都会被记录。
-- 条目只保存经文的**位置**（`label` = 书卷名 + 章:节）；面板展示时再按当前脚本
-  取回该节的经文正文，因此简繁切换后历史与收藏依然可读。
+- 条目只保存经文的**位置**（`label` = 书卷名 + 章:节）；面板展示时再按当前译本
+  取回该节的经文正文，因此切换译本后历史与收藏依然可读。
 
 ### 系统能力
 
@@ -257,6 +260,14 @@ type SearchHit = Verse & { bookName: string };
 - 存储位置见 §4 的 `annotations.json`；
 - 渲染层在进入某章时读一次、每次落笔后写一次（`src/renderer/js/draw.js`）。
 
+### 译本管理
+
+| 方法 | 参数 | 返回 | 说明 |
+| --- | --- | --- | --- |
+| `bible:listVersions` | — | `VersionInfo[]` | 返回译本清单：清单条目 + 本地已安装状态（详见 §8） |
+| `bible:installVersion` | `id: string` | `{ ok, id?, name?, verses?, error? }` | 从信望愛 FHL API 下载并安装指定译本；下载期间通过 `bible:version-progress` 推送进度 |
+| `bible:importVersionFile` | — | `{ ok, canceled?, id?, name?, verses?, error? }` | 弹出系统「打开文件」对话框导入本地译本 JSON；取消返回 `{ ok: false, canceled: true }` |
+
 ### 推送通道
 
 | 通道 | 方向 | 载荷 | 说明 |
@@ -266,6 +277,8 @@ type SearchHit = Verse & { bookName: string };
 | `bible:shortcut` | 主进程 → 渲染进程 | `{ key, code, control, meta, shift, alt }` | 主进程在 `before-input-event` 阶段拦下的按键（如 `F5`），见 §5 |
 | `bible:float-state` | 主进程 → 面板窗口 | 状态对象 | 主进程把主窗口的最新状态转发给浮动控制面板 |
 | `bible:float-command` | 主进程 → 主窗口 | 命令对象 | 面板上的操作（翻节、开关投影等）经主进程转发回主窗口 |
+| `bible:version-progress` | 主进程 → 渲染进程 | `{ id, done, total, percent }` | 下载译本时的进度推送，`done` / `total` 为已完成的卷数 |
+| `bible:versions-changed` | 主进程 → 渲染进程 | `VersionInfo[]` | 译本安装 / 导入成功后广播新的清单，渲染层据此刷新下拉框 |
 
 预加载层把它们包装成订阅函数，**返回取消订阅函数**：
 
@@ -275,6 +288,8 @@ const offFs = window.bible.onFullscreenChanged((flag) => { /* ... */ });
 const offSc = window.bible.onShortcut((payload) => { /* ... */ });
 const offFloatState = window.bible.onFloatState((payload) => { /* ... */ });
 const offFloatCmd = window.bible.onFloatCommand((payload) => { /* ... */ });
+const offProgress = window.bible.onVersionProgress((info) => { /* ... */ });
+const offVersions = window.bible.onVersionsChanged((list) => { /* ... */ });
 
 // 不再需要时
 off();
@@ -282,6 +297,8 @@ offFs();
 offSc();
 offFloatState();
 offFloatCmd();
+offProgress();
+offVersions();
 ```
 
 > `fullscreen-changed` 同时覆盖「点顶栏按钮进入投影模式」与「用户按系统键 / 拖动窗口标题栏退出全屏」两种情况，
@@ -365,12 +382,15 @@ if (mode === 'any' ? matched > 0 : matched === terms.length) { /* 命中 */ }
 <userData>/history.json      历史记录   { "items": [...] }
 <userData>/saved.json        收藏       { "items": [...] }
 <userData>/annotations.json  画笔标注   { "items": { "<bookId>:<chapter>": Stroke[] } }
+<userData>/versions/         已安装译本  <id>.json + <id>.meta.json（见 §8）
 ```
 
 `userData` 在 Windows 上默认是 `%APPDATA%\BibleProjection`（产品名 `BibleProjection`，
 由 `package.json` 的 `build.productName` 决定），实际路径以 `app.getPath('userData')` 为准。
 
 **经文数据不在这里** —— `data/` 是随安装包分发的只读资源，升级即更新。
+唯一的例外是**用户自行安装的译本**：它们受版权保护、不进仓库，只能落在
+`<userData>/versions/` 里（见 §8）。
 
 ### 写入策略
 
@@ -480,7 +500,7 @@ fs.renameSync(tmp, this.filePath);
 - 标注层是**独立的 `<canvas>`**（`#draw-canvas`），不与经文 DOM 混在一起：
   这样滚动经文时笔迹可以按需固定在视口或随内容移动，两种行为都容易实现；
   清空标注也只需清空画布状态。
-- 画笔状态与经文内容**互不影响**：切换章节、切换简繁、切换主题都不会丢失标注，
+- 画笔状态与经文内容**互不影响**：切换章节、切换译本、切换主题都不会丢失标注，
   因为标注是叠在上面的独立图层。
 - 画笔只做**基础笔迹**：画笔 / 擦除 / 撤销 / 重做 / 清空。
   不做调色板、形状识别、多图层，也不做屏幕录制。
@@ -662,18 +682,160 @@ stroke = {
 - 查找结果支持多选：结果行左侧复选框勾选后，复制按钮只复制勾选的那些（对应原版按所选列决定复制内容）。
 - `Ctrl` + `C` 的语义随上下文切换：查找抽屉打开时复制查找结果，否则复制显示区经文。
 
-## 8. 目录速查
+## 8. 多译本架构
+
+仓库内置**和合本（简体 / 繁体）**（公有领域，可随仓库分发）；
+吕振中译本、中文标准译本、和合本修订版 2010、现代中文译本 1995 / 2019、环球新译本
+**仍受版权保护，仓库不分发其正文**，由使用者自行下载后安装到本机。
+译本清单与版权详见 [译本清单与版权](versions.md)。
+
+### 8.1 总体数据流
+
+```
+data/versions/manifest.json                ← 仓库内：译本清单（只有元信息，无正文）
+        │
+        ▼  versions.loadManifest()
+src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层「译本下拉」
+        │                                                    │
+        │ resolveVersionFile(id)                              │ 设置 settings.version
+        ├─ bundled=true  → data/<file>                        ▼
+        └─ 否则          → %APPDATA%/BibleProjection/versions/<id>.json
+                                     ▲                              │
+                                     │ installVersion(id)          │ bible:getChapter / getRange / search
+                                     │   ← 信望愛 FHL API          │   （按 settings.version 取数）
+                                     │ importVersionFile(path)     ▼
+```
+
+### 8.2 译本清单 manifest.json
+
+清单文件位于 `data/versions/manifest.json`，格式为 `{"versions": [ ... ]}`：
+
+| 字段 | 含义 |
+| --- | --- |
+| `id` | 译本标识，同时也是 `settings.version` 的取值 |
+| `name` | 界面显示名（如「和合本（简体）」） |
+| `bundled` | `true` 表示正文随仓库分发（只有和合本简 / 繁为 `true`） |
+| `file` | 正文文件名，相对 `data/` 目录；仅 `bundled` 条目使用 |
+| `fhlVersion` | 信望愛 API 的版本参数，用于在线下载；仅可安装条目使用 |
+| `copyright` / `source` | 版权归属与正文来源，界面会显示 |
+| `lang` | 语言标记，如 `zh-Hans` / `zh-Hant` |
+
+读取失败（文件缺失或格式不对）时，`versions.loadManifest()` 回退到 `versions.js` 内置的
+`DEFAULT_MANIFEST`（同样只有和合本简 / 繁两条），应用不会因此启动失败。
+
+### 8.3 译本文件的解析顺序
+
+`versions.resolveVersionFile(id)` 按下面的顺序定位正文文件：
+
+1. 清单条目 `bundled === true` 且 `file` 存在 → `data/<file>`（仓库内，内置和合本）；
+2. 否则 → `%APPDATA%\BibleProjection\versions/<id>.json`（用户安装目录）；
+3. 两者都不存在 → 返回 `null`，`versions.isInstalled(id)` 为 `false`。
+
+用户数据目录来自 Electron 的 `app.getPath('userData')`，即
+`%APPDATA%\BibleProjection`；其下再建一个 `versions` 子目录存放译本正文与 `<id>.meta.json`。
+
+### 8.4 主进程模块 src/main/versions.js
+
+| 导出 | 作用 |
+| --- | --- |
+| `loadManifest()` | 读取并缓存 `data/versions/manifest.json`，失败回退内置清单 |
+| `listVersions()` | 合并清单与本地已安装状态；本地存在但清单里没有的译本（如手工导入）也会补进来 |
+| `resolveVersionFile(id)` / `isInstalled(id)` | 按 8.3 的顺序定位正文、判断是否可读 |
+| `installVersion(id, { onProgress })` | 从 FHL API 下载 66 卷 → 清洗文本 → 写入 `<id>.json` + `<id>.meta.json`；内置译本与无 `fhlVersion` 的条目直接返回失败 |
+| `importVersionFile(path)` | 导入本地译本 JSON（`[书卷号, 章, 节, 正文]` 数组）；译本 id 取文件名 |
+| `cleanText(raw)` | 去掉标题标签、`<br>`、行内注释（`([...])` / `（[...]）`）并压缩空白，规则与 `tools/fetch-versions.py` 一致 |
+
+`listVersions()` 返回的每条记录形如：
+
+```js
+{ id, name, bundled, installed, copyright, source, lang, fhlVersion }
+```
+
+### 8.5 IPC 与事件
+
+| 通道 | 方向 | 载荷 | 说明 |
+| --- | --- | --- | --- |
+| `bible:listVersions` | 渲染进程 → 主进程 | — | 返回 `VersionInfo[]` |
+| `bible:installVersion` | 渲染进程 → 主进程 | `id: string` | 下载并安装；返回 `{ ok, id, name, verses }` 或 `{ ok: false, error }` |
+| `bible:importVersionFile` | 渲染进程 → 主进程 | — | 主进程弹系统文件对话框；返回 `{ ok, id, name, verses }`、`{ ok: false, canceled: true }` 或 `{ ok: false, error }` |
+| `bible:version-progress` | 主进程 → 渲染进程 | `{ id, done, total, percent }` | 下载进度；`done` / `total` 是已完成的卷数 / 总卷数 |
+| `bible:versions-changed` | 主进程 → 渲染进程 | `VersionInfo[]` | 安装 / 导入成功后广播新清单 |
+
+预加载层暴露：`listVersions()`、`installVersion(id)`、`importVersionFile()`、
+`onVersionProgress(cb)`、`onVersionsChanged(cb)`，两个订阅函数都返回取消订阅函数。
+
+### 8.6 顶栏译本下拉框与「获取译本」面板
+
+顶栏有两个与译本相关的控件，**取代了原版的独立「简 / 繁」按钮**：
+
+| 控件 | 位置 | 行为 |
+| --- | --- | --- |
+| `#version-select` 译本下拉框 | 顶栏 | 列出 `listVersions()` 返回的全部译本：已安装的只显示名字，未安装的显示「XXX（未安装）」。**选中未安装的译本不会切换**，只 toast 提示「尚未安装，请先在「获取译本」中下载」并打开该面板；选中已安装的译本则写入 `settings.version` 并重新取数 |
+| `#btn-versions` 「获取译本」按钮 | 顶栏 | 打开右侧抽屉里的 `#panel-versions` 面板并刷新列表 |
+
+`#panel-versions` 面板（`src/renderer/js/panel-versions.js`）的约定：
+
+- 顶部一行状态：`共 N 个译本，已安装 M 个`；
+- 每个译本一行：名称 + 「已安装 / 未安装 / 内置」标签 + 来源与版权；
+- 已安装的译本按钮是「使用此译本」，当前译本显示「当前译本」并禁用；
+  未安装的译本按钮是「下载安装」，下载中显示进度条与百分比，并提供「停止跟踪」
+  （只停止 UI 跟随，后台下载可能仍在继续）；
+- 面板底部是「从本地文件导入…」与「刷新列表」；
+- 安装或导入完成后主进程广播 `bible:versions-changed`，渲染层刷新列表并**自动切换到刚装好的译本**。
+
+切换译本时（`switchVersion(id)`）渲染层依次做：写 `settings.version` → 清章节缓存
+（否则会显示上一个译本的经文）→ 重新拉取当前章 → 若查找面板有关键字则按新译本重查。
+
+### 8.7 当前译本 settings.version
+
+- `settings.version` 是一个**译本 id 字符串**，取值集合为
+  `simplified` / `traditional` / `lcc` / `rcuv` / `csb` / `tcv95` / `tcv2019` / `ncv`，
+  以及用户手工导入的任意 id。
+- **繁简不再是正交的布尔开关**，切换简繁就是切换译本 id。
+  旧设置里的 `traditional` 布尔量只作为**兼容回落**：当 `settings.version` 缺失时，
+  `traditional ? 'traditional' : 'simplified'`；该开关在界面上不再暴露。
+- 若当前 `settings.version` 对应的译本**未安装**（文件不存在），
+  主进程 `currentVersion()` 回落为 `simplified`，避免界面空白。
+- 渲染层的**书名规则**：只有 `version === 'traditional'` 用繁体书名，
+  其余译本一律用简体书名（其他译本本身不分简繁）。
+
+### 8.8 搜索 / 复制 / 速选如何按当前译本取数
+
+主进程在三个取数入口统一带上当前译本 id：
+
+| IPC | 取数 |
+| --- | --- |
+| `bible:getChapter(bookId, chapter)` | `bible.getChapter(bookId, chapter, currentVersion())` |
+| `bible:getRange(bookId, from, to)` | `bible.getRange(bookId, from, to, currentVersion())` |
+| `bible:search(payload)` | `bible.search(payload, currentVersion())` |
+
+因此：
+
+- **显示区**（逐章 / 跨章范围显示）取的是当前译本的正文；
+- **查找**在当前译本的全文里搜，结果里的书卷名 / 分类名按当前译本给；
+- **复制**复制的也是当前译本的正文（复制语义见 §7）；
+- **速选定位**（`CSJ4:14` 一类）只决定「哪一卷哪一章哪一节」，正文仍由当前译本给出；
+- 切换译本后需要重新取数：渲染层收到 `settings-changed` 后按新的 `settings.version` 重新拉取当前章。
+
+> 已安装译本与内置和合本**同构**（同样的 `[书卷号, 章, 节, 正文]` 数组与同样的索引键
+> `"卷:章:节"`），所以数据加载与查找策略（§3）对所有译本一致，只是数据文件来源不同。
+
+## 9. 目录速查
 
 | 路径 | 作用 |
 | --- | --- |
 | `src/main/main.js` | 窗口（主窗口 + 浮动面板）、菜单、IPC 注册、默认值 `DEFAULT_SETTINGS` |
 | `src/main/bible.js` | 经文加载、索引、查章 / 查范围 / 查找 |
+| `src/main/versions.js` | 译本清单、译本文件解析、译本下载与导入（见 §8） |
 | `src/main/store.js` | `JsonStore`：默认合并 + 原子写入 |
 | `src/preload/preload.js` | `window.bible` API 白名单 |
 | `src/shared/books.js` | 66 卷书目与 8 个分类的元数据 |
 | `src/renderer/index.html` | 主窗口页面骨架 |
 | `src/renderer/float.html` | 浮动控制面板页面骨架 |
 | `src/renderer/js/` | 渲染层 ES module（快捷键、投影、绘制、浮动面板、查找……） |
-| `data/` | 简繁经文 JSON（只读资源，随安装包分发） |
+| `data/` | 内置和合本经文 JSON（简体 / 繁体，只读资源，随安装包分发） |
+| `data/versions/manifest.json` | 译本清单（只有元信息，不含受版权保护的正文） |
 | `tools/extract-mdb.ps1` | 从原程序 MDB 重新抽取经文 |
+| `tools/fetch-versions.py` | 用户侧取数工具：从 FHL API 抓取译本到用户数据目录（不进 CI） |
+| `tools/verify-versions.js` / `tools/clean-versions.js` | 译本文件校验与文本清洗（均不联网） |
 | `test/` | `node --test` 单元测试 |

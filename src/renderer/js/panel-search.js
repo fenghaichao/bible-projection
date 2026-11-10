@@ -3,6 +3,7 @@
 import { $, bus, el } from './util.js';
 import { ipc } from './bridge.js';
 import { bookDisplayName, bookById, state } from './state.js';
+import { currentVersion } from './version.js';
 import { T } from './i18n.js';
 import { toast } from './toast.js';
 import { closePanel } from './panels.js';
@@ -93,7 +94,7 @@ async function run() {
 
   running = true;
   refs.status.textContent = T.search.running;
-  const rows = await ipc.search({ keywords, mode });
+  const rows = await ipc.search({ keywords, mode, version: currentVersion() });
   running = false;
 
   allRows = Array.isArray(rows) ? rows : [];

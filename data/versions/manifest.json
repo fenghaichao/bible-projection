@@ -1,0 +1,76 @@
+{
+  "versions": [
+    {
+      "id": "simplified",
+      "name": "和合本（简体）",
+      "bundled": true,
+      "file": "bible-simplified.json",
+      "copyright": "公有领域（1919 年中文和合本）",
+      "source": "原版《语音投影圣经》Access 数据库 bibleNosound.dat",
+      "lang": "zh-Hans"
+    },
+    {
+      "id": "traditional",
+      "name": "和合本（繁体）",
+      "bundled": true,
+      "file": "bible-traditional.json",
+      "copyright": "公有领域（1919 年中文和合本）",
+      "source": "原版《语音投影圣经》Access 数据库 bibleNosound.dat",
+      "lang": "zh-Hant"
+    },
+    {
+      "id": "lcc",
+      "name": "吕振中译本",
+      "bundled": false,
+      "fhlVersion": "lcc",
+      "copyright": "© 吕振中 / 环球天道圣经机构",
+      "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
+      "lang": "zh-Hans"
+    },
+    {
+      "id": "rcuv",
+      "name": "和合本修订版 2010",
+      "bundled": false,
+      "fhlVersion": "rcuv",
+      "copyright": "© 香港圣经公会",
+      "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
+      "lang": "zh-Hans"
+    },
+    {
+      "id": "csb",
+      "name": "中文标准译本",
+      "bundled": false,
+      "fhlVersion": "csb",
+      "copyright": "© 全球圣经促进会 GBI",
+      "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
+      "lang": "zh-Hans"
+    },
+    {
+      "id": "tcv95",
+      "name": "现代中文译本 1995",
+      "bundled": false,
+      "fhlVersion": "tcv95",
+      "copyright": "© 联合国圣经翻译中文委员会",
+      "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
+      "lang": "zh-Hans"
+    },
+    {
+      "id": "tcv2019",
+      "name": "现代中文译本 2019",
+      "bundled": false,
+      "fhlVersion": "tcv2019",
+      "copyright": "© 联合国圣经翻译中文委员会",
+      "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
+      "lang": "zh-Hans"
+    },
+    {
+      "id": "ncv",
+      "name": "环球新译本",
+      "bundled": false,
+      "fhlVersion": "ncv",
+      "copyright": "© 环球圣经公会",
+      "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
+      "lang": "zh-Hans"
+    }
+  ]
+}

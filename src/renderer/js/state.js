@@ -14,6 +14,9 @@ export const DEFAULT_SETTINGS = {
   underline: false,
   showNotes: false,
   versesPerPage: 1,
+  // 当前译本 id：simplified=和合本(简) / traditional=和合本(繁)，其余为用户安装的译本
+  version: 'simplified',
+  // 旧字段：仅用于兼容旧设置，UI 不再暴露（繁简请切换译本）
   traditional: false,
   theme: 'dark',
   // 主进程 DEFAULT_SETTINGS 新增字段（main.js）
@@ -72,6 +75,10 @@ export function mergeSettings(raw) {
     underline: !!s.underline,
     showNotes: !!s.showNotes,
     versesPerPage: Math.round(num(s.versesPerPage, DEFAULT_SETTINGS.versesPerPage, 1, 20)),
+    // 译本 id：新设置用 version；旧设置只有 traditional 布尔量时据此折算
+    version: typeof s.version === 'string' && s.version.trim()
+      ? s.version.trim()
+      : (s.traditional ? 'traditional' : DEFAULT_SETTINGS.version),
     traditional: !!s.traditional,
     theme: s.theme === 'light' ? 'light' : 'dark',
     textShadow: !!s.textShadow,
@@ -124,9 +131,24 @@ export function bookById(id) {
   return state.bookMap.get(id) || null;
 }
 
+/** 当前译本 id（与后端 settings.version 一致）。 */
+export function currentVersion() {
+  return state.settings.version || DEFAULT_SETTINGS.version;
+}
+
+/** 该译本是否使用繁体书名（目前只有和合本繁体）。 */
+export function isTraditionalVersion() {
+  return currentVersion() === 'traditional';
+}
+
+/** 切换译本后清空章节缓存，避免显示上一个译本的经文。 */
+export function clearChapterCache() {
+  state.chapterCache.clear();
+}
+
 export function bookDisplayName(book) {
   if (!book) return '';
-  if (state.settings.traditional) {
+  if (isTraditionalVersion()) {
     return book.nameTraditional || book.name || book.shortTraditional || book.short || '';
   }
   return book.name || book.short || '';
@@ -134,16 +156,16 @@ export function bookDisplayName(book) {
 
 export function bookShortName(book) {
   if (!book) return '';
-  if (state.settings.traditional) {
+  if (isTraditionalVersion()) {
     return book.shortTraditional || book.short || book.nameTraditional || book.name || '';
   }
   return book.short || book.name || '';
 }
 
-/** 分类名（繁体模式取 categoryNameTraditional）。 */
+/** 分类名（繁体译本取 categoryNameTraditional）。 */
 export function categoryDisplayName(book) {
   if (!book) return '';
-  if (state.settings.traditional) {
+  if (isTraditionalVersion()) {
     return book.categoryNameTraditional || book.categoryName || '';
   }
   return book.categoryName || book.categoryNameTraditional || '';

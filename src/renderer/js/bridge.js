@@ -35,6 +35,12 @@ const stub = {
   sendFloatCommand: async () => false,
   onFloatState: () => () => {},
   onFloatCommand: () => () => {},
+  // 译本管理
+  listVersions: async () => [],
+  installVersion: async () => ({ ok: false, error: '未检测到主进程桥接' }),
+  importVersionFile: async () => ({ ok: false, error: '未检测到主进程桥接' }),
+  onVersionProgress: () => () => {},
+  onVersionsChanged: () => () => {},
 };
 
 const backend = usable ? real : stub;
@@ -104,5 +110,11 @@ export const ipc = {
   sendFloatCommand: (payload) => call('sendFloatCommand', payload),
   onFloatState: (handler) => subscribe('onFloatState', handler),
   onFloatCommand: (handler) => subscribe('onFloatCommand', handler),
+  // 译本管理（下载 / 导入 / 进度 / 列表变化）
+  listVersions: () => call('listVersions'),
+  installVersion: (id) => call('installVersion', id),
+  importVersionFile: () => call('importVersionFile'),
+  onVersionProgress: (handler) => subscribe('onVersionProgress', handler),
+  onVersionsChanged: (handler) => subscribe('onVersionsChanged', handler),
   appVersion: () => call('appVersion'),
 };

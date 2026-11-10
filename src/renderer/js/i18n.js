@@ -13,8 +13,9 @@ export const T = {
     settings: '设置',
     projection: '投影模式',
     help: '帮助',
-    lang: '简 / 繁',
     float: '浮动面板',
+    version: '译本',
+    versions: '获取译本',
     searchPlaceholder: '查找经文（关键字 / 字母定位）',
   },
 
@@ -139,7 +140,7 @@ export const T = {
 
   help: {
     title: '帮助与快捷键',
-    about: '圣经投影 · 完全离线运行的教会圣经投影与查经工具，支持简繁体经文、投影模式与绘画标注。',
+    about: '圣经投影 · 完全离线运行的教会圣经投影与查经工具，支持多译本经文、投影模式与绘画标注。',
     version: (v) => `版本 ${v}`,
     home: '打开项目主页',
     homeUrl: 'https://github.com/fenghaichao/bible-projection',
@@ -152,6 +153,8 @@ export const T = {
       {
         title: '选经与定位',
         rows: [
+          ['顶栏译本下拉框', '切换译本（和合本简 / 繁、吕振中、和合本 2010、中文标准、现代中文 1995 / 2019、环球新译本等）'],
+          ['顶栏「获取译本」', '打开译本管理面板：下载安装 / 从本地文件导入 / 查看版权'],
           ['字母缩写', '速选书卷，例如 CSJ / CAJ / LWJ'],
           ['字母 + 数字', '定位章节，例如 CSJ4 或 CSJ 4'],
           ['CSJ4:14', '定位到第 4 章 14 节'],
@@ -193,7 +196,6 @@ export const T = {
           ['Ctrl + 0 / Ctrl + /', '恢复默认字号'],
           ['Ctrl + D', '切换经文字体'],
           ['Ctrl + T', '显示 / 隐藏出处标注'],
-          ['顶栏「简 / 繁」', '切换简体 / 繁体经文'],
         ],
       },
       {
@@ -342,6 +344,36 @@ export const T = {
     exit: '退出投影',
     close: '关闭',
     empty: '—',
+  },
+
+  versions: {
+    title: '获取译本',
+    installed: '已安装',
+    notInstalled: '未安装',
+    notInstalledSuffix: '（未安装）',
+    bundled: '内置',
+    source: '来源',
+    use: '使用此译本',
+    current: '当前译本',
+    download: '下载安装',
+    downloading: '下载中…',
+    progress: (p) => `下载进度 ${p}%`,
+    import: '从本地文件导入…',
+    refresh: '刷新列表',
+    listHint: (total, ready) => `共 ${total} 个译本，已安装 ${ready} 个`,
+    empty: '暂无可用译本',
+    copyrightHint: '译本版权与使用范围请以各译本出版方说明为准；导入的译本仅在本机使用。',
+    notInstalledToast: (name) => `「${name}」尚未安装，请先在「获取译本」中下载`,
+    switched: (name) => `已切换到「${name}」`,
+    switchFailed: '切换译本失败',
+    installedToast: (name, n) => `「${name}」安装完成（共 ${n} 节）`,
+    installFailed: '安装译本失败',
+    installError: (msg) => `安装译本失败：${msg || '未知错误'}`,
+    importedToast: (name, n) => `已导入「${name}」（共 ${n} 节）`,
+    importFailed: '导入译本失败',
+    importError: (msg) => `导入译本失败：${msg || '未知错误'}`,
+    stopTracking: '停止跟踪',
+    stoppedHint: '已停止跟踪该译本的下载进度（后台下载可能仍在继续）',
   },
 
   toast: {
