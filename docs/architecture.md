@@ -556,6 +556,17 @@ stroke = {
 - 画布清空（`Ctrl` + `E` / `X`）只作用于**当前章**，并同步删除该章在
   `annotations.json` 里的记录。
 
+### 当前节的高亮与智能滚动（`stage.js`）
+
+| 机制 | 说明 |
+| --- | --- |
+| 当前节 | `state.current.verse`；对应节点带 `.is-current` 类，`.verse-text` 用 `var(--current-verse-color, var(--gold))` 着色（设置项 `currentVerseColor` 为空时跟随主题色） |
+| 切换方式 | `↓` / `↑` 翻节；**鼠标点击某一节**同样切换（`stage.js → selectVerse(chapter, verse)`）；点到下一章的经文按正常跳转处理 |
+| 舒适区 | `READ_ZONE = { top: 0.14, bottom: 0.46 }`（占滚动视口高度的比例） |
+| 智能滚动 | `smartScrollToCurrent()`：当前节已在舒适区 → 屏幕完全不动；偏下 → `smoothScrollBy()` 用 easeInOutCubic 缓慢上移（420ms，可被打断）；偏上（往上翻）→ 缓慢下移 |
+| 点选不换页 | 鼠标点选会写入 `state.anchor`（显示窗口起点），`displayVerses()` 用 `clamp((anchor || verse) - 1, …)` 开窗，因此点一下不会把「每页节数」窗口挪走；普通导航（`goToVerse`）会清空 `anchor` |
+| 例外 | 画笔模式（`body.drawing`）、双击/三击、刚刚用鼠标拖选过文字时，点击不触发切换 |
+
 ### 指针隐藏
 
 投影模式下若 3 秒内没有鼠标移动，系统指针会自动隐藏；再次移动即恢复。

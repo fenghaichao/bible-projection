@@ -107,6 +107,8 @@ export const state = {
   hideVerses: false,
   /** 字母速选设定的显示范围：{ bookId, chapter, from, to }，to=0 表示到末节 */
   range: null,
+  /** 显示窗口锚点：鼠标点选某节时用来固定当前这一页，避免点一下就换页 */
+  anchor: null,
   /** 多栏对照：最多 4 栏，每栏 { bookId, chapter, verse, enabled } */
   columns: [],
   activeColumn: 0,

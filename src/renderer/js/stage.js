@@ -42,6 +42,26 @@ export function initStage() {
     refs.stage.addEventListener('click', (event) => {
       if (event.detail >= 3) toggleHideVerses();
     });
+    // 点选某一节 → 切换「当前节」高亮（与按 ↓ / ↑ 同效果）
+    if (refs.list) {
+      refs.list.addEventListener('click', (event) => {
+        if (event.detail >= 2) return;                 // 双击/三击另有用途
+        if (document.body.classList.contains('drawing')) return;   // 画笔模式下不切换
+        const node = event.target && event.target.closest ? event.target.closest('.verse') : null;
+        if (!node || !refs.list.contains(node)) return;
+        // 刚刚用鼠标拖选过文字 → 不当作点选
+        try {
+          const sel = window.getSelection();
+          if (sel && !sel.isCollapsed && sel.anchorNode && node.contains(sel.anchorNode)) return;
+        } catch {
+          /* 忽略 */
+        }
+        const verse = Number(node.dataset.v);
+        const chapter = Number(node.dataset.c);
+        if (!Number.isFinite(verse) || verse <= 0) return;
+        selectVerse(Number.isFinite(chapter) && chapter > 0 ? chapter : state.current.chapter, verse);
+      });
+    }
   }
   bus.on('settings', () => renderStage());
   bus.on('navigate', () => renderStage());
@@ -90,6 +110,7 @@ export async function goToVerse(bookId, chapter, verse, opts = {}) {
 
   state.current = { bookId, chapter: ch, verse: v };
   state.range = opts.range || null;
+  state.anchor = opts.anchor !== undefined ? opts.anchor : null;
 
   renderStage();
   if (opts.scroll !== false) {
@@ -225,14 +246,16 @@ export function displayVerses() {
   }
 
   const perPage = clamp(state.settings.versesPerPage, 1, 20);
+  // 窗口起点：默认跟着「当前节」走；鼠标点选时用 anchor 固定住这一页，避免点一下就换页。
+  const anchor = state.anchor;
   if (state.projection && list.length) {
-    const start = clamp(verse - 1, 0, list.length - 1);
+    const start = clamp((anchor || verse) - 1, 0, list.length - 1);
     return list.slice(start, start + perPage);
   }
   // 普通模式：「每页节数」≥ 2 时按页开窗（Shift+> / Shift+< 可增减），
   // = 1 时保持整章连续显示（原版的「整章」阅读习惯）。
   if (perPage > 1 && list.length) {
-    const start = clamp(verse - 1, 0, list.length - 1);
+    const start = clamp((anchor || verse) - 1, 0, list.length - 1);
     return list.slice(start, start + perPage);
   }
   return list;
@@ -402,10 +425,42 @@ function verseNode(item, chapter, currentVerse) {
     body.push(el('span', { class: 'verse-ref', text: verseRef(item, chapter) }));
   }
 
-  return el('p', { class: `verse${isCurrent ? ' is-current' : ''}`, dataset: { v: String(num) } }, [
+  return el('p', { class: `verse${isCurrent ? ' is-current' : ''}`, dataset: { v: String(num), c: String(chapter) } }, [
     el('span', { class: 'verse-no', text: String(num) }),
     el('span', { class: 'verse-body' }, body),
   ]);
+}
+
+/**
+ * 鼠标点选某节：把「当前节」切过去，行为与按 ↓ / ↑ 一致
+ * （高亮变色 + 智能滚动：位置合适不动，偏下才缓慢上移）。
+ */
+export async function selectVerse(chapter, verse) {
+  const { bookId } = state.current;
+  const targetChapter = Math.max(1, Math.round(Number(chapter) || state.current.chapter));
+  const list = await ensureChapter(bookId, targetChapter);
+  const n = clamp(Math.round(Number(verse) || 0), 1, Math.max(1, list.length));
+
+  // 点到下一章的经文（普通模式会把下一章接在下面）→ 按正常跳转处理
+  if (targetChapter !== state.current.chapter) {
+    await goToVerse(bookId, targetChapter, n, { scrollMode: 'smart' });
+    return;
+  }
+
+  // 固定当前这一页：点选不该把「每页节数」窗口挪走
+  const visible = displayVerses();
+  state.anchor = visible.length ? verseNumber(visible[0]) : n;
+
+  smartScrollUntil = Date.now() + 1200;
+  if (n === state.current.verse) {
+    requestAnimationFrame(() => smartScrollToCurrent());
+    return;
+  }
+
+  state.current = { bookId, chapter: targetChapter, verse: n };
+  recordHistory();
+  bus.emit('navigate', { ...state.current, silent: true });
+  requestAnimationFrame(() => smartScrollToCurrent());
 }
 
 function scrollToCurrent() {
