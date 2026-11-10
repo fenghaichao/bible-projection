@@ -3,14 +3,18 @@
 /**
  * 译本注册表
  *
- * - 仓库内置（data/versions/manifest.json）：
- *   和合本（简体 / 繁体）——公有领域（1919 年中文和合本），随仓库分发；
- *   吕振中 / 和合本 2010 / 中文标准 / 现代中文 2019 / 环球新译本 ——版权归各自权利人，
- *   按用户要求一并内置（数据取自信望愛 FHL API），仓库中保留版权与来源声明；
- *   安装包与仓库体积因此增加约 19 MB。
- * - 用户安装（%APPDATA%/BibleProjection/versions/<id>.json）：
- *   仍可通过应用内「获取译本」从信望愛 FHL API 下载，或从本地 JSON 文件导入；
- *   内置译本缺失时可用此路径补齐。
+ * - 仓库内置（data/versions/manifest.json，bundled:true）：
+ *   和合本（简体 / 繁体）——公有领域（1919 年中文和合本）；
+ *   吕振中译本——依信望愛 FHL 版权说明页，该译本 1952 / 1970 年出版，
+ *   已超过中国著作权保护期 50 年，属公有领域，且 FHL 开放离线下载授权（candownload=1），
+ *   故随仓库与安装包一并分发。
+ * - 应用内按需下载 / 本地导入（bundled:false）：
+ *   和合本 2010（© 香港圣经公会）、中文标准译本（© GBI）、
+ *   现代中文译本 2019（© 联合圣经公会）、环球新译本（© 环球圣经公会）
+ *   ——版权归各自权利人，FHL 仅获「于网页使用」授权且 candownload=0，
+ *   因此不随程序分发；程序提供下载入口（下载前弹「需授权确认」框）与本地 JSON 导入。
+ *
+ * 解析顺序：内置文件优先，其次用户目录 %APPDATA%/BibleProjection/versions/<id>.json。
  */
 const fs = require('fs');
 const path = require('path');
@@ -118,8 +122,14 @@ function installedFile(id) {
 function resolveVersionFile(id) {
   const entry = manifestEntry(id);
   if (entry && entry.bundled && entry.file) {
-    const file = path.join(DATA_DIR, entry.file);
-    if (fs.existsSync(file)) return file;
+    // 内置文件可能放在 data/ 根下（如 bible-simplified.json）或 data/versions/ 下（如 lcc.json）
+    const candidates = [
+      path.join(DATA_DIR, entry.file),
+      path.join(DATA_DIR, 'versions', entry.file),
+    ];
+    for (const file of candidates) {
+      if (fs.existsSync(file)) return file;
+    }
   }
   const local = installedFile(id);
   if (fs.existsSync(local)) return local;
@@ -138,6 +148,8 @@ function listVersions() {
     name: v.name,
     bundled: !!v.bundled,
     installed: isInstalled(v.id),
+    // 内置译本的数据文件名（相对 data/ 目录）
+    file: v.bundled ? (v.file || '') : '',
     copyright: v.copyright || '',
     source: v.source || '',
     lang: v.lang || '',

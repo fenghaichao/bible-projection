@@ -21,9 +21,10 @@
     {
       "id": "lcc",
       "name": "吕振中译本",
-      "bundled": false,
+      "bundled": true,
+      "file": "lcc.json",
       "fhlVersion": "lcc",
-      "copyright": "© 吕振中 / 环球天道圣经机构",
+      "copyright": "© 吕振中 / 环球天道圣经机构（依 FHL 版权说明页，该译本已超过中国著作权保护期 50 年，属公有领域）",
       "source": "信望愛資訊中心 FHL API（https://bible.fhl.net/api/qb.php）",
       "lang": "zh-Hans",
       "offlineDownload": true

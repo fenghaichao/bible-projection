@@ -429,8 +429,13 @@ function checkManifest(manifestFile) {
     if (v.bundled) {
       if (typeof v.file !== 'string' || !v.file) out.errors.push(`${v.id}: 内置译本缺少 file`);
       else {
-        const f = path.join(DATA_DIR, v.file);
-        if (!fs.existsSync(f)) out.errors.push(`${v.id}: 内置数据文件不存在 ${f}`);
+        // 内置文件可能放在 data/ 根下或 data/versions/ 下
+        const candidates = [
+          path.join(DATA_DIR, v.file),
+          path.join(DATA_DIR, 'versions', v.file),
+        ];
+        const found = candidates.find((f) => fs.existsSync(f));
+        if (!found) out.errors.push(`${v.id}: 内置数据文件不存在 ${candidates[0]} 或 ${candidates[1]}`);
       }
     } else if (!v.fhlVersion) {
       out.warnings.push(`${v.id}: 非内置译本没有 fhlVersion，应用内将无法在线下载`);
