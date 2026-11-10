@@ -38,6 +38,9 @@ text shadow / title font and title colour / verse-number colour / current-verse 
 floating panel, and more.
 
 ![Settings panel](docs/images/settings-panel.png)
+Multiple translations: the "Get translations" panel lists all 8 translations (Union Version simplified/traditional are bundled, the rest are installed on demand), with source and copyright shown, plus online download and local JSON import.
+
+![Translations panel](docs/images/versions-panel.png)
 
 ## Why rewrite
 
