@@ -629,8 +629,8 @@ stroke = {
 
 | 用户操作 | 实现 | 输出形态 |
 | --- | --- | --- |
-| `Ctrl` + `C` | `stage.js → copyCurrent()` | **复制经文**＝标题 ＋ 当前显示的经文；格式由设置项 `copyFormat` 决定（`text` 连排无节号 / `section` 每节一段段间空行 / `line` 每节一行带节号）。显示区重绘后会清除旧选区，因此 `Ctrl` + `C` 永远复制当前显示内容 |
-| `Alt` + `C` | `stage.js → copyTitleOnly()` | **复制章节**＝仅标题 |
+| `Ctrl` + `C` | `stage.js → copyCurrent()` | **复制经文**＝`【创1:10-11】` 章节引用 ＋ 当前显示的经文（原版同形，引用与正文同一行）；格式由设置项 `copyFormat` 决定（`text` 连排一行 / `section` 每节一段、段间空行 / `line` 每节一行，两种分节格式每节都带自己的【小节引用】）。显示区重绘后会清除旧选区，因此 `Ctrl` + `C` 永远复制当前显示内容 |
+| `Alt` + `C` | `stage.js → copyTitleOnly()` | **复制章节**＝仅章节引用 `【创1:10-11】` |
 | 右键 → 复制 ▸ → 复制章节_Alt+C | `stage.js → copyTitleOnly()` | **复制章节**＝仅标题（原版该项在「复制」子菜单内） |
 | 右键 → 复制 ▸ → 复制经文_Ctrl+C | `stage.js → copyTextVariant('plain')` | 同 `Ctrl` + `C` 的连排形态 |
 | 右键 → 复制 ▸ → 复制经文(分节) | `copyTextVariant('numbered')` | 标题 ＋ 每节一段，段间空行 |

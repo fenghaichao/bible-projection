@@ -6,6 +6,7 @@ import {
   bookById,
   bookDisplayName,
   bookLabel,
+  bookShortName,
   state,
   verseNumber,
   verseRef,
@@ -417,23 +418,46 @@ function normalizeVerse(text) {
 }
 
 /**
- * 组装复制文本（原版 F083–F086）：
- *   'text'    复制经文          —— 标题 + 经文连排（无节号）
- *   'section' 复制经文(分节)    —— 标题 + 每节一段，段间空行
- *   'line'    复制经文(分节分行) —— 标题 + 每节一行（带节号）
+ * 原版式引用串：【创1:10-11】（短卷名 + 章 + 节范围，全角方括号）。
+ * 原版复制出来的经文就是这种形式，例如
+ *   【创1:10-11】神称旱地为地，称水的聚处为海。神看着是好的。神说：“地要发生青草和结种子的菜蔬，并结果子的树木，各从其类，果子都包着核。”事就这样成了。
+ */
+export function copyRef(rows) {
+  if (!rows || !rows.length) return '';
+  const first = rows[0];
+  const last = rows[rows.length - 1];
+  const book = bookById(first.bookId);
+  const short = bookShortName(book) || bookDisplayName(book);
+  const c1 = Number(first.chapter) || state.current.chapter;
+  const c2 = Number(last.chapter) || c1;
+  const v1 = verseNumber(first);
+  const v2 = verseNumber(last);
+  if (c1 !== c2) return `【${short}${c1}:${v1}-${short}${c2}:${v2}】`;
+  if (v1 === v2) return `【${short}${c1}:${v1}】`;
+  return `【${short}${c1}:${v1}-${v2}】`;
+}
+
+/**
+ * 组装复制文本（与原版 5.20 SP2 一致）：
+ *   'text'    复制经文          —— 【创1:10-11】+ 正文连排（同一行，无节号）
+ *   'section' 复制经文(分节)    —— 每节一段，每段带自己的【创1:10】小节引用，段间空行
+ *   'line'    复制经文(分节分行) —— 每节一行，每行带自己的【创1:10】小节引用
  * 复制的是**当前显示区**里的经文（受速选范围 / 每页节数影响），不是整章。
  */
 function buildCopyText(mode) {
   const rows = displayVerses();
   if (!rows.length) return '';
-  const head = currentTitle();
   if (mode === 'section') {
-    return [head, ...rows.map((item) => normalizeVerse(verseText(item)))].join('\n\n');
+    return rows
+      .map((item) => `${copyRef([item])}${normalizeVerse(verseText(item))}`)
+      .join('\n\n');
   }
   if (mode === 'line') {
-    return [head, ...rows.map((item) => `${verseNumber(item)} ${normalizeVerse(verseText(item))}`)].join('\n');
+    return rows
+      .map((item) => `${copyRef([item])}${normalizeVerse(verseText(item))}`)
+      .join('\n');
   }
-  return [head, rows.map((item) => normalizeVerse(verseText(item))).join('')].join('\n');
+  return `${copyRef(rows)}${rows.map((item) => normalizeVerse(verseText(item))).join('')}`;
 }
 
 /** 显示区内的文本选区（选区不在显示区时返回空）。 */
@@ -495,9 +519,9 @@ export function currentVerseText() {
   return found ? verseText(found) : '';
 }
 
-/** Alt+C：只复制章节标题（原版「复制章节」＝仅显示区标题）。 */
+/** Alt+C：只复制章节引用（原版「复制章节」＝【创1:10-11】这种章节引用串）。 */
 export async function copyTitleOnly() {
-  const head = currentTitle();
+  const head = copyRef(displayVerses());
   if (!head) {
     toast(T.toast.copyFailed, 'error');
     return;
@@ -512,9 +536,9 @@ export async function copyTitleOnly() {
 
 /**
  * 右击菜单「复制 ▸」的三种方式（原版 F085）：
- *   plain   → 复制经文          ＝ 标题 + 经文连排
- *   numbered→ 复制经文(分节)    ＝ 标题 + 每节一段（段间空行）
- *   lines   → 复制经文(分节分行) ＝ 标题 + 每节一行（带节号）
+ *   plain   → 复制经文          ＝【创1:10-11】+ 正文连排（同一行）
+ *   numbered→ 复制经文(分节)    ＝ 每节一段，每段带【创1:10】小节引用
+ *   lines   → 复制经文(分节分行) ＝ 每节一行，每行带【创1:10】小节引用
  */
 export async function copyTextVariant(mode) {
   const kind = mode === 'numbered' ? 'section' : mode === 'lines' ? 'line' : 'text';

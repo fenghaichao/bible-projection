@@ -37,6 +37,10 @@ export function initContextMenu() {
     if (menu.contains(event.target)) return;
     hideMenu();
   });
+  // 鼠标完全离开菜单时才收起子菜单（面板是菜单的子节点，移入面板不会触发这里）
+  menu.addEventListener('mouseleave', () => {
+    submenus.forEach((panel) => panel.classList.remove('is-open'));
+  });
   window.addEventListener('blur', hideMenu);
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && menu && !menu.hidden) {
@@ -149,7 +153,7 @@ function buildMenu() {
   ]);
 }
 
-/** 追加一个带子菜单的条目（悬停展开）。 */
+/** 追加一个带子菜单的条目（悬停展开，鼠标可直接移入子菜单）。 */
 function appendSubmenu(label, entries) {
   const item = el('div', { class: 'ctx-item ctx-sub' }, [
     el('span', { class: 'ctx-label', text: label }),
@@ -157,11 +161,36 @@ function appendSubmenu(label, entries) {
   ]);
   const panel = el('div', { class: 'ctx-submenu' },
     entries.map(([text, onClick]) => menuItem(text, onClick)));
-  item.addEventListener('mouseenter', () => panel.classList.add('is-open'));
-  item.addEventListener('mouseleave', () => panel.classList.remove('is-open'));
+  // 子菜单面板是菜单的 DOM 子节点：鼠标从父项移入面板不会触发菜单的 mouseleave，
+  // 因此不能在父项的 mouseleave 里关闭面板（旧版就是这里导致「鼠标移不进子菜单」）。
+  const open = () => {
+    submenus.forEach((p) => p.classList.remove('is-open'));
+    panel.classList.add('is-open');
+    positionPanel(item, panel);
+  };
+  item.addEventListener('mouseenter', open);
+  item.addEventListener('click', (event) => {
+    event.stopPropagation();
+    open();
+  });
+  panel.addEventListener('mouseenter', () => panel.classList.add('is-open'));
   menu.appendChild(item);
   menu.appendChild(panel);
   submenus.push(panel);
+}
+
+/** 子菜单贴着父项对齐；右侧放不下时翻到菜单左边。 */
+function positionPanel(item, panel) {
+  if (!menu) return;
+  panel.style.left = '100%';
+  panel.style.right = 'auto';
+  panel.style.top = `${item.offsetTop}px`;
+  const menuRect = menu.getBoundingClientRect();
+  const panelWidth = panel.getBoundingClientRect().width || 168;
+  if (menuRect.right + panelWidth > window.innerWidth - 8) {
+    panel.style.left = 'auto';
+    panel.style.right = '100%';
+  }
 }
 
 function menuItem(label, onClick) {

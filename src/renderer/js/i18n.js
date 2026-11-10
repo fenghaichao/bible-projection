@@ -113,7 +113,7 @@ export const T = {
     themeDark: '深色',
     themeLight: '浅色',
     copyFormat: '复制经文格式（Ctrl+C / 右击“复制”）',
-    copyFormatHint: '连排＝标题＋正文连排；分节＝每节一段（空行分隔）；分节分行＝每节一行并带节号',
+    copyFormatHint: '连排＝【创1:10-11】＋正文连排成一行；分节＝每节一段，每段带【创1:10】小节引用；分节分行＝每节一行，每行带【创1:10】小节引用',
     copyFormatText: '连排',
     copyFormatSection: '分节',
     copyFormatLine: '分节分行',
@@ -180,9 +180,9 @@ export const T = {
       {
         title: '文字与复制',
         rows: [
-          ['Ctrl + C', '复制经文：章节标题 + 当前显示的经文（格式可在设置中选：连排 / 分节 / 分节分行）'],
+          ['Ctrl + C', '复制经文：【创1:10-11】章节引用＋当前显示的经文（格式可在设置中选：连排 / 分节 / 分节分行）'],
           ['Ctrl + Shift + C', '仅复制当前节经文'],
-          ['Alt + C', '复制章节：仅复制显示区标题'],
+          ['Alt + C', '复制章节：仅复制章节引用，如【创1:10-11】'],
           ['鼠标右键', '复制 ▸ 复制经文_Ctrl+C / 复制经文(分节) / 复制经文(分节分行) / 复制章节_Alt+C'],
           ['鼠标右键', '全屏显示_F5 / 复制 ▸ / 播放进度 ▸ / 显示当前经文 / 打开画笔_Ctrl+P / 画笔颜色 ▸ / 画笔粗细 ▸ / 白色画笔_Ctrl+B / 橡皮擦_E / 清除画笔_Ctrl+E / 扩展桌面_F9'],
           ['Ctrl + P', '打开 / 关闭画笔（原版为 Ctrl+F，本版 Ctrl+F 用于查找）'],
@@ -343,11 +343,11 @@ export const T = {
   },
 
   toast: {
-    copied: '已复制经文（标题＋经文）到剪贴板',
-    copiedFormat: (kind) => (kind === 'section' ? '已复制分节经文（每节一段）' : kind === 'line' ? '已复制分节分行经文（每节一行，含节号）' : '已复制经文（标题＋经文连排）'),
+    copied: '已复制经文（章节引用＋经文）到剪贴板',
+    copiedFormat: (kind) => (kind === 'section' ? '已复制分节经文（每节一段，带小节引用）' : kind === 'line' ? '已复制分节分行经文（每节一行，带小节引用）' : '已复制经文（章节引用＋经文连排）'),
     copiedSelection: '已复制选中的经文到剪贴板',
     copiedVerse: '已复制当前节经文到剪贴板',
-    copiedTitle: '已复制章节标题到剪贴板',
+    copiedTitle: '已复制章节引用到剪贴板',
     notesOn: '已显示出处标注',
     notesOff: '已隐藏出处标注',
     copiedVariant: (kind) => (kind === 'section' ? '已复制分节经文' : kind === 'line' ? '已复制分节分行经文' : '已复制经文'),
