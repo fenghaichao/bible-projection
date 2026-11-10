@@ -15,6 +15,11 @@ const COLORS = [
   { key: 'B', value: '#b58cff' },
 ];
 const WIDTHS = [2, 4, 6, 10, 16, 24];
+
+/** 画笔颜色表（供右击菜单「画笔颜色 ▸」使用）。 */
+export const DRAW_COLORS = COLORS;
+/** 画笔粗细表（供右击菜单「画笔粗细 ▸」使用）。 */
+export const DRAW_WIDTHS = WIDTHS;
 const TEXT_MAX = 30;
 
 let canvas = null;

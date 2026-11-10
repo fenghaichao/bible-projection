@@ -103,6 +103,23 @@ export async function moveVerse(delta) {
     if (!book) return;
 
     const list = await ensureChapter(bookId, chapter);
+
+    // 字母速选设定了一段范围时，翻节按「整块平移」处理，
+    // 保持屏幕上显示的节数不变（投影时每一屏的经文长度一致）。
+    const range = activeRange();
+    if (range) {
+      const rangeTo = range.to > 0 ? range.to : Math.max(1, list.length);
+      const len = rangeTo - range.from + 1;
+      const nextFrom = range.from + delta * len;
+      if (nextFrom >= 1 && nextFrom + len - 1 <= list.length) {
+        await goToVerse(bookId, chapter, nextFrom, {
+          range: { bookId, chapter, from: nextFrom, to: nextFrom + len - 1 },
+        });
+        return;
+      }
+      // 越出本章范围 → 交回普通翻节逻辑（范围取消）
+    }
+
     let target = verse + delta;
     let bookIdNext = bookId;
     let chapterNext = chapter;
@@ -258,6 +275,7 @@ export function renderStage() {
     refs.sub.textContent = '';
     refs.list.textContent = '';
     refs.list.appendChild(el('p', { class: 'empty-note', text: book ? T.err.emptyBook : T.stage.empty }));
+    clearStaleSelection();
     return;
   }
 
@@ -325,6 +343,23 @@ export function renderStage() {
 
   refs.list.textContent = '';
   refs.list.appendChild(frag);
+  clearStaleSelection();
+}
+
+/**
+ * 清除显示区里残留的旧文本选区。
+ * 原版显示区是 PictureBox，没有“选区”概念，Ctrl+C 永远复制当前显示的经文；
+ * 这里在每次重绘后清掉旧选区，避免“上一次选中的文字”劫持 Ctrl+C。
+ */
+function clearStaleSelection() {
+  try {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const node = sel.anchorNode;
+    if (node && refs.stage && refs.stage.contains(node)) sel.removeAllRanges();
+  } catch {
+    /* 忽略 */
+  }
 }
 
 function verseNode(item, chapter, currentVerse) {
@@ -416,11 +451,15 @@ function stageSelection() {
   }
 }
 
-/** 复制：优先复制显示区选区，否则复制「标题 + 经文」（原版 Ctrl+C＝复制经文）。 */
+/**
+ * 复制：优先复制显示区选区（用户刚刚手动选中的文字），否则按设置里的
+ * 「复制经文格式」复制当前显示区的经文（原版 Ctrl+C＝复制经文）。
+ */
 export async function copyCurrent() {
   const selection = stageSelection();
   const useSelection = selection.trim().length > 0;
-  const text = useSelection ? selection : buildCopyText('text');
+  const format = state.settings.copyFormat || 'text';
+  const text = useSelection ? selection : buildCopyText(format);
   if (!text) {
     toast(T.toast.copyFailed, 'error');
     return;
@@ -430,7 +469,7 @@ export async function copyCurrent() {
     toast(T.toast.copyFailed, 'error');
     return;
   }
-  toast(useSelection ? T.toast.copiedSelection : T.toast.copied, 'ok');
+  toast(useSelection ? T.toast.copiedSelection : T.toast.copiedFormat(format), 'ok');
 }
 
 /** 只复制当前节。 */

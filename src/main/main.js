@@ -35,6 +35,8 @@ const DEFAULT_SETTINGS = {
   titleColor: '',
   verseNumberColor: '',
   padding: 0,
+  // 复制经文格式：text=连排 / section=分节 / line=分节分行（带节号）
+  copyFormat: 'text',
 };
 
 let mainWindow = null;

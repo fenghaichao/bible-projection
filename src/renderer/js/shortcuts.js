@@ -19,7 +19,7 @@ import {
 } from './stage.js';
 import { copySearchResults } from './panel-search.js';
 import { toggleProjection, exitProjection } from './projection.js';
-import { clearDraw, isDrawing, redoDraw, toggleDraw, toggleEraser, undoDraw } from './draw.js';
+import { clearDraw, isDrawing, redoDraw, setDrawColor, toggleDraw, toggleEraser, undoDraw } from './draw.js';
 import { pushSettings, cycleFont } from './settings.js';
 import { switchColumnByNumber } from './columns.js';
 import { ipc } from './bridge.js';
@@ -94,9 +94,13 @@ function runShortcut(key, mods) {
         saveCurrent();
         return true;
       case 'b':
-        // 原版 Ctrl+B = 画笔开关（feature-check 6.3 取舍）；收藏改用 Ctrl+S。
-        if (!state.projection) toggleProjection();
-        toggleDraw();
+        // 原版 Ctrl+B = 白色画笔（打开画笔是 Ctrl+P）；未进入绘制时先开画笔。
+        if (!isDrawing()) {
+          if (!state.projection) toggleProjection();
+          toggleDraw();
+        }
+        setDrawColor('W');
+        toast(T.ctx.whitePen, 'ok', 1200);
         return true;
       case 'p':
         if (!state.projection) toggleProjection();

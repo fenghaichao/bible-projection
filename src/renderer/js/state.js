@@ -33,6 +33,8 @@ export const DEFAULT_SETTINGS = {
   // 渲染层扩展项：后端 JsonStore.set 用 Object.assign 合并，额外键同样会被持久化
   bgmLoop: true,
   mouseAdvance: true,
+  // 复制经文格式：text=连排 / section=分节（段间空行）/ line=分节分行（带节号）
+  copyFormat: 'text',
 };
 
 function num(value, fallback, min, max) {
@@ -84,6 +86,7 @@ export function mergeSettings(raw) {
     padding: Math.round(num(s.padding, DEFAULT_SETTINGS.padding, 0, 120)),
     bgmLoop: s.bgmLoop === undefined ? DEFAULT_SETTINGS.bgmLoop : !!s.bgmLoop,
     mouseAdvance: s.mouseAdvance === undefined ? DEFAULT_SETTINGS.mouseAdvance : !!s.mouseAdvance,
+    copyFormat: ['text', 'section', 'line'].includes(s.copyFormat) ? s.copyFormat : DEFAULT_SETTINGS.copyFormat,
   };
 }
 

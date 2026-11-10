@@ -59,6 +59,7 @@ export function initSettings() {
   refs.notes = $('#set-notes');
   refs.vpp = $('#set-vpp');
   refs.theme = $$('input[name="theme"]');
+  refs.copyFormat = $$('input[name="copyFormat"]');
   refs.langTag = $('.lang-tag');
 
   for (const preset of T.settings.fontPresets) {
@@ -213,6 +214,13 @@ export function initSettings() {
       if (!radio.checked) return;
       const colors = THEME_COLORS[radio.value] || THEME_COLORS.dark;
       pushSettings({ theme: radio.value, textColor: colors.text, bgColor: colors.bg });
+    });
+  }
+
+  for (const radio of refs.copyFormat) {
+    radio.addEventListener('change', () => {
+      if (!radio.checked) return;
+      pushSettings({ copyFormat: radio.value });
     });
   }
 
@@ -379,4 +387,5 @@ export function syncInputs() {
   refs.notes.checked = !!s.showNotes;
   if (document.activeElement !== refs.vpp) refs.vpp.value = String(s.versesPerPage);
   for (const radio of refs.theme) radio.checked = radio.value === s.theme;
+  for (const radio of refs.copyFormat) radio.checked = radio.value === (s.copyFormat || 'text');
 }

@@ -87,7 +87,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | — (new) | ✅ verses per page | 1..20 verses per page, `Shift` + `>` / `<` adjusts |
 | — (new) | ✅ multi-column comparison | Up to 4 passages compared side by side, added with the "+ pane" button |
 | — (new) | ✅ background music | Optional looping local audio with a volume control (unrelated to narration) |
-| — (new) | ✅ context menu on the passage area | Copy ▸ three variants, fullscreen / stop slideshow / hide verses |
+| — (new) | ✅ context menu on the passage area | Same structure as the original 5.20 SP2: fullscreen_F5 / Copy ▸ / slideshow progress ▸ / hide verses / open pen_Ctrl+P / pen colour ▸ / pen width ▸ / white pen_Ctrl+B / eraser_E / clear pen_Ctrl+E / extend desktop_F9 / theme settings ▸ |
 | — (new) | ✅ click-to-advance in projection | Clicking the projected text advances one verse; can be switched off in the settings |
 | — (new) | ✅ remote-style navigation | Jump to a chapter by number, media keys, space to advance |
 | — (new) | ✅ dark / light theme | Driven by display settings |
@@ -239,11 +239,11 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 
 | Shortcut / action | Action |
 | --- | --- |
-| `Ctrl` + `C` | Copy verse text: chapter title + the displayed verses (one flowing paragraph, no verse numbers; copies the selection when there is one) |
+| `Ctrl` + `C` | Copy verse text: chapter title + **the verses currently displayed** (one flowing paragraph by default; the format can be switched in Settings → copy format: flowing / per verse / per verse one per line) |
 | `Ctrl` + `Shift` + `C` | Copy the current verse only |
 | `Alt` + `C` | Copy the chapter: title only |
 | Right-click | Copy ▸ copy verse text_Ctrl+C / copy verse text (per verse) / copy verse text (per verse, one per line) / copy chapter_Alt+C |
-| Right-click | Stop slideshow_End / fullscreen_F5 / hide verses / open pen / theme settings (dark, light) |
+| Right-click | fullscreen_F5 / Copy ▸ / slideshow progress ▸ / hide verses / open pen_Ctrl+P / pen colour ▸ / pen width ▸ / white pen_Ctrl+B / eraser_E / clear pen_Ctrl+E / extend desktop_F9 / theme settings ▸ (dark, light) |
 | `Ctrl` + `C` inside the search panel | Copy the search results (chapter + verse text) |
 | Search panel "copy verse text / copy chapter" | Copy the ticked results: chapter + verse text / chapter only |
 | `Ctrl` + `=` / `Ctrl` + `-` | Increase / decrease font size |

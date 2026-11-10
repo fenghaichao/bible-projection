@@ -262,6 +262,16 @@
           <input class="text-input" id="set-vpp" type="number" min="1" max="20" step="1" value="1" />
         </label>
 
+        <label class="field">
+          <span class="field-label" data-i18n="settings.copyFormat">复制经文格式（Ctrl+C / 右击“复制”）</span>
+          <div class="radio-row">
+            <label class="radio"><input type="radio" name="copyFormat" value="text" /><span data-i18n="settings.copyFormatText">连排</span></label>
+            <label class="radio"><input type="radio" name="copyFormat" value="section" /><span data-i18n="settings.copyFormatSection">分节</span></label>
+            <label class="radio"><input type="radio" name="copyFormat" value="line" /><span data-i18n="settings.copyFormatLine">分节分行</span></label>
+          </div>
+          <span class="field-hint" data-i18n="settings.copyFormatHint">连排＝标题＋正文连排；分节＝每节一段（空行分隔）；分节分行＝每节一行并带节号</span>
+        </label>
+
         <div class="field">
           <span class="field-label" data-i18n="settings.theme">主题</span>
           <div class="radio-row">

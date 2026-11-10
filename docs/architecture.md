@@ -99,7 +99,7 @@ src/renderer/
     ├── draw.js        画笔 / 擦除 / 撤销 / 重做 / 文字标注
     ├── columns.js     多栏对照（最多 4 组经文）
     ├── letterbar.js   字母 + 数字速选定位（CSJ4:14 一类输入）
-    ├── contextmenu.js 显示区右键菜单（停止播放_End / 全屏显示_F5 / 复制 ▸ 三种 / 不显示经文）
+    ├── contextmenu.js 显示区右键菜单（对齐原版 5.20 SP2：全屏显示_F5 / 复制 ▸ / 播放进度 ▸ / 不显示经文 / 打开画笔_Ctrl+P / 画笔颜色 ▸ / 画笔粗细 ▸ / 白色画笔_Ctrl+B / 橡皮擦_E / 清除画笔_Ctrl+E / 扩展桌面_F9 / 主题设置 ▸）
     ├── slideshow.js   投影模式自动翻页（幻灯放映）
     ├── bgm.js         背景音乐播放
     ├── highlight.js   查找结果高亮
@@ -629,19 +629,22 @@ stroke = {
 
 | 用户操作 | 实现 | 输出形态 |
 | --- | --- | --- |
-| `Ctrl` + `C` | `stage.js → copyCurrent()` | 显示区有选区 → 复制选区；否则 **复制经文**＝标题 ＋ 当前显示的经文连排（无节号，节间不断行；数据里残留的换行会被去掉） |
+| `Ctrl` + `C` | `stage.js → copyCurrent()` | **复制经文**＝标题 ＋ 当前显示的经文；格式由设置项 `copyFormat` 决定（`text` 连排无节号 / `section` 每节一段段间空行 / `line` 每节一行带节号）。显示区重绘后会清除旧选区，因此 `Ctrl` + `C` 永远复制当前显示内容 |
 | `Alt` + `C` | `stage.js → copyTitleOnly()` | **复制章节**＝仅标题 |
 | 右键 → 复制 ▸ → 复制章节_Alt+C | `stage.js → copyTitleOnly()` | **复制章节**＝仅标题（原版该项在「复制」子菜单内） |
-| 右键 → 复制 ▸ → 复制经文_Ctrl+C | `stage.js → copyTextVariant('plain')` | 同 `Ctrl` + `C` |
+| 右键 → 复制 ▸ → 复制经文_Ctrl+C | `stage.js → copyTextVariant('plain')` | 同 `Ctrl` + `C` 的连排形态 |
 | 右键 → 复制 ▸ → 复制经文(分节) | `copyTextVariant('numbered')` | 标题 ＋ 每节一段，段间空行 |
 | 右键 → 复制 ▸ → 复制经文(分节分行) | `copyTextVariant('lines')` | 标题 ＋ 每节一行（带节号） |
-| 右键 → 打开画笔 / 主题设置 | `draw.js → toggleDraw()` / `settings.js → pushSettings()` | 原版 5.20 菜单条目（原版的「主题设置」为灰态，本版做成深/浅色切换） |
+| 右键 → 打开画笔_Ctrl+P / 画笔颜色 ▸ / 画笔粗细 ▸ / 白色画笔_Ctrl+B / 橡皮擦_E / 清除画笔_Ctrl+E | `draw.js → toggleDraw() / setDrawColor() / setDrawWidth() / toggleEraser() / clearDraw()` | 与原版 5.20 SP2 实测菜单一致（画笔只在投影模式下生效，菜单动作会先进入投影） |
+| 右键 → 播放进度 ▸ / 不显示经文 / 扩展桌面_F9 / 主题设置 ▸ | `slideshow.js / stage.js / settings.js` | 自动翻页的暂停 / 继续 / 停止、隐藏经文、桌面扩展提示、深色 / 浅色主题 |
 | 查找面板 `Ctrl` + `C` / 「复制经文」 | `panel-search.js → copySearchResults('both')` | 勾选的结果（未勾选＝当前已展示的结果），每行「章节 经文」 |
 | 查找面板「复制章节」 | `copySearchResults('title')` | 每行只有「章节」（`书卷 章:节`） |
 
 要点：
 
 - 复制的是**当前显示区**里的经文，受速选范围（`CSJ2:1-10`）与「每页节数」影响，不是整章。
+- 速选范围在翻节时**整块平移**：`stage.js → moveVerse()` 检测到 `state.range` 时按范围长度整体移到下一段（`2–4` → `5–7`），屏幕上的节数保持不变；越出本章边界才退回普通翻节并取消范围。
+- 复制格式是设置项 `copyFormat`（`main.js` 与 `state.js` 的 `DEFAULT_SETTINGS` 各存一份，渲染层 `mergeSettings()` 白名单校验），可在「设置 → 复制经文格式」里切换。
 - 查找结果支持多选：结果行左侧复选框勾选后，复制按钮只复制勾选的那些（对应原版按所选列决定复制内容）。
 - `Ctrl` + `C` 的语义随上下文切换：查找抽屉打开时复制查找结果，否则复制显示区经文。
 
