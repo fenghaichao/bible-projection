@@ -31,7 +31,6 @@
 | --- | --- | --- |
 | 查找结果 | `search.png` | 多关键字查找与结果列表 |
 | 历史与收藏 | `history.png` | 历史记录与收藏夹面板 |
-| 浮动控制面板 | `float-panel.png` | 悬浮控制面板与新约/旧约目录 |
 | 译本下拉框 | `version-dropdown.png` | 顶栏译本下拉（原生 select，展开态无法用 CDP 截图，需人工截取） |
 
 > 提示：仓库根目录的 `.gitignore` 已忽略 `shots/` 与 `tmp/`，临时截图请先放在那里，

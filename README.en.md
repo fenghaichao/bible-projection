@@ -36,7 +36,7 @@ at the top right and a shortcut hint bar at the bottom right.
 
 Settings panel: font / size / line height / text and background colour / background image and background music /
 text shadow / title font and title colour / verse-number colour / current-verse highlight colour / padding / verses per page / simplified–traditional /
-floating panel, and more.
+copy format, and more.
 
 ![Settings panel](docs/images/settings-panel.png)
 Multiple translations: the "Get translations" panel lists all 7 translations with their source and copyright,
@@ -89,7 +89,9 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | Independent title font / title colour / verse-number colour / padding | ✅ independent typography settings | Title font and title colour can be set on their own (empty = follow the body text), the verse-number colour can be set on its own (empty = follow the theme accent colour), and the padding can be 0–120 px on all four sides (the background image still fills the screen) |
 | Current-verse highlight | ✅ smart verse stepping + mouse click + configurable highlight colour | `↓` / `↑` **or clicking a verse with the mouse** switches the current verse and highlights it in the **highlight colour** (theme gold by default, pick your own; empty = follow the theme); the screen stays still while the verse sits in the comfortable reading zone and only glides up slowly when it drifts too low; clicking a verse never moves the "verses per page" window |
 | Remember and save visited passages | ✅ history | Up to 200 entries; nothing is written on startup, every verse in a multi-verse run is recorded, entries carry the verse text, clearable |
-| Floating panel / slideshow / quick controls | ✅ floating panel + auto-advance | A dedicated resizable `float.html` window (460×520) with 5 tabs (passage, search, format, New Testament, Old Testament — the last two list all 27 / 39 books and jump to chapter 1 on click); the *passage* tab lists the **whole current chapter** (scrollable, current verse highlighted), clicking a verse jumps to it, and **append to main panel** adds that verse to the main stage; revealed by hovering the left edge, with a master switch in the top bar; the slideshow auto-advances on the configured interval |
+| Floating panel / slideshow / quick controls | ⚠️ floating panel removed, slideshow kept | Following user feedback the floating control panel was **removed entirely** (top-bar button, left-edge hot zone, setting, separate window and its IPC channels are all gone); the slideshow is kept — it auto-advances on the configured interval; the main-stage editing abilities now live in the **stage title**, the **right-click menu** and the **search results** (see the two rows below) |
+| — (new) | ✅ edit the chapter from the title | Click the stage title (book + "chapter N") to type a new chapter: `5` jumps to chapter 5, `5:3` jumps to chapter 5 verse 3; Enter applies, Esc cancels, an out-of-range chapter shows "this book has no chapter N" |
+| — (new) | ✅ remove / append verses on the main stage | Right-click a verse → "**remove this verse from the main panel**" (display only — the verse itself is untouched, the subtitle shows how many are hidden); the menu also has "restore all"; each search result has a "**＋**" button that **appends** that verse to the end of the main stage (with an "appended verses" divider) |
 | Wireless remote control | ⚠️ partial | No dedicated remote support, but the keyboard media keys (previous / next track) work as a page-turner |
 | Multi-keyword text search | ✅ multi-keyword search | "Match all" and "Match any" modes; hits are highlighted, results are paged with a "showing N / M" hint and the keywords are kept |
 | Traditional and Simplified Chinese | ✅ translation switching | **CUV (Simplified)** and **CUV (Traditional)** are two *separate* translation entries, switched from the top-bar dropdown; book and category names are localised to the selected script |
@@ -284,7 +286,6 @@ bible-projection/
 │   ├── preload/preload.js  # contextBridge security bridge
 │   ├── renderer/           # UI (plain JS, no framework, no build step)
 │   │   ├── index.html      # main window
-│   │   ├── float.html      # floating control panel (second window)
 │   │   └── js/             # ES module renderer code
 │   └── shared/books.js     # 66 books and 8 categories metadata
 ├── test/                   # node --test unit tests
@@ -400,7 +401,6 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 | Double-click the stage | Open "recently read" (normal mode) |
 | Triple-click the stage | Clear screen: hide the verses, keep the background |
 | Auto-advance | Turns the page automatically at the configured interval |
-| Floating control panel | Hover the left edge of the stage or use the top-bar button |
 
 ### Original audio features (not applicable to the no-speech edition)
 
@@ -411,7 +411,7 @@ no-speech edition** and are not provided here either.
 ### UI notes
 
 - The top bar provides every action above: search, history, bookmarks, settings, projection mode,
-  floating panel and help.
+  and help.
 - The top bar carries a **translation dropdown** listing all 7 translations. The CUV (Simplified / Traditional)
   pair and the Lü Zhenzhong Translation ship with the app, so picking one switches to it immediately; the other
   four have to be downloaded or imported first and show "XXX (not installed)" until then — picking such an entry
@@ -449,7 +449,7 @@ no-speech edition** and are not provided here either.
 - **Verse text is inherited from the original program's database** and has not been proofread verse-by-verse
   against a modern published electronic CUV; some characters and punctuation may differ.
 - **No multi-window display** of several passages at once (the original has it); a single window plus one
-  floating control panel. Use the per-verse multi-version comparison to compare translations.
+  single window. Use the per-verse multi-version comparison to compare translations.
 - **No hardware support for a wireless remote**, but the keyboard media keys (previous / next track)
   can be used as a page-turner.
 - **The original transparent window (`F7`) is not implemented**: it relies on extra main-process

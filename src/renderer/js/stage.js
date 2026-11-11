@@ -21,6 +21,7 @@ let refs = {};
 let navigating = false;
 let lastUserScrollAt = 0;     // 用户手动滚动的时刻
 let smartScrollUntil = 0;     // 导航后短时间内，重绘完可以补一次智能滚动
+let titleEditorOpen = false;  // 标题正在编辑（防止点输入框时重复打开）
 
 export function initStage() {
   refs.stage = $('#stage');
@@ -33,6 +34,13 @@ export function initStage() {
   refs.scroll.addEventListener('wheel', onWheel, { passive: false });
   // 用户自己滚动过显示区（智能滚动就不该再把画面拉回去）
   refs.scroll.addEventListener('wheel', () => { lastUserScrollAt = Date.now(); }, { passive: true });
+  // 点标题 → 直接修改章节（可写「3」或「3:2」）
+  if (refs.title) {
+    refs.title.addEventListener('click', () => {
+      if (titleEditorOpen) return;
+      openChapterEditor();
+    });
+  }
   // 原版遥控习惯：双击显示区=历史面板；三击=清屏（隐藏经文只留背景）
   if (refs.stage) {
     refs.stage.addEventListener('dblclick', () => {
@@ -92,6 +100,82 @@ export function activeRange() {
   const { bookId, chapter } = state.current;
   if (range.bookId !== bookId || Number(range.chapter) !== Number(chapter)) return null;
   return range;
+}
+
+/**
+ * 点标题 → 直接修改章节。
+ * 输入「5」跳到第 5 章；输入「5:3」跳到第 5 章第 3 节。
+ */
+function openChapterEditor() {
+  const book = bookById(state.current.bookId);
+  if (!book || !refs.title) return;
+  if (refs.title.querySelector('.chapter-editor')) return;
+
+  const bookName = bookDisplayName(book);
+  const input = el('input', {
+    class: 'chapter-editor-input',
+    type: 'text',
+    inputmode: 'numeric',
+    value: String(state.current.chapter),
+    title: T.stage.editChapterHint,
+    'aria-label': T.stage.editChapterHint,
+  });
+  const box = el('span', { class: 'chapter-editor' }, [
+    el('span', { class: 'chapter-editor-book', text: bookName }),
+    input,
+    el('span', { class: 'chapter-editor-suffix', text: T.stage.chapterLabel('').replace(/\s*\d+\s*/, '').trim() || '章' }),
+  ]);
+
+  titleEditorOpen = true;
+  const original = refs.title.textContent;
+  refs.title.textContent = '';
+  refs.title.appendChild(box);
+  input.focus();
+  input.select();
+
+  const close = (apply) => {
+    if (!titleEditorOpen) return;
+    titleEditorOpen = false;
+    const value = input.value.trim();
+    refs.title.textContent = original;
+    if (apply && value) applyChapterInput(book, value);
+    else renderStage();
+  };
+
+  input.addEventListener('keydown', async (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+      const value = input.value.trim();
+      close(false);
+      await applyChapterInput(book, value);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      close(false);
+      renderStage();
+    }
+    event.stopPropagation();
+  });
+  input.addEventListener('blur', () => close(false));
+}
+
+/** 解析「章」或「章:节」并跳转。 */
+async function applyChapterInput(book, raw) {
+  const text = String(raw).replace(/\s+/g, '');
+  const m = /^(\d+)(?:[:.、,，](\d+))?$/.exec(text);
+  if (!m) {
+    toast(T.stage.chapterNotExist(raw), 'error');
+    return;
+  }
+  const maxChapter = Math.max(1, Number(book.chapters) || 1);
+  const chapter = Number(m[1]);
+  if (chapter < 1 || chapter > maxChapter) {
+    toast(T.stage.chapterNotExist(chapter), 'error');
+    return;
+  }
+  const verse = m[2] ? Number(m[2]) : 1;
+  await goToVerse(book.id, chapter, verse, { scrollMode: 'smart' });
 }
 
 /** 跳转到指定经节。 */
@@ -289,7 +373,7 @@ function countRemoved(bookId, chapter) {
 
 /**
  * 从主显示区删除一节（右击菜单「删除本节」）。
- * 若该节是从浮动面板追加进来的，同时从追加列表里移除。
+ * 若该节是通过「追加到主面板」挂上来的，同时从追加列表里移除。
  */
 export function removeVerseFromStage(bookId, chapter, verse) {
   if (!bookId || !chapter || !verse) return false;
@@ -325,7 +409,7 @@ export function hasVerseEdits() {
 }
 
 /**
- * 把一节追加到主显示区末尾（浮动面板「追加到主面板」）。
+ * 把一节追加到主显示区末尾（查找结果里的「＋」按钮）。
  * ref 省略时追加当前节。
  */
 export async function appendVerseToStage(ref) {
@@ -396,6 +480,8 @@ export function renderStage() {
   const list = state.chapterCache.get(`${bookId}:${chapter}`) || [];
   const range = activeRange();
 
+  if (titleEditorOpen) return;   // 正在编辑标题时不要被重绘覆盖
+
   refs.title.textContent = book
     ? `${bookDisplayName(book)} ${T.stage.chapterLabel(chapter)}`
     : T.stage.empty;
@@ -413,9 +499,11 @@ export function renderStage() {
 
   const first = verseNumber(visible[0]);
   const last = verseNumber(visible[visible.length - 1]);
-  refs.sub.textContent = perPage > 1
+  const removedHere = countRemoved(bookId, chapter);
+  const hiddenHint = removedHere > 0 ? ` · ${T.stage.hiddenCount(removedHere)}` : '';
+  refs.sub.textContent = (perPage > 1
     ? T.stage.pageHint(first, last, list.length, perPage)
-    : T.stage.pageInfo(first, last, list.length);
+    : T.stage.pageInfo(first, last, list.length)) + hiddenHint;
 
   const frag = document.createDocumentFragment();
   let pageIndex = 1;
@@ -431,8 +519,7 @@ export function renderStage() {
   });
 
   // 普通模式：连续显示下一章，便于向下滚动阅读
-  // （被「删除本节」移除的节不计入判断，删掉一节仍会接上下一章）
-  const removedHere = countRemoved(bookId, chapter);
+  // （被「从主面板移除」的节不计入判断，移除一节仍会接上下一章）
   if (!state.projection && !range && visible.length + removedHere === list.length) {
     const nextChapter = chapter + 1;
     const hasNext = book && nextChapter <= (Number(book.chapters) || 1);
@@ -472,7 +559,7 @@ export function renderStage() {
     }
   }
 
-  // 从浮动面板「追加到主面板」的节：显示在最后，带一条分隔标题
+  // 通过「追加到主面板」挂上来的节：显示在最后，带一条分隔标题
   if (state.appendedVerses.length) {
     frag.appendChild(el('div', { class: 'chapter-divider' }, [
       el('span', { text: T.stage.appendedLabel }),

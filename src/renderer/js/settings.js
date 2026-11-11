@@ -55,7 +55,6 @@ export function initSettings() {
   refs.bgmVolumeOut = $('#set-bgm-volume-out');
   refs.bgmLoop = $('#set-bgm-loop');
   refs.slideshow = $('#set-slideshow');
-  refs.floatPanel = $('#set-float-panel');
   refs.mouseAdvance = $('#set-mouse-advance');
   refs.italic = $('#set-italic');
   refs.underline = $('#set-underline');
@@ -189,14 +188,6 @@ export function initSettings() {
       const value = clamp(Math.round(Number(refs.slideshow.value) || 0), 0, 3600);
       refs.slideshow.value = String(value);
       pushSettings({ slideshowInterval: value });
-    });
-  }
-  if (refs.floatPanel) {
-    refs.floatPanel.addEventListener('change', async () => {
-      const on = refs.floatPanel.checked;
-      await pushSettings({ floatPanel: on });
-      await ipc.toggleFloatPanel(on);
-      toast(on ? T.toast.floatOn : T.toast.floatOff, 'ok');
     });
   }
   if (refs.mouseAdvance) {
@@ -385,7 +376,6 @@ export function syncInputs() {
   if (refs.bgmVolumeOut) refs.bgmVolumeOut.textContent = String(s.bgmVolume);
   if (refs.bgmLoop) refs.bgmLoop.checked = s.bgmLoop !== false;
   if (document.activeElement !== refs.slideshow) refs.slideshow.value = String(s.slideshowInterval);
-  if (refs.floatPanel) refs.floatPanel.checked = !!s.floatPanel;
   if (refs.mouseAdvance) refs.mouseAdvance.checked = s.mouseAdvance !== false;
   refs.italic.checked = !!s.italic;
   refs.underline.checked = !!s.underline;

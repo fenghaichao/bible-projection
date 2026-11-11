@@ -31,8 +31,6 @@ const DEFAULT_SETTINGS = {
   bgmVolume: 50,
   // 幻灯放映：每 N 秒自动翻一节，0 = 关闭
   slideshowInterval: 0,
-  // 浮动控制面板
-  floatPanel: false,
   // 标题/节号/缩进（与渲染层 state.js 字段名保持一致）
   titleFontFamily: '',
   titleColor: '',
@@ -45,7 +43,6 @@ const DEFAULT_SETTINGS = {
 };
 
 let mainWindow = null;
-let floatWindow = null;
 let secondWindow = null;
 let secondPayload = null;
 let settingsStore = null;
@@ -154,64 +151,6 @@ function createWindow() {
   }
 }
 
-/**
- * 浮动控制面板：投影时浮在屏幕上方的小控制条（原版功能 7「浮动面板控制」）。
- * 与主窗口通过 IPC 双向通信：
- *   主窗口 → 面板：'bible:float-state'
- *   面板 → 主窗口：'bible:float-command'
- */
-function createFloatWindow() {
-  if (floatWindow && !floatWindow.isDestroyed()) {
-    floatWindow.show();
-    floatWindow.focus();
-    return floatWindow;
-  }
-
-  floatWindow = new BrowserWindow({
-    // 面板放大：能一次看到 5–10 节经文（原版浮动面板也远比这个大）
-    width: 460,
-    height: 520,
-    frame: false,
-    resizable: true,
-    minimizable: false,
-    maximizable: false,
-    fullscreenable: false,
-    skipTaskbar: true,
-    alwaysOnTop: true,
-    transparent: true,
-    backgroundColor: '#00000000',
-    show: false,
-    webPreferences: {
-      preload: path.join(__dirname, '..', 'preload', 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: false,
-      backgroundThrottling: false,
-    },
-  });
-
-  floatWindow.loadFile(path.join(__dirname, '..', 'renderer', 'float.html'));
-  floatWindow.once('ready-to-show', () => floatWindow.show());
-  // 面板刚打开时，主动向主窗口要一次当前状态（否则面板要等用户翻节才有内容）
-  floatWindow.webContents.once('did-finish-load', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('bible:float-state-request');
-    }
-  });
-  floatWindow.on('closed', () => {
-    floatWindow = null;
-    if (settingsStore) settingsStore.set({ floatPanel: false });
-  });
-
-  // 面板上的按钮 → 转发给主窗口
-  return floatWindow;
-}
-
-function sendToFloat(channel, payload) {
-  if (floatWindow && !floatWindow.isDestroyed()) {
-    floatWindow.webContents.send(channel, payload);
-  }
-}
 
 /**
  * 副屏投影窗口（原版 F9「扩展桌面」的现代等价）：
@@ -494,31 +433,8 @@ function registerIpc() {
     return Array.isArray(items[k]) ? items[k] : [];
   });
 
-  // ---- 浮动控制面板 ----
-  ipcMain.handle('bible:toggleFloatPanel', (_e, visible) => {
-    if (visible === false) {
-      if (floatWindow && !floatWindow.isDestroyed()) floatWindow.close();
-      return false;
-    }
-    createFloatWindow();
-    settingsStore.set({ floatPanel: true });
-    return true;
-  });
-
   // 主窗口 → 面板
-  ipcMain.handle('bible:floatState', (_e, payload) => {
-    sendToFloat('bible:float-state', payload || {});
-    return true;
-  });
-
   // 面板 → 主窗口
-  ipcMain.handle('bible:floatCommand', (_e, payload) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('bible:float-command', payload || {});
-    }
-    return true;
-  });
-
   // ---- 副屏投影（原版 F9「扩展桌面」）----
   ipcMain.handle('bible:secondScreen:displays', () => {
     try {

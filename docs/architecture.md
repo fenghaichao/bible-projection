@@ -28,13 +28,13 @@
 │ 渲染进程  src/renderer/                                   │
 │   index.html + 渲染层 JS/CSS                              │
 │   经文显示、卷章导航、查找、设置、历史、收藏、投影模式        │
-│   float.html  浮动控制面板（独立无边框置顶小窗）            │
 └──────────────────────────────────────────────────────────┘
 ```
 
-> 应用一共会创建**两个窗口**：主窗口 `index.html` 与投影时浮在屏幕上方的小控制条
-> `float.html`（`frameless` / `alwaysOnTop` / `transparent` / `skipTaskbar`）。
-> 两者共用同一个 preload 与同一个 `window.bible` 桥，靠 IPC 互相驱动（见 §2）。
+> 应用默认只创建**一个窗口**：主窗口 `index.html`。
+> 按 `F9`（原版 F9「扩展桌面」）会额外创建一个**副屏投影窗口** `second.html`
+> （无边框 / 全屏 / 置顶 / 不占任务栏），两者共用同一个 preload 与同一个 `window.bible` 桥（见 §2、§9）。
+> 浮动控制面板已于第 87 轮整体移除（见 §6）。
 
 ### 职责划分
 
@@ -84,8 +84,6 @@ mainWindow.once('ready-to-show', () => mainWindow.show());
 src/renderer/
 ├── index.html      页面骨架
 ├── styles.css      全部样式
-├── float.html      浮动控制面板的页面骨架
-├── float.css       浮动控制面板的样式
 └── js/             ES module（<script type="module"> 引入）
     ├── app.js         应用装配：把各模块装配起来
     ├── bridge.js      唯一的主进程访问入口（window.bible 的包装）
@@ -103,7 +101,6 @@ src/renderer/
     ├── slideshow.js   投影模式自动翻页（幻灯放映）
     ├── bgm.js         背景音乐播放
     ├── highlight.js   查找结果高亮
-    ├── float.js / floatlink.js   浮动控制面板及其与主窗口的联动
     ├── version.js     译本取值统一入口（当前译本 id、书名 / 短卷名 / 分类名）
     ├── panel-versions.js  顶栏译本下拉 + 「译本」面板（下载安装 / 本地导入 / 刷新）
     ├── compare.js        顶栏「多版本比对」面板（勾选译本 → 逐节对照）
@@ -133,8 +130,8 @@ src/renderer/
 ## 2. IPC 契约
 
 所有通道名统一使用 `bible:` 前缀，均为 **request / response** 语义（`ipcRenderer.invoke`）。
-除 `settings-changed` 与 `fullscreen-changed` 外，浮动控制面板还使用 `bible:float-state`、
-`bible:float-command` 与 `bible:float-state-request` 三条推送通道（主进程 ↔ 面板），详见 §6。
+除 `settings-changed` 与 `fullscreen-changed` 外，译本下载还使用 `bible:version-progress`、
+`bible:version-progress` 与 `bible:versions-changed` 两条推送通道（译本下载进度与清单变化），详见 §8。
 
 ### 经文数据
 
@@ -189,7 +186,6 @@ type SearchHit = Verse & { bookName: string };
 | `bgmPath` | `string` | `''` | 背景音乐文件路径（空字符串表示不播放） |
 | `bgmVolume` | `number` | `50` | 背景音乐音量（0–100） |
 | `slideshowInterval` | `number` | `0` | 幻灯放映间隔（秒），`0` 表示关闭 |
-| `floatPanel` | `boolean` | `false` | 浮动控制面板是否常驻 |
 | `titleFontFamily` | `string` | `''` | 标题字体（空字符串 = 跟随 `fontFamily`） |
 | `titleColor` | `string` | `''` | 标题颜色（空字符串 = 跟随 `textColor`） |
 | `verseNumberColor` | `string` | `''` | 节号颜色（空字符串 = 跟随主题强调色） |
@@ -245,7 +241,6 @@ type SearchHit = Verse & { bookName: string };
 | `bible:appVersion` | — | `string` | `app.getVersion()` |
 | `bible:pickImage` | — | `string \| null` | 弹出系统「打开文件」对话框选择背景图；取消返回 `null`。只放行 `jpg / jpeg / png / bmp / gif / webp` |
 | `bible:pickAudio` | — | `string \| null` | 同上，选择背景音乐；只放行 `mp3 / wav / m4a / flac / ogg / aac` |
-| `bible:toggleFloatPanel` | `visible: boolean` | `boolean` | 显示 / 隐藏浮动控制面板；`false` 时关闭浮窗并把设置里的 `floatPanel` 复位 |
 | `bible:secondScreen:displays` | — | `DisplayInfo[]` | 列出所有显示器：`{ id, label, bounds, primary }`；主进程用 `screen.getAllDisplays()` 取得 |
 | `bible:secondScreen:open` | `displayId: number` | `{ ok: boolean, error?: string }` | 在指定显示器上打开副屏投影窗口；没有可用显示器时返回 `{ ok: false, error: 'no-display' }` |
 | `bible:secondScreen:close` | — | `boolean` | 关闭副屏投影窗口 |
@@ -280,9 +275,6 @@ type SearchHit = Verse & { bookName: string };
 | `settings-changed` | 主进程 → 渲染进程 | `Settings` | `bible:setSettings` 成功后广播；多窗口 / 多标签下保持同步 |
 | `fullscreen-changed` | 主进程 → 渲染进程 | `boolean` | 窗口进入 / 退出全屏时广播；由 `enter-full-screen` / `leave-full-screen` 事件触发 |
 | `bible:shortcut` | 主进程 → 渲染进程 | `{ key, code, control, meta, shift, alt }` | 主进程在 `before-input-event` 阶段拦下的按键（如 `F5`），见 §5 |
-| `bible:float-state` | 主进程 → 面板窗口 | 状态对象 | 主进程把主窗口的最新状态转发给浮动控制面板 |
-| `bible:float-command` | 主进程 → 主窗口 | 命令对象 | 面板上的操作（翻节、开关投影、**追加到主面板**等）经主进程转发回主窗口 |
-| `bible:float-state-request` | 主进程 → 主窗口 | （无载荷） | 浮窗刚加载完时主进程向主窗口要一次当前状态，避免面板空白 |
 | `bible:version-progress` | 主进程 → 渲染进程 | `{ id, done, total, percent }` | 下载译本时的进度推送，`done` / `total` 为已完成的卷数 |
 | `bible:versions-changed` | 主进程 → 渲染进程 | `VersionInfo[]` | 译本安装 / 导入成功后广播新的清单，渲染层据此刷新下拉框 |
 
@@ -292,8 +284,8 @@ type SearchHit = Verse & { bookName: string };
 const off = window.bible.onSettingsChanged((settings) => { /* ... */ });
 const offFs = window.bible.onFullscreenChanged((flag) => { /* ... */ });
 const offSc = window.bible.onShortcut((payload) => { /* ... */ });
-const offFloatState = window.bible.onFloatState((payload) => { /* ... */ });
-const offFloatCmd = window.bible.onFloatCommand((payload) => { /* ... */ });
+const offVersionProgress = window.bible.onVersionProgress((info) => { /* ... */ });
+const offVersionsChanged = window.bible.onVersionsChanged(() => { /* ... */ });
 const offProgress = window.bible.onVersionProgress((info) => { /* ... */ });
 const offVersions = window.bible.onVersionsChanged((list) => { /* ... */ });
 
@@ -301,8 +293,8 @@ const offVersions = window.bible.onVersionsChanged((list) => { /* ... */ });
 off();
 offFs();
 offSc();
-offFloatState();
-offFloatCmd();
+offVersionProgress();
+offVersionsChanged();
 offProgress();
 offVersions();
 ```
@@ -600,82 +592,47 @@ stroke = {
 
 ---
 
-## 6. 浮动控制面板（第二个 BrowserWindow）
+## 6. 主面板的编辑与章节跳转
 
-投影时讲台上的操作者往往够不到键盘，因此有一个独立的**浮动控制面板**：
-一个无边框、置顶、不占任务栏的小浮窗，贴在屏幕上方。
+本节描述第 87 轮改造后的形态：浮动控制面板**已整体移除**，主面板的可编辑能力由
+「舞台标题」「右键菜单」「查找结果」三处承担。
 
-### 窗口形态
+### 6.1 浮动控制面板已移除
 
-| 属性 | 取值 | 作用 |
+| 位置 | 处理 |
+| --- | --- |
+| 顶栏 | 删除 `#btn-float` 按钮与 `#float-hotspot` 左缘热区 |
+| 设置面板 | 删除「显示浮动控制面板」开关（`settings.floatPanel`） |
+| 主进程 | 删除 `createFloatWindow()` / `sendToFloat()` 与 `bible:toggleFloatPanel` / `bible:floatState` / `bible:floatCommand` 三条 IPC |
+| preload / bridge | 删除 `toggleFloatPanel` / `sendFloatState` / `sendFloatCommand` / `onFloatState` / `onFloatCommand` / `onFloatStateRequest` |
+| 渲染层 | 删除 `float.html`、`float.css`、`js/float.js`、`js/floatlink.js` 与全部 `.float-*` 样式 |
+
+> 原本挂在浮动面板上的两项能力被保留下来：整章经文列表 → 由主窗口的查找面板与侧栏承担；
+> 「追加到主面板」→ 由查找结果行右侧的「＋」按钮承担。
+
+### 6.2 点标题直接改章节
+
+舞台标题（`#stage-title`，显示「书名 第 N 章」）是一个**可直接编辑**的入口：
+
+| 步骤 | 实现 |
+| --- | --- |
+| 点击标题 | `stage.js` 的 `openChapterEditor()` 在标题位置插入 `.chapter-editor`（书名 + 输入框 + 「章」后缀），输入框预填当前章号并自动全选 |
+| 回车 | `applyChapterInput()` 用 `/^(\d+)(?:[:.、,，](\d+))?$/` 解析：填 `5` → 第 5 章；填 `5:3` → 第 5 章第 3 节；随后 `goToVerse(book.id, chapter, verse, { scrollMode: 'smart' })` |
+| Esc / 失焦 | 关闭编辑框并用 `renderStage()` 还原原标题 |
+| 章号越界 | `toast(T.stage.chapterNotExist(n))` 提示「该卷没有第 N 章」，不跳转 |
+
+编辑期间 `renderStage()` 会因 `titleEditorOpen` 直接返回，避免重绘把编辑框覆盖掉。
+
+### 6.3 从主面板移除 / 追加经文
+
+| 操作 | 入口 | 实现 |
 | --- | --- | --- |
-| `frame` | `false` | 无边框 |
-| `alwaysOnTop` | `true` | 始终置顶 |
-| `transparent` | `true` + `backgroundColor: '#00000000'` | 圆角浮窗、只显示控件本身 |
-| `skipTaskbar` | `true` | 不在任务栏留下条目 |
-| `resizable` / `fullscreenable` | `true` / `false` | 可拖拽缩放（默认 460×520），不参与全屏 |
-| `show` | 先 `false`，`ready-to-show` 后再 `show()` | 避免白屏闪烁 |
+| 从主面板移除此节 | 显示区右键某一节 →「从主面板移除此节」 | `contextmenu.js` 记录右键落点的 `.verse`（`dataset.b/c/v`），`stage.js` 的 `removeVerseFromStage()` 把键 `bookId:chapter:verse` 写入 `state.removedVerses`；`displayVerses()` 三个分支都会过滤它 |
+| 恢复全部显示 | 显示区右键 →「恢复全部显示」 | `restoreAllVerses()` 清空 `state.removedVerses` 与 `state.appendedVerses` |
+| 追加到主面板 | 查找面板结果行右侧的「＋」 | `panel-search.js` → `stage.js` 的 `appendVerseToStage()`，追加的节进入 `state.appendedVerses`，`renderStage()` 在末尾单独成段（`.chapter-divider` 标题「追加的经文」+ `.verse.is-appended`） |
 
-- 浮窗加载的是**独立的页面入口** `src/renderer/float.html`
-  （配 `src/renderer/float.css` 与 `src/renderer/js/float.js`），
-  与主窗口的 `index.html` 是两个页面、两条渲染进程，但**共用同一个 preload**，
-  因此两边拿到的是同一个 `window.bible` 白名单 API。
-- 浮窗关闭（`closed` 事件）时，主进程会把设置里的 `floatPanel` 复位为 `false`，
-  避免下次启动时状态不一致。
-- 浮窗有 **5 个标签页**：经文选择、查找、格式、新约、旧约。
-  「新约 / 旧约」两页是**真实目录**（新约 27 卷、旧约 39 卷），
-  点某一卷会让主窗口跳到该卷第 1 章；「格式」页提供字号 ± 与主题切换。
-
-### 经文选择页：整章列表 + 追加到主面板
-
-「经文选择」页不再只显示当前一节，而是列出**当前章的全部经文**：
-
-- 数据来源：`ipc.getChapter(bookId, chapter, version)`（浮窗与主窗口共用同一个 preload，
-  `version` 取当前译本），因此浮窗里看到的经文与主窗口**同译本**。
-- 列表项 `.float-verse` 显示「节号 + 正文」，当前节加 `.is-current` 并 `scrollIntoView`；
-  列表可滚动（面板高 520，列表区最高 340px），一次能看到 5–10 节以上。
-- 点列表中的某节 → `send({action:'goto', bookId, chapter, verse})` → 主窗口跳到该节。
-- 点「**追加到主面板**」→ `send({action:'append'})` → `bible:float-command` →
-  `floatlink.js` 的 `handleCommand('append')` → `stage.js` 的 `appendVerseToStage()`：
-  该节被追加到主显示区末尾（带 `.is-appended` 样式与「追加的经文」分隔标题），
-  便于把多个零散经文凑成一页一起投影。
-- 浮窗刚打开时主进程会发一次 `bible:float-state-request`，主窗口回推当前状态，
-  避免面板空白（见下方「双向通道」）。
-
-### 显隐与总开关
-
-- 顶栏有一个**总开关**按钮；设置面板里也有同名开关（`settings.floatPanel`）。
-- 浮窗关闭时鼠标移到**主窗口显示区左缘**会再次唤出（悬停显隐），
-  鼠标移开后自动隐藏，实现「需要时出现、不打扰投影」。
-- 显隐最终都收敛到同一个 IPC：`bible:toggleFloatPanel(visible)`。
-
-### 双向通道
-
-面板与主窗口之间通过**主进程中转**，主进程自己不解释语义，只做转发：
-
-```
-主窗口渲染进程                      主进程                        面板渲染进程
-      │                                                        │
-      │  bible:floatState(payload)  ──invoke──▶  sendToFloat(   │
-      │                                        'bible:float-state') ──▶ │
-      │                                                        │
-      │  ◀── send('bible:float-command', payload) ──  invoke ──  │
-      │        bible:floatCommand(payload)  ──invoke──▶        │
-```
-
-| IPC | 方向 | 载荷 | 说明 |
-| --- | --- | --- | --- |
-| `bible:floatState` | 主窗口 → 主进程 → 面板 | 状态对象（当前经文位置、设置摘要、投影状态等） | 主窗口在导航、投影、设置变化时推送最新状态给面板 |
-| `bible:floatCommand` | 面板 → 主进程 → 主窗口 | 命令对象（翻上一节 / 下一节、开关投影、收藏等） | 面板上的按钮经主进程转发回主窗口执行 |
-
-- 面板一侧用 `window.bible.onFloatState(...)` 订阅状态、用
-  `window.bible.onFloatCommand(...)` 接收命令；
-- 主窗口一侧用 `window.bible.sendFloatState(...)` 推送状态、
-  `window.bible.onFloatCommand(...)` 处理面板发来的命令；
-- 两个窗口都订阅 `settings-changed`，因此在任一侧改设置，两侧都会刷新。
-
-> 面板与主窗口是**两个独立页面**，不是同一个页面的两个实例；
-> 因此状态同步完全依赖上述两个通道，不共享 DOM。
+> **语义澄清**：「移除」只影响**显示区**，经文本身、译本数据、历史与收藏都不受影响，
+> 随时可以用「恢复全部显示」还原；副标题会显示「已从主面板移除 N 节」。
 
 ---
 
@@ -890,7 +847,7 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 | --- | --- | --- |
 | 删除某一节 | 主显示区右键 →「删除本节」 | `contextmenu.js` 在 `onContextMenu` 里记录命中的 `.verse`（dataset 记 `b` / `c` / `v`），点菜单项 → `removeVerseFromStage()` 把 `${bookId}:${chapter}:${verse}` 记进 `state.removedVerses`（`Set`），`displayVerses()` 三个分支统一过滤 |
 | 恢复全部显示 | 主显示区右键 →「恢复全部显示」 | `restoreAllVerses()` 清空 `state.removedVerses` 并重绘；菜单项仅在 `hasVerseEdits()` 为真时出现 |
-| 追加经文到主面板 | 浮动面板「经文选择」页 →「追加到主面板」 | `float.js` 发 `append` 命令 → `floatlink.js` → `appendVerseToStage()`；追加的节进入 `state.appendedVerses`，`renderStage()` 在末尾单独成段（`.chapter-divider` 标题「追加的经文」+ `.verse.is-appended`） |
+| 追加经文到主面板 | 查找面板结果行右侧的「＋」 | `panel-search.js` → `appendVerseToStage()`；追加的节进入 `state.appendedVerses`，`renderStage()` 在末尾单独成段（`.chapter-divider` 标题「追加的经文」+ `.verse.is-appended`） |
 
 因为「接上下一章」的判断改用 `visible.length + removedHere === list.length`，
 删掉本章某节后仍会正确接上下一章，不会出现整章空白。
@@ -938,16 +895,15 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 
 | 路径 | 作用 |
 | --- | --- |
-| `src/main/main.js` | 窗口（主窗口 + 浮动面板 + 副屏投影）、菜单、IPC 注册、默认值 `DEFAULT_SETTINGS` |
+| `src/main/main.js` | 窗口（主窗口 + 副屏投影）、菜单、IPC 注册、默认值 `DEFAULT_SETTINGS` |
 | `src/main/bible.js` | 经文加载、索引、查章 / 查范围 / 查找 |
 | `src/main/versions.js` | 译本清单、译本文件解析、译本下载与导入（见 §8） |
 | `src/main/store.js` | `JsonStore`：默认合并 + 原子写入 |
 | `src/preload/preload.js` | `window.bible` API 白名单 |
 | `src/shared/books.js` | 66 卷书目与 8 个分类的元数据 |
 | `src/renderer/index.html` | 主窗口页面骨架 |
-| `src/renderer/float.html` | 浮动控制面板页面骨架 |
 | `src/renderer/second.html` | 副屏投影窗口页面骨架（见 §9） |
-| `src/renderer/js/` | 渲染层 ES module（快捷键、投影、绘制、浮动面板、查找、副屏投影……） |
+| `src/renderer/js/` | 渲染层 ES module（快捷键、投影、绘制、查找、译本、副屏投影……） |
 | `data/` | 内置和合本经文 JSON（简体 / 繁体，只读资源，随安装包分发） |
 | `data/versions/manifest.json` | 译本清单（只有元信息，不含受版权保护的正文） |
 | `tools/extract-mdb.ps1` | 从原程序 MDB 重新抽取经文 |

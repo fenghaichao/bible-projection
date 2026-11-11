@@ -114,24 +114,25 @@ body::after {
   backdrop-filter: blur(8px);
 }
 
-.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.brand { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex: 0 0 auto; }
 
 .brand-mark {
   color: var(--gold);
-  font-size: 15px;
+  font-size: 13px;
   transform: translateY(-1px);
 }
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 19px;
-  letter-spacing: .22em;
+  font-size: 15px;
+  letter-spacing: .12em;
   color: var(--tx-1);
+  white-space: nowrap;
 }
 
 .brand-latin {
-  font-size: 9.5px;
-  letter-spacing: .34em;
+  font-size: 8.5px;
+  letter-spacing: .26em;
   color: var(--tx-3);
   text-transform: uppercase;
   white-space: nowrap;
@@ -609,6 +610,43 @@ body::after {
   color: var(--tx-3);
 }
 
+/* 点标题直接改章节 */
+.stage-title { cursor: text; }
+
+.chapter-editor {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.chapter-editor-book {
+  color: var(--title-color, var(--stage-color));
+  opacity: .92;
+}
+
+.chapter-editor-input {
+  width: 5.4em;
+  padding: 1px 6px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: .06em;
+  color: var(--tx-1);
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  outline: none;
+}
+
+.chapter-editor-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(216, 166, 72, .16);
+}
+
+.chapter-editor-suffix {
+  color: var(--title-color, var(--stage-color));
+  opacity: .92;
+}
+
 .stage-scroll {
   flex: 1;
   min-height: 0;
@@ -1062,6 +1100,24 @@ input[type="color"] {
 
 .result-del:hover { color: var(--crimson); border-color: var(--line); }
 
+.result-append {
+  flex: none;
+  align-self: center;
+  width: 24px; height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--gold-dim);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+
+.result-append:hover { color: var(--gold); border-color: var(--gold-dim); }
+
 .help-about {
   margin: 0 0 4px;
   font-size: 12.5px;
@@ -1338,21 +1394,6 @@ body.hide-verses .stage-head { opacity: .25; }
   color: var(--tx-2);
   font-variant-numeric: tabular-nums;
 }
-
-/* ── 浮动面板热区 ──────────────────────────────────────────── */
-.float-hotspot {
-  position: fixed;
-  left: 0; top: 30%;
-  z-index: 15;
-  width: 10px;
-  height: 190px;
-  border-radius: 0 6px 6px 0;
-  background: linear-gradient(180deg, transparent, var(--gold-dim), transparent);
-  opacity: 0;
-  transition: opacity var(--dur) var(--ease);
-}
-
-.float-hotspot:hover { opacity: 1; }
 
 /* ── 帮助分组 ──────────────────────────────────────────────── */
 .help-group { margin-bottom: 20px; }

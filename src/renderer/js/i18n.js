@@ -13,7 +13,6 @@ export const T = {
     settings: '设置',
     projection: '投影模式',
     help: '帮助',
-    float: '浮动面板',
     version: '译本',
     versions: '译本',
     compare: '多版本比对',
@@ -33,6 +32,9 @@ export const T = {
   stage: {
     empty: '请选择左侧书卷以开始阅读',
     chapterLabel: (c) => `第 ${c} 章`,
+    editChapterHint: '点击标题可直接修改章节（可写「章」或「章:节」）',
+    hiddenCount: (n) => `已从主面板移除 ${n} 节`,
+    chapterNotExist: (c) => `该卷没有第 ${c} 章`,
     pageInfo: (a, b, t) => `${a}–${b} 节 / 共 ${t} 节`,
     pageHint: (a, b, t, per) => `${a}–${b} 节 / 共 ${t} 节 · 每页 ${per} 节`,
     pageLabel: (n) => `第 ${n} 页`,
@@ -60,6 +62,7 @@ export const T = {
     copyVerse: '复制经文',
     copyTitle: '复制章节',
     selectForCopy: '选中该条（用于复制）',
+    appendToMain: '追加到主面板',
   },
 
   settings: {
@@ -112,7 +115,6 @@ export const T = {
     versesPerPage: '每页节数（1 = 整章显示；投影模式每屏显示）',
     slideshow: '自动翻页间隔（秒，0 = 关闭）',
     slideshowHint: '仅在投影模式下生效',
-    floatPanel: '显示浮动控制面板',
     mouseAdvance: '投影模式下点击画面翻节',
     theme: '主题',
     themeDark: '深色',
@@ -236,7 +238,6 @@ export const T = {
           ['双击显示区', '打开最近阅读（普通模式）'],
           ['三击显示区', '清屏：隐藏经文，只留背景'],
           ['自动翻页', '按设置中的间隔自动翻节'],
-          ['浮动控制面板', '显示区左缘悬停或顶栏按钮开启'],
         ],
       },
       {
@@ -292,7 +293,7 @@ export const T = {
     playStop: '停止自动翻页',
     hideVerses: '不显示经文',
     showVerses: '显示当前经文',
-    removeVerse: '删除本节',
+    removeVerse: '从主面板移除此节',
     restoreVerses: '恢复全部显示',
     openPen: '打开画笔_Ctrl+P',
     penColor: '画笔颜色',
@@ -331,15 +332,6 @@ export const T = {
     chapterOf: (name, c) => `${name} 第 ${c} 章`,
     jumped: (name) => `已跳转到 ${name}`,
     multiple: (name) => `已跳转到第一个候选：${name}`,
-  },
-
-  float: {
-    title: '浮动控制面板',
-    prev: '上一节',
-    next: '下一节',
-    exit: '退出投影',
-    close: '关闭',
-    empty: '—',
   },
 
   secondScreen: {
@@ -413,10 +405,8 @@ export const T = {
     span: (n) => `显示 ${n} 节`,
     spanAll: '已回到整章显示',
     spanLimit: '已是 1 节，无法再减少',
-    floatOn: '已打开浮动控制面板',
-    floatOff: '已关闭浮动控制面板',
-    verseRemoved: '已从显示区删除该节',
-    versesRestored: '已恢复全部被删除的经文',
+    verseRemoved: '已从主面板移除该节（经文本身未改动，可随时恢复）',
+    versesRestored: '已恢复全部被移除的经文',
     verseAppended: '已追加到主面板',
     appendFailed: '追加到主面板失败',
     bootFailed: (msg) => `启动失败：${msg}`,
@@ -445,7 +435,7 @@ export function t(path, fallback = '') {
   return value === undefined ? fallback : value;
 }
 
-/** 把 index.html / float.html 中标注了 data-i18n 的节点填上文案。 */
+/** 把 index.html 中标注了 data-i18n 的节点填上文案。 */
 export function applyI18n(root = document) {
   if (!root || typeof root.querySelectorAll !== 'function') return;
   for (const node of root.querySelectorAll('[data-i18n]')) {

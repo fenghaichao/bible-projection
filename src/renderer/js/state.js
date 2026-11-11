@@ -27,7 +27,6 @@ export const DEFAULT_SETTINGS = {
   bgmPath: '',
   bgmVolume: 50,
   slideshowInterval: 0,
-  floatPanel: false,
   // 标题与节号样式、四边留白（main.js DEFAULT_SETTINGS 同步新增）
   titleFontFamily: '',
   titleColor: '',
@@ -88,7 +87,6 @@ export function mergeSettings(raw) {
     bgmPath: str(s.bgmPath, ''),
     bgmVolume: Math.round(num(s.bgmVolume, DEFAULT_SETTINGS.bgmVolume, 0, 100)),
     slideshowInterval: Math.round(num(s.slideshowInterval, DEFAULT_SETTINGS.slideshowInterval, 0, 3600)),
-    floatPanel: !!s.floatPanel,
     titleFontFamily: str(s.titleFontFamily, DEFAULT_SETTINGS.titleFontFamily),
     titleColor: hex(s.titleColor, DEFAULT_SETTINGS.titleColor),
     verseNumberColor: hex(s.verseNumberColor, DEFAULT_SETTINGS.verseNumberColor),
@@ -125,7 +123,7 @@ export const state = {
   compareSelection: [],
   /** 主显示区里被「删除本节」移除的节：key = `${bookId}:${chapter}:${verse}` */
   removedVerses: new Set(),
-  /** 从浮动面板「追加到主面板」的节：[{ bookId, chapter, verse }] */
+  /** 通过「追加到主面板」挂到主显示区末尾的节：[{ bookId, chapter, verse }] */
   appendedVerses: [],
 };
 

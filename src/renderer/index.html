@@ -44,7 +44,6 @@
     <button class="btn" type="button" data-open-panel="history"><svg class="icon"><use href="#i-clock"></use></svg><span data-i18n="topbar.history">历史</span></button>
     <button class="btn" type="button" data-open-panel="saved"><svg class="icon"><use href="#i-star"></use></svg><span data-i18n="topbar.saved">收藏</span></button>
     <button class="btn" type="button" data-open-panel="settings"><svg class="icon"><use href="#i-gear"></use></svg><span data-i18n="topbar.settings">设置</span></button>
-    <button class="btn" id="btn-float" type="button" title="浮动控制面板"><svg class="icon"><use href="#i-panel"></use></svg><span data-i18n="topbar.float">浮动面板</span></button>
     <button class="btn btn-accent" type="button" id="btn-projection"><svg class="icon"><use href="#i-expand"></use></svg><span data-i18n="topbar.projection">投影模式</span></button>
     <button class="btn" type="button" data-open-panel="help"><svg class="icon"><use href="#i-help"></use></svg><span data-i18n="topbar.help">帮助</span></button>
   </nav>
@@ -103,8 +102,6 @@
   </main>
 </div>
 
-<!-- 显示区左缘热区：悬停可唤出浮动控制面板 -->
-<div class="float-hotspot" id="float-hotspot" title="浮动控制面板"></div>
 
 <!-- ── 右键菜单 ───────────────────────────────────────────────── -->
 <div class="ctx-menu" id="ctx-menu" hidden></div>
@@ -256,7 +253,6 @@
           <input class="text-input" id="set-slideshow" type="number" min="0" max="3600" step="1" value="0" />
         </label>
 
-        <label class="check"><input type="checkbox" id="set-float-panel" /><span data-i18n="settings.floatPanel">显示浮动控制面板</span></label>
 
         <label class="check"><input type="checkbox" id="set-mouse-advance" checked /><span data-i18n="settings.mouseAdvance">投影模式下点击画面翻节</span></label>
 

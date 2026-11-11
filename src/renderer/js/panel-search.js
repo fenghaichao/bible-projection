@@ -7,7 +7,7 @@ import { currentVersion } from './version.js';
 import { T } from './i18n.js';
 import { toast } from './toast.js';
 import { closePanel } from './panels.js';
-import { goToVerse, renderStage } from './stage.js';
+import { goToVerse, renderStage, appendVerseToStage } from './stage.js';
 import { highlightFragment } from './highlight.js';
 
 const PAGE_SIZE = 40;
@@ -66,7 +66,7 @@ function parseKeywords(raw) {
     .filter(Boolean);
 }
 
-/** 供浮动面板等外部入口调用：以给定关键字执行一次查找。 */
+/** 以给定关键字执行一次查找（供外部入口调用）。 */
 export function runSearchWith(keywords) {
   const text = Array.isArray(keywords) ? keywords.join(' ') : String(keywords || '');
   if (!text.trim()) return false;
@@ -169,7 +169,23 @@ function resultItem(row) {
     await goToVerse(row.bookId, row.chapter, row.verse);
     closePanel();
   });
-  return el('div', { class: 'result-row' }, [check, item]);
+
+  // 「追加到主面板」：把这一节挂到主显示区末尾（不跳走当前阅读位置）
+  const append = el('button', {
+    class: 'result-append',
+    type: 'button',
+    title: T.search.appendToMain,
+    'aria-label': T.search.appendToMain,
+    text: '＋',
+  });
+  append.addEventListener('click', async (event) => {
+    event.stopPropagation();
+    const ok = await appendVerseToStage({ bookId: row.bookId, chapter: row.chapter, verse: row.verse });
+    if (ok) toast(T.toast.verseAppended, 'ok', 1600);
+    else toast(T.toast.appendFailed, 'error', 1600);
+  });
+
+  return el('div', { class: 'result-row' }, [check, item, append]);
 }
 
 function rowKey(row) {

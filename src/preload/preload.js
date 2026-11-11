@@ -41,10 +41,6 @@ const bible = {
   installVersion: (id) => ipcRenderer.invoke('bible:installVersion', id),
   importVersionFile: () => ipcRenderer.invoke('bible:importVersionFile'),
 
-  // 浮动控制面板
-  toggleFloatPanel: (visible) => ipcRenderer.invoke('bible:toggleFloatPanel', visible),
-  sendFloatState: (payload) => ipcRenderer.invoke('bible:floatState', payload),
-
   // 副屏投影（原版 F9「扩展桌面」）
   secondScreenDisplays: () => ipcRenderer.invoke('bible:secondScreen:displays'),
   secondScreenOpen: (displayId) => ipcRenderer.invoke('bible:secondScreen:open', displayId),
@@ -76,41 +72,6 @@ const bible = {
     return () => ipcRenderer.removeListener('bible:shortcut', listener);
   },
 
-  /**
-   * 订阅浮动控制面板的指令（面板按钮 → 主窗口）。
-   * 返回取消订阅函数。
-   */
-  onFloatCommand: (callback) => {
-    const listener = (_event, payload) => callback(payload || {});
-    ipcRenderer.on('bible:float-command', listener);
-    return () => ipcRenderer.removeListener('bible:float-command', listener);
-  },
-
-  /**
-   * 面板 → 主窗口：发送控制指令（上一节 / 下一节 / 退出投影 / 关闭面板…）。
-   * 浮动面板自身调用此方法即可驱动主窗口。
-   */
-  sendFloatCommand: (payload) => ipcRenderer.invoke('bible:floatCommand', payload || {}),
-
-  /**
-   * 订阅主进程推送给浮动面板的状态（当前书卷章节、投影开关等）。
-   * 返回取消订阅函数。
-   */
-  onFloatState: (callback) => {
-    const listener = (_event, payload) => callback(payload || {});
-    ipcRenderer.on('bible:float-state', listener);
-    return () => ipcRenderer.removeListener('bible:float-state', listener);
-  },
-
-  /**
-   * 订阅「请把当前状态推给浮动面板」的请求（浮动面板刚打开时主进程会发一次）。
-   * 返回取消订阅函数。
-   */
-  onFloatStateRequest: (callback) => {
-    const listener = () => callback();
-    ipcRenderer.on('bible:float-state-request', listener);
-    return () => ipcRenderer.removeListener('bible:float-state-request', listener);
-  },
 
   /**
    * 订阅译本下载进度，返回取消订阅函数。

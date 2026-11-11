@@ -19,7 +19,6 @@ import { initLetterbar } from './letterbar.js';
 import { initBgm } from './bgm.js';
 import { initSlideshow } from './slideshow.js';
 import { initContextMenu } from './contextmenu.js';
-import { initFloatLink } from './floatlink.js';
 import { initVersions, refreshVersionList } from './panel-versions.js';
 import { initCompare } from './compare.js';
 import { initSecondScreen } from './secondScreen.js';
@@ -69,7 +68,6 @@ async function start() {
   initBgm();
   initSlideshow();
   initContextMenu();
-  initFloatLink();
   initVersions();
   initCompare();
   initSecondScreen();
