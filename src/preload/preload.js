@@ -45,6 +45,13 @@ const bible = {
   toggleFloatPanel: (visible) => ipcRenderer.invoke('bible:toggleFloatPanel', visible),
   sendFloatState: (payload) => ipcRenderer.invoke('bible:floatState', payload),
 
+  // 副屏投影（原版 F9「扩展桌面」）
+  secondScreenDisplays: () => ipcRenderer.invoke('bible:secondScreen:displays'),
+  secondScreenOpen: (displayId) => ipcRenderer.invoke('bible:secondScreen:open', displayId),
+  secondScreenClose: () => ipcRenderer.invoke('bible:secondScreen:close'),
+  secondScreenState: () => ipcRenderer.invoke('bible:secondScreen:state'),
+  secondScreenUpdate: (payload) => ipcRenderer.invoke('bible:secondScreen:update', payload || {}),
+
   /** 订阅设置变化，返回取消订阅函数 */
   onSettingsChanged: (callback) => {
     const listener = (_event, settings) => callback(settings);
@@ -111,6 +118,33 @@ const bible = {
     const listener = (_event, list) => callback(Array.isArray(list) ? list : []);
     ipcRenderer.on('bible:versions-changed', listener);
     return () => ipcRenderer.removeListener('bible:versions-changed', listener);
+  },
+
+  /**
+   * 订阅副屏投影窗口推送的经文数据，返回取消订阅函数。
+   */
+  onSecondScreenPayload: (callback) => {
+    const listener = (_event, payload) => callback(payload || {});
+    ipcRenderer.on('bible:second:payload', listener);
+    return () => ipcRenderer.removeListener('bible:second:payload', listener);
+  },
+
+  /**
+   * 副屏窗口就绪后主进程会来索要一次当前经文，返回取消订阅函数。
+   */
+  onSecondScreenRequest: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('bible:second:request', listener);
+    return () => ipcRenderer.removeListener('bible:second:request', listener);
+  },
+
+  /**
+   * 副屏窗口被关闭时通知渲染层，返回取消订阅函数。
+   */
+  onSecondScreenClosed: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('bible:second:closed', listener);
+    return () => ipcRenderer.removeListener('bible:second:closed', listener);
   },
 };
 

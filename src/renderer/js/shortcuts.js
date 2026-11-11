@@ -21,6 +21,7 @@ import { copySearchResults } from './panel-search.js';
 import { toggleProjection, exitProjection } from './projection.js';
 import { clearDraw, isDrawing, redoDraw, setDrawColor, toggleDraw, toggleEraser, undoDraw } from './draw.js';
 import { pushSettings, cycleFont } from './settings.js';
+import { toggleSecondScreen } from './secondScreen.js';
 import { ipc } from './bridge.js';
 
 const FONT_STEP = 2;
@@ -224,6 +225,10 @@ function runShortcut(key, mods) {
       // 原版：F6 = 退出 / 隐藏窗口（feature-check 6.3 取舍：F5 进、F6 出）
       if (!state.projection) return false;
       exitProjection();
+      return true;
+    case 'F9':
+      // 原版 F9「扩展桌面」：本版改为把当前经文投影到第二个显示器
+      toggleSecondScreen();
       return true;
     case 'F11':
       // 系统 F11 走原生全屏，主进程广播 fullscreen-changed 同步投影外观，

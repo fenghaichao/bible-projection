@@ -100,7 +100,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | Bookmarks | ✅ my bookmarks | `Ctrl` + `S` bookmarks the current verse, up to 500 entries |
 | Continuous display across chapters / verse ranges | ✅ ranges | Verses can be shown continuously across chapter boundaries or as an explicit range |
 | Projection / slideshow mode | ✅ projection mode | `F5` enters and leaves, `F6` leaves projection, `F11` is the system fullscreen; drawer panels no longer interrupt projection, text is not clipped and `Esc` leaves projection in one step |
-| Original window shapes: transparent window (`F7`), desktop extension (`F9`) | ❌ not implemented in this version | Both need extra main-process `BrowserWindow` capabilities that this version does not implement; `F5` for projection and `F11` for native fullscreen cover the common cases (the right-click menu keeps an "extend desktop_F9" entry that simply reports that this version uses "project to a second screen" instead) |
+| Original window shapes: transparent window (`F7`), desktop extension (`F9`) | ⚠️ partly implemented | **Desktop extension is implemented as "project to a second screen"**: `F9` (or the right-click entry "extend desktop_F9") opens a frameless fullscreen window on the second monitor showing the same passage as the main window (font size, colours, background image and shadow follow the main window settings); press it again to close. The transparent window (`F7`) is still not implemented |
 | Original `Ctrl` + `0`…`4` "hide all comparison panes" | ⚠️ deliberate deviation | This version has **no comparison panes** (the feature was removed on request); `Ctrl` + `0` resets the font size (see [docs/feature-audit.md](docs/feature-audit.md)) |
 | — (new) | ✅ verses per page | 1..20 verses per page, `Shift` + `>` / `<` adjusts |
 | — (new) | ✅ multi-column comparison | Up to 4 passages compared side by side, added with the "+ pane" button |
@@ -334,6 +334,7 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 | `Shift` + `>` / `<` | Grow / shrink the displayed verse span (original method 5): with a picked range it extends that range (e.g. `CSJ2:1-10` → verses 1-11), without one it changes "verses per page" |
 | `F5` | Enter / leave projection mode (fullscreen) |
 | `F6` | Leave projection mode |
+| `F9` | Project to a second screen (show the current passage on the second monitor; press again to close) |
 | `F11` | System fullscreen (the projection look follows automatically) |
 | `Esc` | Close panel / leave drawing / leave projection |
 
@@ -452,10 +453,9 @@ no-speech edition** and are not provided here either.
   floating control panel. Use the per-verse multi-version comparison to compare translations.
 - **No hardware support for a wireless remote**, but the keyboard media keys (previous / next track)
   can be used as a page-turner.
-- **The original transparent window (`F7`) and desktop extension (`F9`) are not implemented**: both rely on
-  extra main-process `BrowserWindow` capabilities this version does not have; use `F5` for projection and
-  `F11` for the native system fullscreen. The right-click menu keeps an "extend desktop_F9" entry that
-  simply reports that this version uses "project to a second screen" instead.
+- **The original transparent window (`F7`) is not implemented**: it relies on extra main-process
+  `BrowserWindow` capabilities this version does not have; use `F5` for projection, `F11` for the native
+  system fullscreen and **`F9` to project to a second screen**.
 - **The original `Ctrl` + `0`…`4` "hide all comparison panes" semantics were replaced**: this version has
   **no comparison panes** (the feature was removed on request); `Ctrl` + `0` resets the font size.
 - **Apart from the three bundled translations (CUV Simplified / Traditional and the Lü Zhenzhong

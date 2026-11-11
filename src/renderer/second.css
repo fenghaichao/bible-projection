@@ -1,0 +1,45 @@
+/* second.css — 副屏投影窗口样式（与主窗口「墨金」风格一致） */
+
+.second-body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  color: #f5f5f5;
+  overflow: hidden;
+  user-select: none;
+  cursor: none;
+}
+
+.second-wrap {
+  max-width: 78vw;
+  text-align: center;
+  padding: 4vh 6vw;
+}
+
+.second-ref {
+  margin: 0 0 1.2em;
+  font-size: 0.42em;
+  letter-spacing: 0.12em;
+  color: #c8a45c;
+  opacity: 0.85;
+}
+
+.second-text {
+  margin: 0;
+  font-family: '微软雅黑', 'Microsoft YaHei', sans-serif;
+  font-size: 48px;
+  line-height: 1.8;
+  color: #f5f5f5;
+  text-align: center;
+  word-break: break-word;
+}
+
+.second-foot {
+  margin: 2.2em 0 0;
+  font-size: 0.34em;
+  color: #8a8378;
+  opacity: 0.7;
+}

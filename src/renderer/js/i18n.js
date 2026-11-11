@@ -177,6 +177,7 @@ export const T = {
           ['Shift + > / Shift + <', '增减显示的经文节数（原版方法5）：有速选范围时增减该范围，没有范围时增减「每页节数」'],
           ['F5', '进入 / 退出投影模式（全屏）'],
           ['F6', '退出投影模式'],
+          ['F9', '投影到副屏：把当前经文投到第二个显示器（再按一次关闭）'],
           ['F11', '系统原生全屏（外观自动同步投影模式）'],
           ['Esc', '关闭面板 / 退出绘制 / 退出投影'],
         ],
@@ -296,8 +297,7 @@ export const T = {
     eraser: '橡皮擦_E',
     clearPen: '清除画笔_Ctrl+E',
     extendDesktop: '扩展桌面_F9',
-    extendDesktopTip: '扩展桌面（多屏扩展）需在系统显示设置中开启，本版改为「投影到副屏」',
-    theme: '主题设置',
+    extendDesktopTip: '扩展桌面（多屏扩展）需在系统显示设置中开启，本版改为「投影到副屏」',    theme: '主题设置',
     themeDark: '深色',
     themeLight: '浅色',
     colors: {
@@ -336,6 +336,13 @@ export const T = {
     exit: '退出投影',
     close: '关闭',
     empty: '—',
+  },
+
+  secondScreen: {
+    opened: '已开启副屏投影',
+    closed: '已关闭副屏投影',
+    noDisplay: '未检测到第二个显示器：请先在系统「显示设置」中扩展屏幕，再按 F9',
+    failed: '副屏投影开启失败',
   },
 
   versions: {

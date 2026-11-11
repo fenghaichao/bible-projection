@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, clipboard, shell, Menu, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard, shell, Menu, dialog, screen } = require('electron');
 const path = require('path');
 const { JsonStore } = require('./store');
 const bible = require('./bible');
@@ -46,6 +46,8 @@ const DEFAULT_SETTINGS = {
 
 let mainWindow = null;
 let floatWindow = null;
+let secondWindow = null;
+let secondPayload = null;
 let settingsStore = null;
 let historyStore = null;
 let savedStore = null;
@@ -99,7 +101,12 @@ function createWindow() {
       if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) mainWindow.show();
     }, 1000);
   });
-  mainWindow.on('closed', () => { mainWindow = null; });
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+    // 主窗口关闭时一并关掉副屏投影窗口，否则窗口未全关，进程不会退出
+    if (secondWindow && !secondWindow.isDestroyed()) secondWindow.close();
+    secondWindow = null;
+  });
 
   // 系统级全屏切换（Win+↓ / F11）也通知渲染层，避免投影模式外观不同步
   const sendFullscreen = (flag) => {
@@ -197,6 +204,75 @@ function sendToFloat(channel, payload) {
   if (floatWindow && !floatWindow.isDestroyed()) {
     floatWindow.webContents.send(channel, payload);
   }
+}
+
+/**
+ * 副屏投影窗口（原版 F9「扩展桌面」的现代等价）：
+ * 在第二个显示器上开一个无边框全屏窗口，显示与主窗口同步的经文。
+ */
+function createSecondWindow(displayId) {
+  if (secondWindow && !secondWindow.isDestroyed()) {
+    secondWindow.show();
+    secondWindow.focus();
+    return secondWindow;
+  }
+
+  let displays = [];
+  try {
+    displays = screen.getAllDisplays();
+  } catch (err) {
+    console.error('[screen] 读取显示器列表失败:', err.message);
+    displays = [];
+  }
+  if (!displays.length) return null;
+
+  const primary = screen.getPrimaryDisplay();
+  const display =
+    displays.find((d) => String(d.id) === String(displayId)) ||
+    displays.find((d) => d.id !== primary.id) ||
+    displays[0];
+  const { x, y, width, height } = display.bounds;
+
+  secondWindow = new BrowserWindow({
+    x, y, width, height,
+    frame: false,
+    show: false,
+    fullscreen: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    backgroundColor: '#000000',
+    webPreferences: {
+      preload: path.join(__dirname, '..', 'preload', 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      backgroundThrottling: false,
+    },
+  });
+
+  secondWindow.setAlwaysOnTop(true, 'screen-saver');
+  secondWindow.loadFile(path.join(__dirname, '..', 'renderer', 'second.html'));
+  secondWindow.once('ready-to-show', () => {
+    if (secondWindow && !secondWindow.isDestroyed()) secondWindow.show();
+  });
+  // 页面加载完成后再补发一次当前经文，避免首次推送早于渲染层就绪
+  secondWindow.webContents.once('did-finish-load', () => {
+    if (secondWindow && !secondWindow.isDestroyed() && secondPayload) {
+      secondWindow.webContents.send('bible:second:payload', secondPayload);
+    }
+    // 向主窗口索要一次当前经文：副屏窗口可能不是由渲染层打开的
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('bible:second:request');
+    }
+  });
+  secondWindow.on('closed', () => {
+    secondWindow = null;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('bible:second:closed');
+    }
+  });
+
+  return secondWindow;
 }
 
 function buildMenu() {
@@ -432,6 +508,52 @@ function registerIpc() {
   ipcMain.handle('bible:floatCommand', (_e, payload) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('bible:float-command', payload || {});
+    }
+    return true;
+  });
+
+  // ---- 副屏投影（原版 F9「扩展桌面」）----
+  ipcMain.handle('bible:secondScreen:displays', () => {
+    try {
+      const primary = screen.getPrimaryDisplay();
+      return screen.getAllDisplays().map((d) => ({
+        id: d.id,
+        label: d.label || '',
+        bounds: {
+          x: Number(d.bounds.x) || 0,
+          y: Number(d.bounds.y) || 0,
+          width: Number(d.bounds.width) || 0,
+          height: Number(d.bounds.height) || 0,
+        },
+        primary: d.id === primary.id,
+      }));
+    } catch (err) {
+      console.error('[screen] 读取显示器列表失败:', err.message);
+      return [];
+    }
+  });
+
+  ipcMain.handle('bible:secondScreen:open', (_e, displayId) => {
+    const win = createSecondWindow(displayId);
+    if (!win) return { ok: false, error: 'no-display' };
+    return { ok: true };
+  });
+
+  ipcMain.handle('bible:secondScreen:close', () => {
+    if (secondWindow && !secondWindow.isDestroyed()) secondWindow.close();
+    secondWindow = null;
+    return true;
+  });
+
+  ipcMain.handle('bible:secondScreen:state', () => ({
+    open: !!(secondWindow && !secondWindow.isDestroyed()),
+  }));
+
+  // 主窗口 → 副屏：推送当前经文与显示设置
+  ipcMain.handle('bible:secondScreen:update', (_e, payload) => {
+    secondPayload = payload || null;
+    if (secondWindow && !secondWindow.isDestroyed()) {
+      secondWindow.webContents.send('bible:second:payload', secondPayload);
     }
     return true;
   });

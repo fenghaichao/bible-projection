@@ -23,6 +23,7 @@ import {
   toggleEraser,
 } from './draw.js';
 import { pushSettings } from './settings.js';
+import { toggleSecondScreen } from './secondScreen.js';
 
 let menu = null;
 const submenus = [];
@@ -141,9 +142,9 @@ function buildMenu() {
 
   menu.appendChild(el('div', { class: 'ctx-sep' }));
 
-  menu.appendChild(menuItem(T.ctx.extendDesktop, () => {
+  menu.appendChild(menuItem(T.ctx.extendDesktop, async () => {
     hideMenu();
-    toast(T.ctx.extendDesktopTip, 'info', 2600);
+    await toggleSecondScreen();
   }));
 
   // 本版额外项（原版没有，但方便切换主题）

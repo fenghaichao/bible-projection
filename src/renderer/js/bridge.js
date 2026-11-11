@@ -35,6 +35,15 @@ const stub = {
   sendFloatCommand: async () => false,
   onFloatState: () => () => {},
   onFloatCommand: () => () => {},
+  // 副屏投影
+  secondScreenDisplays: async () => [],
+  secondScreenOpen: async () => ({ ok: false, error: '未检测到主进程桥接' }),
+  secondScreenClose: async () => false,
+  secondScreenState: async () => ({ open: false }),
+  secondScreenUpdate: async () => false,
+  onSecondScreenPayload: () => () => {},
+  onSecondScreenRequest: () => () => {},
+  onSecondScreenClosed: () => () => {},
   // 译本管理
   listVersions: async () => [],
   installVersion: async () => ({ ok: false, error: '未检测到主进程桥接' }),
@@ -117,5 +126,14 @@ export const ipc = {
   importVersionFile: () => call('importVersionFile'),
   onVersionProgress: (handler) => subscribe('onVersionProgress', handler),
   onVersionsChanged: (handler) => subscribe('onVersionsChanged', handler),
+  // 副屏投影（原版 F9「扩展桌面」）
+  secondScreenDisplays: () => call('secondScreenDisplays'),
+  secondScreenOpen: (displayId) => call('secondScreenOpen', displayId),
+  secondScreenClose: () => call('secondScreenClose'),
+  secondScreenState: () => call('secondScreenState'),
+  secondScreenUpdate: (payload) => call('secondScreenUpdate', payload),
+  onSecondScreenPayload: (handler) => subscribe('onSecondScreenPayload', handler),
+  onSecondScreenRequest: (handler) => subscribe('onSecondScreenRequest', handler),
+  onSecondScreenClosed: (handler) => subscribe('onSecondScreenClosed', handler),
   appVersion: () => call('appVersion'),
 };

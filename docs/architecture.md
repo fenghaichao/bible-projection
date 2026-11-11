@@ -245,6 +245,11 @@ type SearchHit = Verse & { bookName: string };
 | `bible:pickImage` | — | `string \| null` | 弹出系统「打开文件」对话框选择背景图；取消返回 `null`。只放行 `jpg / jpeg / png / bmp / gif / webp` |
 | `bible:pickAudio` | — | `string \| null` | 同上，选择背景音乐；只放行 `mp3 / wav / m4a / flac / ogg / aac` |
 | `bible:toggleFloatPanel` | `visible: boolean` | `boolean` | 显示 / 隐藏浮动控制面板；`false` 时关闭浮窗并把设置里的 `floatPanel` 复位 |
+| `bible:secondScreen:displays` | — | `DisplayInfo[]` | 列出所有显示器：`{ id, label, bounds, primary }`；主进程用 `screen.getAllDisplays()` 取得 |
+| `bible:secondScreen:open` | `displayId: number` | `{ ok: boolean, error?: string }` | 在指定显示器上打开副屏投影窗口；没有可用显示器时返回 `{ ok: false, error: 'no-display' }` |
+| `bible:secondScreen:close` | — | `boolean` | 关闭副屏投影窗口 |
+| `bible:secondScreen:state` | — | `{ open: boolean }` | 副屏投影窗口是否开启 |
+| `bible:secondScreen:update` | `payload: object` | `boolean` | 主窗口 → 副屏：推送当前经文与显示设置（详见 §10） |
 
 ### 标注持久化
 
@@ -858,11 +863,50 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 主进程侧只做了一处改动：`bible:getChapter` / `bible:getRange` 接受**可选**的 `version` 参数
 （省略＝`currentVersion()`），因此不传时行为与从前完全一致。
 
-## 9. 目录速查
+## 9. 副屏投影（原版 F9「扩展桌面」的现代等价）
+
+原版 5.20 SP2 的 F9「扩展桌面」用于把经文投到第二台显示器。本版保留同样的入口
+（`F9` 快捷键 + 显示区右键菜单「扩展桌面_F9」），实现方式改为**第二个 BrowserWindow**。
+
+### 9.1 窗口形态
+
+- 主进程用 `screen.getAllDisplays()` 取得显示器列表；渲染层选择第一个**非主显示器**
+  （只有一块屏时提示「未检测到第二个显示器」）；
+- 在目标显示器的 `bounds` 上创建一个无边框、`fullscreen`、`alwaysOnTop`、`skipTaskbar` 的窗口，
+  加载 `src/renderer/second.html`；
+- 主窗口关闭时副屏窗口一并关闭，避免进程残留。
+
+### 9.2 数据流
+
+```
+主窗口 (secondScreen.js)          主进程 (main.js)                 副屏窗口 (second.js)
+  │ navigate / settings 事件              │                                │
+  │──────── ipc.secondScreenUpdate ─────► │ secondPayload = payload        │
+  │                                       │──── webContents.send ───────► │ 渲染经文
+  │                                       │◄── bible:second:request ───── │ 窗口就绪后索要一次
+  │──────── ipc.secondScreenUpdate ─────► │                                │
+```
+
+- 推送载荷：`{ bookId, chapter, verse, version, settings }`，其中 `settings` 只带显示相关字段
+  （字号、字体、行距、文字色、背景色、背景图、斜体、下划线、标题色、阴影）；
+- 副屏窗口用 `ipc.getChapter(bookId, chapter, version)` 自己取该译本的经文，
+  再用 `ipc.getBooks()` 里的书名拼出「创世记 第1章 1:1」这样的引用；
+- 副屏窗口就绪时主进程会发一次 `bible:second:request`，渲染层据此补推一次当前经文，
+  保证「不是由渲染层打开」的窗口也能显示内容；
+- 用户直接关掉副屏窗口时主进程发 `bible:second:closed`，渲染层把内部状态复位。
+
+### 9.3 快捷键与菜单
+
+| 入口 | 行为 |
+| --- | --- |
+| `F9` | 开 / 关副屏投影 |
+| 右键「扩展桌面_F9」 | 同 `F9`（与原版菜单条目同名） |
+
+## 10. 目录速查
 
 | 路径 | 作用 |
 | --- | --- |
-| `src/main/main.js` | 窗口（主窗口 + 浮动面板）、菜单、IPC 注册、默认值 `DEFAULT_SETTINGS` |
+| `src/main/main.js` | 窗口（主窗口 + 浮动面板 + 副屏投影）、菜单、IPC 注册、默认值 `DEFAULT_SETTINGS` |
 | `src/main/bible.js` | 经文加载、索引、查章 / 查范围 / 查找 |
 | `src/main/versions.js` | 译本清单、译本文件解析、译本下载与导入（见 §8） |
 | `src/main/store.js` | `JsonStore`：默认合并 + 原子写入 |
@@ -870,7 +914,8 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 | `src/shared/books.js` | 66 卷书目与 8 个分类的元数据 |
 | `src/renderer/index.html` | 主窗口页面骨架 |
 | `src/renderer/float.html` | 浮动控制面板页面骨架 |
-| `src/renderer/js/` | 渲染层 ES module（快捷键、投影、绘制、浮动面板、查找……） |
+| `src/renderer/second.html` | 副屏投影窗口页面骨架（见 §9） |
+| `src/renderer/js/` | 渲染层 ES module（快捷键、投影、绘制、浮动面板、查找、副屏投影……） |
 | `data/` | 内置和合本经文 JSON（简体 / 繁体，只读资源，随安装包分发） |
 | `data/versions/manifest.json` | 译本清单（只有元信息，不含受版权保护的正文） |
 | `tools/extract-mdb.ps1` | 从原程序 MDB 重新抽取经文 |
