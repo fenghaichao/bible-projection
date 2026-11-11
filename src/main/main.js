@@ -168,10 +168,11 @@ function createFloatWindow() {
   }
 
   floatWindow = new BrowserWindow({
-    width: 260,
-    height: 96,
+    // 面板放大：能一次看到 5–10 节经文（原版浮动面板也远比这个大）
+    width: 460,
+    height: 520,
     frame: false,
-    resizable: false,
+    resizable: true,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -191,6 +192,12 @@ function createFloatWindow() {
 
   floatWindow.loadFile(path.join(__dirname, '..', 'renderer', 'float.html'));
   floatWindow.once('ready-to-show', () => floatWindow.show());
+  // 面板刚打开时，主动向主窗口要一次当前状态（否则面板要等用户翻节才有内容）
+  floatWindow.webContents.once('did-finish-load', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('bible:float-state-request');
+    }
+  });
   floatWindow.on('closed', () => {
     floatWindow = null;
     if (settingsStore) settingsStore.set({ floatPanel: false });

@@ -10,7 +10,7 @@ import { $, el } from './util.js';
 import { state } from './state.js';
 import { T } from './i18n.js';
 import { toast } from './toast.js';
-import { copyTextVariant, copyTitleOnly, toggleHideVerses } from './stage.js';
+import { copyTextVariant, copyTitleOnly, hasVerseEdits, removeVerseFromStage, restoreAllVerses, toggleHideVerses } from './stage.js';
 import { enterProjection } from './projection.js';
 import * as slideshow from './slideshow.js';
 import {
@@ -27,6 +27,8 @@ import { toggleSecondScreen } from './secondScreen.js';
 
 let menu = null;
 const submenus = [];
+/** 右键落在哪一节：{ bookId, chapter, verse }（不在节上时为 null） */
+let contextVerse = null;
 
 export function initContextMenu() {
   menu = $('#ctx-menu');
@@ -56,6 +58,15 @@ function onContextMenu(event) {
   if (!stage || !menu) return;
   if (!stage.contains(event.target)) return;
   event.preventDefault();
+  // 记录右键落在哪一节：「删除本节」要用
+  const verseEl = event.target.closest ? event.target.closest('.verse') : null;
+  contextVerse = verseEl
+    ? {
+      bookId: Number(verseEl.dataset.b) || state.current.bookId,
+      chapter: Number(verseEl.dataset.c) || state.current.chapter,
+      verse: Number(verseEl.dataset.v) || 0,
+    }
+    : null;
   buildMenu();
   menu.hidden = false;
   positionMenu(event.clientX, event.clientY);
@@ -107,6 +118,21 @@ function buildMenu() {
     hideMenu();
     toggleHideVerses();
   }));
+
+  // 删除本节 / 恢复全部（本版新增：右击某一节即可把它从主显示区去掉）
+  if (contextVerse && contextVerse.verse) {
+    menu.appendChild(el('div', { class: 'ctx-sep' }));
+    menu.appendChild(menuItem(T.ctx.removeVerse, () => {
+      hideMenu();
+      removeVerseFromStage(contextVerse.bookId, contextVerse.chapter, contextVerse.verse);
+    }));
+  }
+  if (hasVerseEdits()) {
+    menu.appendChild(menuItem(T.ctx.restoreVerses, () => {
+      hideMenu();
+      restoreAllVerses();
+    }));
+  }
 
   menu.appendChild(el('div', { class: 'ctx-sep' }));
 

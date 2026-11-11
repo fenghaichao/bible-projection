@@ -7,6 +7,8 @@ import { $ } from './util.js';
 import { ipc } from './bridge.js';
 
 let hideTimer = null;
+/** 当前章经文缓存：{ key: `${bookId}:${chapter}:${version}`, rows: [...] } */
+let verseListCache = { key: '', rows: [] };
 
 export function initFloat() {
   const body = document.body;
@@ -30,6 +32,7 @@ export function initFloat() {
 
   bind('#float-prev', () => send({ action: 'prev' }));
   bind('#float-next', () => send({ action: 'next' }));
+  bind('#float-append', () => send({ action: 'append' }));
   bind('#float-exit', () => send({ action: 'exit' }));
   bind('#float-close', () => send({ action: 'close' }));
   bind('#float-font-up', () => send({ action: 'fontDelta', delta: 2 }));
@@ -140,6 +143,75 @@ function renderState(payload) {
 
   const font = $('#float-font');
   if (font && typeof payload.fontSize === 'number') font.textContent = String(payload.fontSize);
+
+  renderVerseList(payload);
+}
+
+/**
+ * 列出当前章的经文（5–10 节可见，滚动可看全章）：
+ * 当前节高亮并自动滚到视野内；点某一节 → 通知主窗口跳到该节。
+ */
+async function renderVerseList(payload) {
+  const list = $('#float-verses');
+  if (!list) return;
+  const bookId = payload.bookId;
+  const chapter = Number(payload.chapter) || 0;
+  const currentVerse = Number(payload.verse) || 0;
+  if (!bookId || !chapter) {
+    list.textContent = '';
+    return;
+  }
+
+  const cacheKey = `${bookId}:${chapter}:${payload.version || 'current'}`;
+  if (verseListCache.key !== cacheKey) {
+    let rows = [];
+    try {
+      rows = await ipc.getChapter(bookId, chapter, payload.version);
+    } catch (error) {
+      rows = [];
+    }
+    verseListCache = { key: cacheKey, rows: Array.isArray(rows) ? rows : [] };
+  }
+
+  const rows = verseListCache.rows;
+  list.textContent = '';
+  if (!rows.length) {
+    const empty = document.createElement('li');
+    empty.className = 'float-empty';
+    empty.textContent = '本章暂无经文';
+    list.appendChild(empty);
+    return;
+  }
+
+  for (const row of rows) {
+    const verse = Number(row && row.verse !== undefined ? row.verse : row.v) || 0;
+    const item = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `float-verse${verse === currentVerse ? ' is-current' : ''}`;
+    button.dataset.verse = String(verse);
+
+    const no = document.createElement('span');
+    no.className = 'float-verse-no';
+    no.textContent = String(verse);
+
+    const body = document.createElement('span');
+    body.className = 'float-verse-text';
+    body.textContent = row && typeof row.text === 'string' ? row.text : '';
+
+    button.appendChild(no);
+    button.appendChild(body);
+    button.addEventListener('click', () => {
+      send({ action: 'goto', bookId, chapter, verse });
+    });
+    item.appendChild(button);
+    list.appendChild(item);
+  }
+
+  const active = list.querySelector('.float-verse.is-current');
+  if (active && typeof active.scrollIntoView === 'function') {
+    active.scrollIntoView({ block: 'nearest' });
+  }
 }
 
 function show() {

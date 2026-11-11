@@ -1,4 +1,4 @@
-// js/compare.js — 「多版本对比」区块（位于「获取译本」面板底部）
+// js/compare.js — 「多版本比对」区块（顶栏「多版本比对」按钮打开的独立面板）
 //
 // 交互：
 //   · 勾选 2–4 个已安装译本（未安装的译本置灰不可选）；
@@ -9,7 +9,7 @@ import { $, bus, el } from './util.js';
 import { T } from './i18n.js';
 import { toast } from './toast.js';
 import { state } from './state.js';
-import { versionList, versionName } from './panel-versions.js';
+import { versionList, versionName, refreshVersionList } from './panel-versions.js';
 import { startCompare, stopCompare } from './stage.js';
 import { closePanel } from './panels.js';
 
@@ -30,7 +30,12 @@ export function initCompare() {
 
   bus.on('versions-list', renderCompare);
   bus.on('panel-open', (name) => {
-    if (name === 'versions') renderCompare();
+    if (name === 'compare') {
+      // 打开比对面板时先拉一次译本列表，保证 chip 与实际安装情况一致
+      refreshVersionList().then(renderCompare).catch(() => renderCompare());
+    } else if (name === 'versions') {
+      renderCompare();
+    }
   });
 
   renderCompare();

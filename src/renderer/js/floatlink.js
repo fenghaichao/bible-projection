@@ -5,15 +5,20 @@ import { ipc } from './bridge.js';
 import { bookById, bookDisplayName, state, verseNumber, verseText } from './state.js';
 import { T } from './i18n.js';
 import { toast } from './toast.js';
-import { goToVerse, moveVerse } from './stage.js';
+import { appendVerseToStage, goToVerse, moveVerse } from './stage.js';
 import { exitProjection } from './projection.js';
 import { pushSettings } from './settings.js';
 import { openPanel } from './panels.js';
 import { runSearchWith } from './panel-search.js';
+import { currentVersion } from './version.js';
 
 export function initFloatLink() {
   ipc.onFloatState(() => sendFloatState());
   ipc.onFloatCommand((payload) => handleCommand(payload));
+  // 浮动面板刚打开时，主进程会来要一次当前状态
+  if (typeof ipc.onFloatStateRequest === 'function') {
+    ipc.onFloatStateRequest(() => sendFloatState());
+  }
 
   bus.on('navigate', () => sendFloatState());
   bus.on('projection', () => sendFloatState());
@@ -50,6 +55,8 @@ export function sendFloatState() {
     bookName: book ? bookDisplayName(book) : '',
     text: currentVerseText(),
     projection: !!state.projection,
+    version: currentVersion(),
+    fontSize: Number(state.settings.fontSize) || 48,
   });
 }
 
@@ -71,6 +78,14 @@ async function handleCommand(payload) {
       break;
     case 'next':
       await moveVerse(1);
+      break;
+    case 'append':
+      // 「追加到主面板」：把当前节追加到主显示区末尾，不打断正在读的位置
+      await appendVerseToStage({
+        bookId: payload.bookId !== undefined ? payload.bookId : state.current.bookId,
+        chapter: payload.chapter !== undefined ? payload.chapter : state.current.chapter,
+        verse: payload.verse !== undefined ? payload.verse : state.current.verse,
+      });
       break;
     case 'exit':
     case 'exitProjection':

@@ -15,7 +15,8 @@ export const T = {
     help: '帮助',
     float: '浮动面板',
     version: '译本',
-    versions: '获取译本',
+    versions: '译本',
+    compare: '多版本比对',
     searchPlaceholder: '查找经文（关键字 / 字母定位）',
   },
 
@@ -36,6 +37,7 @@ export const T = {
     pageHint: (a, b, t, per) => `${a}–${b} 节 / 共 ${t} 节 · 每页 ${per} 节`,
     pageLabel: (n) => `第 ${n} 页`,
     continuous: '（可继续向下滚动到下一章）',
+    appendedLabel: '追加的经文',
   },
 
   search: {
@@ -290,6 +292,8 @@ export const T = {
     playStop: '停止自动翻页',
     hideVerses: '不显示经文',
     showVerses: '显示当前经文',
+    removeVerse: '删除本节',
+    restoreVerses: '恢复全部显示',
     openPen: '打开画笔_Ctrl+P',
     penColor: '画笔颜色',
     penWidth: '画笔粗细',
@@ -346,7 +350,7 @@ export const T = {
   },
 
   versions: {
-    title: '获取译本',
+    title: '译本',
     installed: '已安装',
     notInstalled: '未安装',
     notInstalledSuffix: '（未安装）',
@@ -366,7 +370,7 @@ export const T = {
     downloadHint: '下载即从信望愛 FHL 逐卷取得该译本正文并存入本机，请自行确认使用授权。',
     confirmRestricted: (name, copyright) =>
       `「${name}」的正文受版权保护${copyright ? `（${copyright}）` : ''}，信望愛 FHL 未开放离线下载授权。\n\n继续将从 FHL 逐卷取得该译本正文并存入本机，仅供你个人使用。请确认你已自行取得使用授权。`,
-    notInstalledToast: (name) => `「${name}」尚未安装，请先在「获取译本」中下载`,
+    notInstalledToast: (name) => `「${name}」尚未安装，请先在「译本」中下载`,
     switched: (name) => `已切换到「${name}」`,
     switchFailed: '切换译本失败',
     installedToast: (name, n) => `「${name}」安装完成（共 ${n} 节）`,
@@ -377,7 +381,7 @@ export const T = {
     importError: (msg) => `导入译本失败：${msg || '未知错误'}`,
     stopTracking: '停止跟踪',
     stoppedHint: '已停止跟踪该译本的下载进度（后台下载可能仍在继续）',
-    compareTitle: '多版本对比',
+    compareTitle: '多版本比对',
     compareHint: '选择 2–4 个已安装译本，正文里每一节下面会逐个译本列出。',
     compareAction: '对比当前经文',
     compareClear: '结束对比',
@@ -411,6 +415,10 @@ export const T = {
     spanLimit: '已是 1 节，无法再减少',
     floatOn: '已打开浮动控制面板',
     floatOff: '已关闭浮动控制面板',
+    verseRemoved: '已从显示区删除该节',
+    versesRestored: '已恢复全部被删除的经文',
+    verseAppended: '已追加到主面板',
+    appendFailed: '追加到主面板失败',
     bootFailed: (msg) => `启动失败：${msg}`,
     runtimeError: (msg) => `发生错误：${msg}`,
   },

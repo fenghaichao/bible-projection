@@ -103,6 +103,16 @@ const bible = {
   },
 
   /**
+   * 订阅「请把当前状态推给浮动面板」的请求（浮动面板刚打开时主进程会发一次）。
+   * 返回取消订阅函数。
+   */
+  onFloatStateRequest: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('bible:float-state-request', listener);
+    return () => ipcRenderer.removeListener('bible:float-state-request', listener);
+  },
+
+  /**
    * 订阅译本下载进度，返回取消订阅函数。
    */
   onVersionProgress: (callback) => {

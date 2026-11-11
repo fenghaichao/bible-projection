@@ -35,6 +35,7 @@ const stub = {
   sendFloatCommand: async () => false,
   onFloatState: () => () => {},
   onFloatCommand: () => () => {},
+  onFloatStateRequest: () => () => {},
   // 副屏投影
   secondScreenDisplays: async () => [],
   secondScreenOpen: async () => ({ ok: false, error: '未检测到主进程桥接' }),
@@ -120,6 +121,7 @@ export const ipc = {
   sendFloatCommand: (payload) => call('sendFloatCommand', payload),
   onFloatState: (handler) => subscribe('onFloatState', handler),
   onFloatCommand: (handler) => subscribe('onFloatCommand', handler),
+  onFloatStateRequest: (handler) => subscribe('onFloatStateRequest', handler),
   // 译本管理（下载 / 导入 / 进度 / 列表变化）
   listVersions: () => call('listVersions'),
   installVersion: (id) => call('installVersion', id),

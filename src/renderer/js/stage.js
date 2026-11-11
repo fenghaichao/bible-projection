@@ -233,7 +233,7 @@ export async function goChapterEdge(which) {
   await goToVerse(bookId, chapter, verse);
 }
 
-/** 当前显示的经文数组（范围 / 投影窗口 / 整章）。 */
+/** 当前显示的经文数组（范围 / 投影窗口 / 整章），并排除被「删除本节」移除的节。 */
 export function displayVerses() {
   const { bookId, chapter, verse } = state.current;
   const list = state.chapterCache.get(`${bookId}:${chapter}`) || [];
@@ -244,7 +244,7 @@ export function displayVerses() {
     return list.filter((item) => {
       const n = verseNumber(item);
       return n >= range.from && n <= to;
-    });
+    }).filter((item) => !isRemoved(bookId, chapter, verseNumber(item)));
   }
 
   const perPage = clamp(state.settings.versesPerPage, 1, 20);
@@ -252,16 +252,106 @@ export function displayVerses() {
   const anchor = state.anchor;
   if (state.projection && list.length) {
     const start = clamp((anchor || verse) - 1, 0, list.length - 1);
-    return list.slice(start, start + perPage);
+    return list.slice(start, start + perPage)
+      .filter((item) => !isRemoved(bookId, chapter, verseNumber(item)));
   }
   // 普通模式：「每页节数」≥ 2 时按页开窗（Shift+> / Shift+< 可增减），
   // = 1 时保持整章连续显示（原版的「整章」阅读习惯）。
   if (perPage > 1 && list.length) {
     const start = clamp((anchor || verse) - 1, 0, list.length - 1);
-    return list.slice(start, start + perPage);
+    return list.slice(start, start + perPage)
+      .filter((item) => !isRemoved(bookId, chapter, verseNumber(item)));
   }
-  return list;
+  return list.filter((item) => !isRemoved(bookId, chapter, verseNumber(item)));
 }
+
+/* ── 删除本节 / 追加到主面板 ───────────────────────────────────── */
+
+/** 节的唯一键。 */
+function verseKey(bookId, chapter, verse) {
+  return `${bookId}:${chapter}:${verse}`;
+}
+
+/** 该节是否已被「删除本节」移除。 */
+export function isRemoved(bookId, chapter, verse) {
+  return state.removedVerses.has(verseKey(bookId, chapter, verse));
+}
+
+/** 本章被移除的节数。 */
+function countRemoved(bookId, chapter) {
+  const prefix = `${bookId}:${chapter}:`;
+  let count = 0;
+  for (const key of state.removedVerses) {
+    if (key.startsWith(prefix)) count += 1;
+  }
+  return count;
+}
+
+/**
+ * 从主显示区删除一节（右击菜单「删除本节」）。
+ * 若该节是从浮动面板追加进来的，同时从追加列表里移除。
+ */
+export function removeVerseFromStage(bookId, chapter, verse) {
+  if (!bookId || !chapter || !verse) return false;
+  const key = verseKey(bookId, chapter, verse);
+  const wasAppended = state.appendedVerses.some(
+    (item) => verseKey(item.bookId, item.chapter, item.verse) === key,
+  );
+  state.removedVerses.add(key);
+  state.appendedVerses = state.appendedVerses.filter(
+    (item) => verseKey(item.bookId, item.chapter, item.verse) !== key,
+  );
+  renderStage();
+  bus.emit('navigate', { ...state.current, silent: true });
+  toast(T.toast.verseRemoved, 'ok', 1600);
+  return wasAppended;
+}
+
+/** 恢复全部被删除 / 追加的节。 */
+export function restoreAllVerses() {
+  const count = state.removedVerses.size + state.appendedVerses.length;
+  if (!count) return false;
+  state.removedVerses.clear();
+  state.appendedVerses = [];
+  renderStage();
+  bus.emit('navigate', { ...state.current, silent: true });
+  toast(T.toast.versesRestored, 'ok', 1600);
+  return true;
+}
+
+/** 当前是否有被删除或追加过的节（决定是否显示「恢复全部」菜单项）。 */
+export function hasVerseEdits() {
+  return state.removedVerses.size > 0 || state.appendedVerses.length > 0;
+}
+
+/**
+ * 把一节追加到主显示区末尾（浮动面板「追加到主面板」）。
+ * ref 省略时追加当前节。
+ */
+export async function appendVerseToStage(ref) {
+  const target = ref && ref.bookId
+    ? { bookId: ref.bookId, chapter: Number(ref.chapter) || 1, verse: Number(ref.verse) || 1 }
+    : { ...state.current };
+  if (!target.bookId) return false;
+
+  const key = verseKey(target.bookId, target.chapter, target.verse);
+  if (state.removedVerses.has(key)) state.removedVerses.delete(key);
+  const exists = state.appendedVerses.some(
+    (item) => verseKey(item.bookId, item.chapter, item.verse) === key,
+  );
+  if (!exists) state.appendedVerses.push(target);
+
+  try {
+    await ensureChapter(target.bookId, target.chapter);
+  } catch {
+    /* 取不到正文也照样登记 */
+  }
+  renderStage();
+  bus.emit('navigate', { ...state.current, silent: true });
+  toast(T.toast.verseAppended, 'ok', 1600);
+  return true;
+}
+
 
 /**
  * 增减当前显示的经文节数（原版「方法5」）。
@@ -341,7 +431,9 @@ export function renderStage() {
   });
 
   // 普通模式：连续显示下一章，便于向下滚动阅读
-  if (!state.projection && !range && visible.length === list.length) {
+  // （被「删除本节」移除的节不计入判断，删掉一节仍会接上下一章）
+  const removedHere = countRemoved(bookId, chapter);
+  if (!state.projection && !range && visible.length + removedHere === list.length) {
     const nextChapter = chapter + 1;
     const hasNext = book && nextChapter <= (Number(book.chapters) || 1);
     if (hasNext) {
@@ -377,6 +469,21 @@ export function renderStage() {
           })
           .catch(() => {});
       }
+    }
+  }
+
+  // 从浮动面板「追加到主面板」的节：显示在最后，带一条分隔标题
+  if (state.appendedVerses.length) {
+    frag.appendChild(el('div', { class: 'chapter-divider' }, [
+      el('span', { text: T.stage.appendedLabel }),
+    ]));
+    for (const ref of state.appendedVerses) {
+      const cache = state.chapterCache.get(`${ref.bookId}:${ref.chapter}`) || [];
+      const item = cache.find((entry) => verseNumber(entry) === ref.verse);
+      if (!item) continue;
+      const node = verseNode(item, ref.chapter, -1);
+      node.classList.add('is-appended');
+      frag.appendChild(node);
     }
   }
 
@@ -443,7 +550,10 @@ function verseNode(item, chapter, currentVerse) {
     body.push(el('span', { class: 'verse-ref', text: verseRef(item, chapter) }));
   }
 
-  return el('p', { class: `verse${isCurrent ? ' is-current' : ''}`, dataset: { v: String(num), c: String(chapter) } }, [
+  const verseBookId = item && item.bookId !== undefined && item.bookId !== null
+    ? item.bookId
+    : state.current.bookId;
+  return el('p', { class: `verse${isCurrent ? ' is-current' : ''}`, dataset: { v: String(num), c: String(chapter), b: String(verseBookId) } }, [
     el('span', { class: 'verse-no', text: String(num) }),
     el('span', { class: 'verse-body' }, body),
   ]);

@@ -105,7 +105,8 @@ src/renderer/
     ├── highlight.js   查找结果高亮
     ├── float.js / floatlink.js   浮动控制面板及其与主窗口的联动
     ├── version.js     译本取值统一入口（当前译本 id、书名 / 短卷名 / 分类名）
-    ├── panel-versions.js  顶栏译本下拉 + 「获取译本」面板（下载安装 / 本地导入 / 刷新）
+    ├── panel-versions.js  顶栏译本下拉 + 「译本」面板（下载安装 / 本地导入 / 刷新）
+    ├── compare.js        顶栏「多版本比对」面板（勾选译本 → 逐节对照）
     ├── i18n.js        文案表（含帮助面板的快捷键表）
     ├── util.js        通用小工具
     └── toast.js       轻提示
@@ -115,10 +116,10 @@ src/renderer/
 
 | 区域 | 关键节点 | 作用 |
 | --- | --- | --- |
-| 顶栏 `topbar` | `data-open-panel`、`btn-projection`、`#version-select` / `#btn-versions` | 打开各面板、进入投影模式、译本下拉与「获取译本」 |
+| 顶栏 `topbar` | `data-open-panel`、`btn-projection`、`#version-select` / `#btn-versions` / `#btn-compare` | 打开各面板、进入投影模式、译本下拉、「译本」与「多版本比对」 |
 | 侧栏 `sidebar` | `sidebar-body` | 66 卷书目（8 分类）与章列表 |
 | 舞台 `stage` | `#verses`、`#stage-scroll`、`canvas#draw-canvas`、`#draw-tools`、`#stage-foot` | 经文显示区 + 标注画布 + 绘画工具条 |
-| 抽屉 `drawer` | `#panel-search` / `#panel-settings` / `#panel-history` / `#panel-saved` / `#panel-help` / `#panel-versions` | 查找、设置、历史、收藏、帮助、获取译本六个面板 |
+| 抽屉 `drawer` | `#panel-search` / `#panel-settings` / `#panel-history` / `#panel-saved` / `#panel-help` / `#panel-versions` / `#panel-compare` | 查找、设置、历史、收藏、帮助、译本、多版本比对七个面板 |
 
 渲染层**不直接触碰 `ipcRenderer`**，所有特权调用都经过 `src/renderer/js/bridge.js`：
 
@@ -132,8 +133,8 @@ src/renderer/
 ## 2. IPC 契约
 
 所有通道名统一使用 `bible:` 前缀，均为 **request / response** 语义（`ipcRenderer.invoke`）。
-除 `settings-changed` 与 `fullscreen-changed` 外，浮动控制面板还使用 `bible:float-state` 与
-`bible:float-command` 两条推送通道（主进程 ↔ 面板），详见 §6。
+除 `settings-changed` 与 `fullscreen-changed` 外，浮动控制面板还使用 `bible:float-state`、
+`bible:float-command` 与 `bible:float-state-request` 三条推送通道（主进程 ↔ 面板），详见 §6。
 
 ### 经文数据
 
@@ -280,7 +281,8 @@ type SearchHit = Verse & { bookName: string };
 | `fullscreen-changed` | 主进程 → 渲染进程 | `boolean` | 窗口进入 / 退出全屏时广播；由 `enter-full-screen` / `leave-full-screen` 事件触发 |
 | `bible:shortcut` | 主进程 → 渲染进程 | `{ key, code, control, meta, shift, alt }` | 主进程在 `before-input-event` 阶段拦下的按键（如 `F5`），见 §5 |
 | `bible:float-state` | 主进程 → 面板窗口 | 状态对象 | 主进程把主窗口的最新状态转发给浮动控制面板 |
-| `bible:float-command` | 主进程 → 主窗口 | 命令对象 | 面板上的操作（翻节、开关投影等）经主进程转发回主窗口 |
+| `bible:float-command` | 主进程 → 主窗口 | 命令对象 | 面板上的操作（翻节、开关投影、**追加到主面板**等）经主进程转发回主窗口 |
+| `bible:float-state-request` | 主进程 → 主窗口 | （无载荷） | 浮窗刚加载完时主进程向主窗口要一次当前状态，避免面板空白 |
 | `bible:version-progress` | 主进程 → 渲染进程 | `{ id, done, total, percent }` | 下载译本时的进度推送，`done` / `total` 为已完成的卷数 |
 | `bible:versions-changed` | 主进程 → 渲染进程 | `VersionInfo[]` | 译本安装 / 导入成功后广播新的清单，渲染层据此刷新下拉框 |
 
@@ -611,7 +613,7 @@ stroke = {
 | `alwaysOnTop` | `true` | 始终置顶 |
 | `transparent` | `true` + `backgroundColor: '#00000000'` | 圆角浮窗、只显示控件本身 |
 | `skipTaskbar` | `true` | 不在任务栏留下条目 |
-| `resizable` / `fullscreenable` | `false` | 固定尺寸，不参与全屏 |
+| `resizable` / `fullscreenable` | `true` / `false` | 可拖拽缩放（默认 460×520），不参与全屏 |
 | `show` | 先 `false`，`ready-to-show` 后再 `show()` | 避免白屏闪烁 |
 
 - 浮窗加载的是**独立的页面入口** `src/renderer/float.html`
@@ -623,6 +625,22 @@ stroke = {
 - 浮窗有 **5 个标签页**：经文选择、查找、格式、新约、旧约。
   「新约 / 旧约」两页是**真实目录**（新约 27 卷、旧约 39 卷），
   点某一卷会让主窗口跳到该卷第 1 章；「格式」页提供字号 ± 与主题切换。
+
+### 经文选择页：整章列表 + 追加到主面板
+
+「经文选择」页不再只显示当前一节，而是列出**当前章的全部经文**：
+
+- 数据来源：`ipc.getChapter(bookId, chapter, version)`（浮窗与主窗口共用同一个 preload，
+  `version` 取当前译本），因此浮窗里看到的经文与主窗口**同译本**。
+- 列表项 `.float-verse` 显示「节号 + 正文」，当前节加 `.is-current` 并 `scrollIntoView`；
+  列表可滚动（面板高 520，列表区最高 340px），一次能看到 5–10 节以上。
+- 点列表中的某节 → `send({action:'goto', bookId, chapter, verse})` → 主窗口跳到该节。
+- 点「**追加到主面板**」→ `send({action:'append'})` → `bible:float-command` →
+  `floatlink.js` 的 `handleCommand('append')` → `stage.js` 的 `appendVerseToStage()`：
+  该节被追加到主显示区末尾（带 `.is-appended` 样式与「追加的经文」分隔标题），
+  便于把多个零散经文凑成一页一起投影。
+- 浮窗刚打开时主进程会发一次 `bible:float-state-request`，主窗口回推当前状态，
+  避免面板空白（见下方「双向通道」）。
 
 ### 显隐与总开关
 
@@ -771,14 +789,15 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 预加载层暴露：`listVersions()`、`installVersion(id)`、`importVersionFile()`、
 `onVersionProgress(cb)`、`onVersionsChanged(cb)`，两个订阅函数都返回取消订阅函数。
 
-### 8.6 顶栏译本下拉框与「获取译本」面板
+### 8.6 顶栏译本下拉框与「译本」面板
 
 顶栏有两个与译本相关的控件，**取代了原版的独立「简 / 繁」按钮**：
 
 | 控件 | 位置 | 行为 |
 | --- | --- | --- |
 | `#version-select` 译本下拉框 | 顶栏 | 列出 `listVersions()` 返回的全部译本（当前 7 个：和合本简 / 繁、吕振中随程序内置，其余 4 个需先下载或导入）。只有文件缺失的译本才显示「XXX（未安装）」，**选中未安装的译本不会切换**，只 toast 提示「尚未安装，请先在「获取译本」中下载」并打开该面板；选中已安装的译本则写入 `settings.version` 并重新取数 |
-| `#btn-versions` 「获取译本」按钮 | 顶栏 | 打开右侧抽屉里的 `#panel-versions` 面板并刷新列表 |
+| `#btn-versions` 「译本」按钮 | 顶栏 | 打开右侧抽屉里的 `#panel-versions` 面板并刷新列表 |
+| `#btn-compare` 「多版本比对」按钮 | 顶栏 | 打开右侧抽屉里的 `#panel-compare` 面板（勾选译本 → 逐节对照） |
 
 `#panel-versions` 面板（`src/renderer/js/panel-versions.js`）的约定：
 
@@ -838,7 +857,7 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 
 ### 8.9 多版本对比（逐节对照）如何取数
 
-「获取译本」面板底部的「多版本对比」区块（`src/renderer/js/compare.js`）**不做左右分栏**：
+顶栏独立的「多版本比对」面板（`#panel-compare`，逻辑在 `src/renderer/js/compare.js`）**不做左右分栏**：
 正文仍是单栏，每一节下面逐个译本列出同一节正文。
 
 | 位置 | 内容 |
@@ -862,6 +881,19 @@ src/main/versions.js  ──listVersions()──►  IPC  ──►  渲染层�
 
 主进程侧只做了一处改动：`bible:getChapter` / `bible:getRange` 接受**可选**的 `version` 参数
 （省略＝`currentVersion()`），因此不传时行为与从前完全一致。
+
+### 8.10 主面板的经文编辑（删除本节 / 恢复全部 / 追加经文）
+
+主显示区（`stage.js`）新增三种编辑能力，都是**内存态**（刷新页面即还原）：
+
+| 能力 | 入口 | 实现 |
+| --- | --- | --- |
+| 删除某一节 | 主显示区右键 →「删除本节」 | `contextmenu.js` 在 `onContextMenu` 里记录命中的 `.verse`（dataset 记 `b` / `c` / `v`），点菜单项 → `removeVerseFromStage()` 把 `${bookId}:${chapter}:${verse}` 记进 `state.removedVerses`（`Set`），`displayVerses()` 三个分支统一过滤 |
+| 恢复全部显示 | 主显示区右键 →「恢复全部显示」 | `restoreAllVerses()` 清空 `state.removedVerses` 并重绘；菜单项仅在 `hasVerseEdits()` 为真时出现 |
+| 追加经文到主面板 | 浮动面板「经文选择」页 →「追加到主面板」 | `float.js` 发 `append` 命令 → `floatlink.js` → `appendVerseToStage()`；追加的节进入 `state.appendedVerses`，`renderStage()` 在末尾单独成段（`.chapter-divider` 标题「追加的经文」+ `.verse.is-appended`） |
+
+因为「接上下一章」的判断改用 `visible.length + removedHere === list.length`，
+删掉本章某节后仍会正确接上下一章，不会出现整章空白。
 
 ## 9. 副屏投影（原版 F9「扩展桌面」的现代等价）
 

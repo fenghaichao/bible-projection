@@ -37,7 +37,8 @@
   <nav class="topbar-actions">
     <div class="version-picker">
       <select class="version-select" id="version-select" title="译本" data-i18n-title="topbar.version" aria-label="译本"></select>
-      <button class="btn" id="btn-versions" type="button" title="获取译本" data-i18n-title="topbar.versions"><svg class="icon"><use href="#i-download"></use></svg><span data-i18n="topbar.versions">获取译本</span></button>
+      <button class="btn" id="btn-versions" type="button" title="译本" data-i18n-title="topbar.versions"><svg class="icon"><use href="#i-download"></use></svg><span data-i18n="topbar.versions">译本</span></button>
+      <button class="btn" id="btn-compare" type="button" title="多版本比对" data-i18n-title="topbar.compare" data-open-panel="compare"><svg class="icon"><use href="#i-copy"></use></svg><span data-i18n="topbar.compare">多版本比对</span></button>
     </div>
     <button class="btn" type="button" data-open-panel="search"><svg class="icon"><use href="#i-search"></use></svg><span data-i18n="topbar.search">查找</span></button>
     <button class="btn" type="button" data-open-panel="history"><svg class="icon"><use href="#i-clock"></use></svg><span data-i18n="topbar.history">历史</span></button>
@@ -306,7 +307,7 @@
     </section>
 
     <section class="panel" id="panel-versions" hidden>
-      <header class="panel-head"><h2 data-i18n="versions.title">获取译本</h2><button class="icon-btn" type="button" data-close-panel><svg class="icon"><use href="#i-close"></use></svg></button></header>
+      <header class="panel-head"><h2 data-i18n="versions.title">译本</h2><button class="icon-btn" type="button" data-close-panel><svg class="icon"><use href="#i-close"></use></svg></button></header>
       <div class="panel-body">
         <p class="panel-status" id="versions-status"></p>
         <div class="version-list" id="version-list"></div>
@@ -315,8 +316,14 @@
           <button class="btn btn-ghost" type="button" id="versions-refresh" data-i18n="versions.refresh">刷新列表</button>
         </div>
         <p class="field-hint" data-i18n="versions.copyrightHint">译本版权与使用范围请以各译本出版方说明为准；导入的译本仅在本机使用。</p>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-compare" hidden>
+      <header class="panel-head"><h2 data-i18n="versions.compareTitle">多版本比对</h2><button class="icon-btn" type="button" data-close-panel><svg class="icon"><use href="#i-close"></use></svg></button></header>
+      <div class="panel-body">
         <div class="version-compare">
-          <h3 class="group-label" data-i18n="versions.compareTitle">多版本对比</h3>
+          <h3 class="group-label" data-i18n="versions.compareTitle">多版本比对</h3>
           <p class="field-hint" data-i18n="versions.compareHint">选择 2–4 个已安装译本，正文里每一节下面会逐个译本列出。</p>
           <div class="compare-chips" id="compare-chips"></div>
           <p class="field-hint" id="compare-status"></p>

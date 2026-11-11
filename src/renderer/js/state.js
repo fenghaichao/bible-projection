@@ -121,8 +121,12 @@ export const state = {
    * 结构 { versions: string[], names: { id: 译本名 }, texts: { id: { 章: { 节: 正文 } } } }
    */
   compare: null,
-  /** 「获取译本」面板里勾选待对比的译本 id 列表 */
+  /** 「多版本比对」面板里勾选待对比的译本 id 列表 */
   compareSelection: [],
+  /** 主显示区里被「删除本节」移除的节：key = `${bookId}:${chapter}:${verse}` */
+  removedVerses: new Set(),
+  /** 从浮动面板「追加到主面板」的节：[{ bookId, chapter, verse }] */
+  appendedVerses: [],
 };
 
 export function setBooks(books) {

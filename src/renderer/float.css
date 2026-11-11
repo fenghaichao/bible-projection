@@ -30,6 +30,7 @@ html, body {
 .float-card {
   width: 100%;
   max-width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -77,7 +78,7 @@ html, body {
   background: rgba(216, 166, 72, .10);
 }
 
-.float-page { display: none; flex-direction: column; gap: 6px; min-height: 0; }
+.float-page { display: none; flex-direction: column; gap: 6px; min-height: 0; flex: 1 1 auto; }
 .float-page.is-active { display: flex; }
 
 .float-ref {
@@ -98,6 +99,65 @@ html, body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
+
+/* 当前章经文列表（一次能看到 5–10 节，滚动可看全章） */
+.float-verses {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: thin;
+}
+
+.float-verses::-webkit-scrollbar { width: 6px; }
+.float-verses::-webkit-scrollbar-thumb {
+  background: rgba(216, 166, 72, .35);
+  border-radius: 3px;
+}
+
+.float-verse {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  width: 100%;
+  padding: 3px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  color: var(--fx-tx-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.float-verse:hover {
+  color: var(--fx-tx);
+  background: rgba(216, 166, 72, .10);
+  border-color: rgba(216, 166, 72, .35);
+}
+
+.float-verse.is-current {
+  color: var(--fx-gold);
+  background: rgba(216, 166, 72, .16);
+  border-color: rgba(216, 166, 72, .45);
+}
+
+.float-verse-no {
+  flex: 0 0 auto;
+  min-width: 16px;
+  text-align: right;
+  color: var(--fx-gold);
+  font-family: "Source Han Serif SC", "SimSun", serif;
+}
+
+.float-verse-text { flex: 1 1 auto; }
 
 .float-input {
   width: 100%;
