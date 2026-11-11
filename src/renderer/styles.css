@@ -1197,105 +1197,6 @@ input[type="color"] {
   to { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* ── 多栏对照（columns） ───────────────────────────────────── */
-.columns-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 42px 0;
-}
-
-.columns-bar:empty { display: none; }
-
-.column-chip {
-  min-width: 30px;
-  justify-content: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.column-chip.is-active {
-  color: var(--crimson);
-  border-color: color-mix(in srgb, var(--crimson) 45%, transparent);
-  background: color-mix(in srgb, var(--crimson) 12%, transparent);
-}
-
-.columns {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 18px;
-  max-width: min(1280px, 100%);
-  margin: 22px auto 0;
-}
-
-/* 有对照栏时：主区与对照栏并排显示 */
-body:not(.projection) .stage-scroll:has(#columns:not([hidden])) {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  align-items: start;
-  gap: 26px;
-}
-
-body:not(.projection) .stage-scroll:has(#columns:not([hidden])) .verses { margin: 0; }
-body:not(.projection) .stage-scroll:has(#columns:not([hidden])) .columns { margin: 0; max-width: none; }
-
-.columns[hidden] { display: none; }
-
-.column-pane {
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--bg-elev) 55%, transparent);
-}
-
-.column-head {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  margin-bottom: 8px;
-  padding-bottom: 7px;
-  border-bottom: 1px solid var(--line);
-}
-
-.column-index {
-  font-family: var(--font-display);
-  font-size: 13px;
-  color: var(--crimson);
-}
-
-.column-title {
-  font-size: 13px;
-  letter-spacing: .08em;
-  color: var(--tx-1);
-}
-
-/* 栏头右侧的译本名（多版本对比） */
-.column-version {
-  margin-left: auto;
-  max-width: 45%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  color: var(--gold-dim);
-}
-
-.column-body { font-size: 15px; line-height: 1.75; color: var(--tx-2); }
-
-.column-verse { display: flex; gap: .5em; align-items: flex-start; }
-
-.column-no {
-  flex: none;
-  min-width: 1.7em;
-  text-align: right;
-  font-family: var(--font-display);
-  font-size: 11px;
-  line-height: 2.1;
-  color: var(--gold);
-  opacity: .7;
-}
-
-.column-text { flex: 1; }
-
 /* ── 分页 / 章分隔 ─────────────────────────────────────────── */
 .page-break {
   display: flex;
@@ -1351,8 +1252,7 @@ mark.hl {
 }
 
 /* ── 隐藏经文（只留背景） ──────────────────────────────────── */
-body.hide-verses .verses,
-body.hide-verses .columns { visibility: hidden; }
+body.hide-verses .verses { visibility: hidden; }
 
 body.hide-verses .stage-head { opacity: .25; }
 
@@ -1494,6 +1394,5 @@ body.hide-verses .stage-head { opacity: .25; }
 .more-btn { margin-top: 10px; }
 
 @media (max-width: 900px) {
-  .columns-bar { padding: 8px 18px 0; }
   .stage-scroll { padding-left: 20px; padding-right: 20px; }
 }

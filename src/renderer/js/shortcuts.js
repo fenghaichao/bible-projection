@@ -21,7 +21,6 @@ import { copySearchResults } from './panel-search.js';
 import { toggleProjection, exitProjection } from './projection.js';
 import { clearDraw, isDrawing, redoDraw, setDrawColor, toggleDraw, toggleEraser, undoDraw } from './draw.js';
 import { pushSettings, cycleFont } from './settings.js';
-import { switchColumnByNumber } from './columns.js';
 import { ipc } from './bridge.js';
 
 const FONT_STEP = 2;
@@ -158,12 +157,6 @@ function runShortcut(key, mods) {
       case 'pagedown':
         moveChapter(1);
         return true;
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-        if (switchColumnByNumber(Number(key))) return true;
-        return false;
       default:
         break;
     }

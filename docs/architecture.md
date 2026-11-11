@@ -98,7 +98,6 @@ src/renderer/
     ├── settings.js    显示设置的读写
     ├── projection.js  投影模式
     ├── draw.js        画笔 / 擦除 / 撤销 / 重做 / 文字标注
-    ├── columns.js     多栏对照（最多 4 组经文）
     ├── letterbar.js   字母 + 数字速选定位（CSJ4:14 一类输入）
     ├── contextmenu.js 显示区右键菜单（对齐原版 5.20 SP2：全屏显示_F5 / 复制 ▸ / 播放进度 ▸ / 不显示经文 / 打开画笔_Ctrl+P / 画笔颜色 ▸ / 画笔粗细 ▸ / 白色画笔_Ctrl+B / 橡皮擦_E / 清除画笔_Ctrl+E / 扩展桌面_F9 / 主题设置 ▸）
     ├── slideshow.js   投影模式自动翻页（幻灯放映）

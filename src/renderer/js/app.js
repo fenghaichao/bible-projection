@@ -18,7 +18,6 @@ import { initShortcuts } from './shortcuts.js';
 import { initLetterbar } from './letterbar.js';
 import { initBgm } from './bgm.js';
 import { initSlideshow } from './slideshow.js';
-import { initColumns } from './columns.js';
 import { initContextMenu } from './contextmenu.js';
 import { initFloatLink } from './floatlink.js';
 import { initVersions, refreshVersionList } from './panel-versions.js';
@@ -68,7 +67,6 @@ async function start() {
   initLetterbar();
   initBgm();
   initSlideshow();
-  initColumns();
   initContextMenu();
   initFloatLink();
   initVersions();

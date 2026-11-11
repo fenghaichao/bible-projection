@@ -116,9 +116,6 @@ export const state = {
   range: null,
   /** 显示窗口锚点：鼠标点选某节时用来固定当前这一页，避免点一下就换页 */
   anchor: null,
-  /** 多栏对照：最多 4 栏，每栏 { bookId, chapter, verse, enabled } */
-  columns: [],
-  activeColumn: 0,
   /**
    * 多版本对比（非左右分栏）：每一节下面逐个译本列出正文。
    * 结构 { versions: string[], names: { id: 译本名 }, texts: { id: { 章: { 节: 正文 } } } }

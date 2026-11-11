@@ -83,7 +83,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | Speech narration, accurate to the verse; continuous reading; playback bar | ❌ not implemented | The **no-speech edition contains no narration**, so this project implements none either |
 | Speech-synced highlighting (LRC style) and `+` / `-` playback speed | ❌ not implemented | Same reason: no speech, no LRC sync |
 | Pick verses via TOC, list box, letter input | ✅ TOC + list + letter bar | 66 books in 8 categories; the quick-pick bar takes letters for a book (`CSJ`), digits for a chapter (`CSJ34`), `CSJ4:14` for a verse, `CSJ2:1-10` for a verse span (1–10 shown together), `CSJ4Z` / `CSJ4:14Z` for a whole chapter or chapter-to-end, auto-inserts separators on space, deletes with Backspace and cancels with `Esc` (needs an English IME) |
-| Show several passages at once (multi-window) | ⚠️ partial | Up to 4 passages side by side in one window (`Ctrl` + `1`…`4` switches the active group); no separate multi-window display |
+| Show several passages at once (multi-window) | ❌ not implemented | The original could show different passages in several windows; this version is single-window. Use the per-verse multi-version comparison to compare translations |
 | Background / font / size / color / shadow / line spacing | ✅ display settings | Font, size, line spacing, text color, background color, background image (local path, browse dialog, clear), italic, underline, verse references |
 | Text shadow | ✅ text shadow | Shadow colour, blur radius and offset are adjustable |
 | Independent title font / title colour / verse-number colour / padding | ✅ independent typography settings | Title font and title colour can be set on their own (empty = follow the body text), the verse-number colour can be set on its own (empty = follow the theme accent colour), and the padding can be 0–120 px on all four sides (the background image still fills the screen) |
@@ -101,7 +101,7 @@ Legend: ✅ implemented and covered by the end-to-end smoke tests · ⚠️ part
 | Continuous display across chapters / verse ranges | ✅ ranges | Verses can be shown continuously across chapter boundaries or as an explicit range |
 | Projection / slideshow mode | ✅ projection mode | `F5` enters and leaves, `F6` leaves projection, `F11` is the system fullscreen; drawer panels no longer interrupt projection, text is not clipped and `Esc` leaves projection in one step |
 | Original window shapes: transparent window (`F7`), desktop extension (`F9`) | ❌ not implemented in this version | Both need extra main-process `BrowserWindow` capabilities that this version does not implement; `F5` for projection and `F11` for native fullscreen cover the common cases (the right-click menu keeps an "extend desktop_F9" entry that simply reports that this version uses "project to a second screen" instead) |
-| Original `Ctrl` + `0`…`4` "hide all comparison panes" | ⚠️ deliberate deviation | Replaced by `Ctrl` + `1`…`4` to switch the active comparison group and `Ctrl` + `0` to reset the font size (see [docs/feature-audit.md](docs/feature-audit.md)) |
+| Original `Ctrl` + `0`…`4` "hide all comparison panes" | ⚠️ deliberate deviation | This version has **no comparison panes** (the feature was removed on request); `Ctrl` + `0` resets the font size (see [docs/feature-audit.md](docs/feature-audit.md)) |
 | — (new) | ✅ verses per page | 1..20 verses per page, `Shift` + `>` / `<` adjusts |
 | — (new) | ✅ multi-column comparison | Up to 4 passages compared side by side, added with the "+ pane" button |
 | — (new) | ✅ background music | Optional looping local audio with a volume control (unrelated to narration) |
@@ -332,7 +332,6 @@ The table below matches the in-app help panel (**Help** → shortcuts) and is gr
 | `Ctrl` + `←` / `→` | Previous / next book |
 | `Ctrl` + `PageUp` / `PageDown` | Previous / next chapter |
 | `Shift` + `>` / `<` | Grow / shrink the displayed verse span (original method 5): with a picked range it extends that range (e.g. `CSJ2:1-10` → verses 1-11), without one it changes "verses per page" |
-| `Ctrl` + `1`…`4` | Switch the active column-comparison group |
 | `F5` | Enter / leave projection mode (fullscreen) |
 | `F6` | Leave projection mode |
 | `F11` | System fullscreen (the projection look follows automatically) |
@@ -437,7 +436,7 @@ no-speech edition** and are not provided here either.
 | --- | --- | --- |
 | `Ctrl` + `S` | Change the font | Bookmark the current verse |
 | `Ctrl` + `←` / `→` | Switch between remembered passages | Previous / next book |
-| `Ctrl` + `0` | Hide all comparison columns | Reset the font size |
+| `Ctrl` + `0` | Hide all comparison columns (this version has none) | Reset the font size |
 | Simplified / Traditional switching | Two built-in texts switched directly | Replaced by the translation dropdown — CUV (Simplified) and CUV (Traditional) are two separate translation entries |
 
 ---
@@ -449,16 +448,16 @@ no-speech edition** and are not provided here either.
   need extra electron-builder targets or running from source.
 - **Verse text is inherited from the original program's database** and has not been proofread verse-by-verse
   against a modern published electronic CUV; some characters and punctuation may differ.
-- **No multi-window display** of several passages at once (the original has it); a single window with
-  up to 4 compared passages plus one floating control panel.
+- **No multi-window display** of several passages at once (the original has it); a single window plus one
+  floating control panel. Use the per-verse multi-version comparison to compare translations.
 - **No hardware support for a wireless remote**, but the keyboard media keys (previous / next track)
   can be used as a page-turner.
 - **The original transparent window (`F7`) and desktop extension (`F9`) are not implemented**: both rely on
   extra main-process `BrowserWindow` capabilities this version does not have; use `F5` for projection and
   `F11` for the native system fullscreen. The right-click menu keeps an "extend desktop_F9" entry that
   simply reports that this version uses "project to a second screen" instead.
-- **The original `Ctrl` + `0`…`4` "hide all comparison panes" semantics were replaced**: `Ctrl` + `1`…`4`
-  now switches the active comparison group and `Ctrl` + `0` resets the font size.
+- **The original `Ctrl` + `0`…`4` "hide all comparison panes" semantics were replaced**: this version has
+  **no comparison panes** (the feature was removed on request); `Ctrl` + `0` resets the font size.
 - **Apart from the three bundled translations (CUV Simplified / Traditional and the Lü Zhenzhong
   Translation), the other four must be downloaded once over the network** (from the top bar,
   "Get translations" → "Download and install", after confirming you have obtained the necessary
